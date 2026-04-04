@@ -169,6 +169,25 @@ def create_web_app(base_dir: Path | None = None):
         docs = list_raw(base)
         return jsonify({"documents": docs})
 
+    @app.route("/api/sources/<path:slug>")
+    def api_source_detail(slug):
+        """Read raw document content for preview."""
+        cfg = load_config(base)
+        raw_dir = Path(cfg["paths"]["raw"])
+        doc_dir = raw_dir / slug
+        idx = doc_dir / "index.md"
+        if not idx.exists():
+            return jsonify({"status": "error", "message": "Not found"})
+        post = frontmatter.load(str(idx))
+        return jsonify({
+            "slug": slug,
+            "title": post.metadata.get("title", slug),
+            "type": post.metadata.get("type", "unknown"),
+            "compiled": post.metadata.get("compiled", False),
+            "content": post.content[:10000],  # Cap at 10K chars for preview
+            "metadata": {k: str(v) for k, v in post.metadata.items()},
+        })
+
     @app.route("/api/ingest", methods=["POST"])
     def api_ingest():
         data = request.json
