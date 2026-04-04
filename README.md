@@ -10,6 +10,8 @@ No vector database. No embeddings pipeline. Just markdown, an LLM, and a clean U
 
 [English](#english) | [中文](#中文)
 
+**Live Demo**: [華藏閣 — Chinese Classics Knowledge Base](https://huazangge-production.up.railway.app)
+
 </div>
 
 ---
