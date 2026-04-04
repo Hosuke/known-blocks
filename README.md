@@ -202,6 +202,43 @@ Or via HTTP at `localhost:5556`:
 | **LLM** | Any OpenAI-compatible API |
 | **Browser** | OpenCLI integration (optional) |
 
+## Deployment
+
+### Docker (recommended)
+
+```bash
+# Build and run
+docker compose up -d
+
+# Or build manually
+docker build -t llmbase .
+docker run -p 5555:5555 --env-file .env -v ./raw:/app/raw -v ./wiki:/app/wiki llmbase
+```
+
+### Railway (one-click cloud deploy)
+
+1. Fork this repo
+2. Go to [railway.app](https://railway.app), create new project from GitHub repo
+3. Add environment variables: `LLMBASE_API_KEY`, `LLMBASE_BASE_URL`, `LLMBASE_MODEL`
+4. Deploy — Railway auto-detects the Dockerfile
+
+### Render
+
+1. Fork this repo
+2. Go to [render.com](https://render.com), create new Web Service from repo
+3. Set build command: `docker build`
+4. Add environment variables
+5. Deploy
+
+### Manual (VPS)
+
+```bash
+git clone https://github.com/Hosuke/llmbase.git && cd llmbase
+pip install -e . && cd frontend && npm ci && npx vite build && cd ..
+cp .env.example .env  # edit with your API key
+gunicorn --bind 0.0.0.0:5555 --workers 2 --timeout 300 wsgi:app
+```
+
 ## Design Philosophy
 
 - **No vector DB needed** — At personal scale (~100-500 articles), index files + LLM context window are sufficient

@@ -1,0 +1,11 @@
+services:
+  llmbase:
+    build: .
+    ports:
+      - "5555:5555"
+    env_file:
+      - .env
+    volumes:
+      - ./raw:/app/raw
+      - ./wiki:/app/wiki
+    restart: unless-stopped
