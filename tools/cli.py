@@ -107,6 +107,55 @@ def ingest_browse_cmd(ctx, url):
         console.print(f"[green]✓[/green] Ingested via browser to: {doc_path}")
 
 
+@ingest.command("cbeta-learn")
+@click.option("--category", type=str, default=None, help="Category: agama, bore, fahua, huayan, chanzong, jingtu, etc.")
+@click.option("--batch", type=int, default=5, help="Number of sutras per run")
+@click.pass_context
+def ingest_cbeta_learn_cmd(ctx, category, batch):
+    """Progressive learning from CBETA. Each run ingests a batch of new sutras."""
+    from .cbeta import learn, status
+    s = status(ctx.obj["base_dir"])
+    console.print(f"[dim]Progress: {s['total_ingested']} sutras ingested so far[/dim]")
+    cat_label = category or "all categories (sequential)"
+    console.print(f"[cyan]Learning {batch} sutras from {cat_label}...[/cyan]")
+    with console.status("Fetching and ingesting..."):
+        results = learn(category, batch, ctx.obj["base_dir"])
+    if results:
+        console.print(f"[green]✓[/green] Ingested {len(results)} new sutras:")
+        for w in results:
+            console.print(f"  • {w}")
+        console.print(f"[dim]Total progress: {s['total_ingested'] + len(results)} sutras[/dim]")
+    else:
+        console.print("[yellow]No new sutras to ingest in this category.[/yellow]")
+
+
+@ingest.command("cbeta-status")
+@click.pass_context
+def ingest_cbeta_status_cmd(ctx):
+    """Show CBETA learning progress."""
+    from .cbeta import status
+    s = status(ctx.obj["base_dir"])
+    console.print(f"[cyan]CBETA Learning Progress[/cyan]")
+    console.print(f"  Total ingested: [green]{s['total_ingested']}[/green] sutras")
+    console.print(f"  Last run: {s.get('last_run', 'never')}")
+    if s.get("ingested_works"):
+        console.print(f"  Recent: {', '.join(s['ingested_works'][:10])}")
+
+
+@ingest.command("cbeta-work")
+@click.argument("work_id")
+@click.pass_context
+def ingest_cbeta_work_cmd(ctx, work_id):
+    """Ingest a specific CBETA work by ID (e.g. T0001, T0235, X1456)."""
+    from .cbeta import ingest_work
+    with console.status(f"Fetching {work_id}..."):
+        path = ingest_work(work_id, base_dir=ctx.obj["base_dir"])
+    if path:
+        console.print(f"[green]✓[/green] Ingested: {path}")
+    else:
+        console.print(f"[yellow]Already ingested or not found: {work_id}[/yellow]")
+
+
 @ingest.command("ctext-book")
 @click.argument("book_name")
 @click.argument("book_path")
