@@ -2,6 +2,7 @@ import { NavLink, Outlet, useNavigate } from 'react-router-dom';
 import { useState, useEffect } from 'react';
 import { Icon } from './Icon';
 import { useTheme } from '../lib/theme';
+import { fetchBranding, getBranding, type Branding } from '../lib/branding';
 import { api, type Article } from '../lib/api';
 
 const NAV = [
@@ -17,11 +18,13 @@ const NAV = [
 export function Layout() {
   const navigate = useNavigate();
   const { theme, toggle } = useTheme();
+  const [branding, setBranding] = useState<Branding>(getBranding());
   const [articles, setArticles] = useState<Article[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [sidebarOpen, setSidebarOpen] = useState(true);
 
   useEffect(() => {
+    fetchBranding().then(setBranding);
     api.getArticles().then(setArticles).catch(() => {});
   }, []);
 
@@ -39,11 +42,11 @@ export function Layout() {
         <div className="p-5 border-b border-outline-variant/30">
           {sidebarOpen ? (
             <>
-              <h1 className="text-lg font-bold text-primary tracking-tight">LLMBase</h1>
-              <p className="text-[11px] text-on-surface-variant tracking-widest uppercase mt-0.5">The Scholarly Synthesis</p>
+              <h1 className="text-lg font-bold text-primary tracking-tight font-headline">{branding.name}</h1>
+              <p className="text-[11px] text-on-surface-variant tracking-widest uppercase mt-0.5">{branding.tagline}</p>
             </>
           ) : (
-            <div className="text-primary font-bold text-center text-lg">L</div>
+            <div className="text-primary font-bold text-center text-lg font-headline">{branding.nameShort}</div>
           )}
         </div>
 
@@ -85,14 +88,28 @@ export function Layout() {
           )}
         </nav>
 
-        {/* Bottom controls */}
-        <div className="p-2.5 border-t border-outline-variant/30 space-y-1">
-          <button
-            onClick={() => setSidebarOpen(!sidebarOpen)}
-            className="w-full flex items-center justify-center py-2 rounded-lg hover:bg-surface-high text-on-surface-variant transition-colors"
-          >
-            <Icon name={sidebarOpen ? 'chevron_left' : 'chevron_right'} />
-          </button>
+        {/* Bottom: Powered by + Collapse */}
+        <div className="border-t border-outline-variant/30">
+          {sidebarOpen && (
+            <div className="px-5 py-3">
+              <a
+                href={branding.poweredBy.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-[11px] text-outline hover:text-primary transition-colors"
+              >
+                {branding.poweredBy.label}
+              </a>
+            </div>
+          )}
+          <div className="p-2.5 pt-0">
+            <button
+              onClick={() => setSidebarOpen(!sidebarOpen)}
+              className="w-full flex items-center justify-center py-2 rounded-lg hover:bg-surface-high text-on-surface-variant transition-colors"
+            >
+              <Icon name={sidebarOpen ? 'chevron_left' : 'chevron_right'} />
+            </button>
+          </div>
         </div>
       </aside>
 
@@ -134,6 +151,18 @@ export function Layout() {
         <main className="flex-1 overflow-y-auto bg-bg">
           <Outlet />
         </main>
+
+        {/* Footer */}
+        <footer className="h-8 bg-surface-container border-t border-outline-variant/20 flex items-center justify-center flex-shrink-0">
+          <a
+            href={branding.poweredBy.url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-[11px] text-outline hover:text-primary transition-colors"
+          >
+            {branding.poweredBy.label}
+          </a>
+        </footer>
       </div>
     </div>
   );

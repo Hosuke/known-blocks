@@ -23,6 +23,20 @@ def create_web_app(base_dir: Path | None = None):
 
     # ─── API Routes ────────────────────────────────────────────
 
+    @app.route("/api/branding")
+    def api_branding():
+        cfg = load_config(base)
+        branding = cfg.get("branding", {})
+        return jsonify({
+            "name": branding.get("name", "LLMBase"),
+            "nameShort": branding.get("name_short", "L"),
+            "tagline": branding.get("tagline", "Knowledge Base"),
+            "poweredBy": {
+                "label": branding.get("powered_by_label", "Powered by LLMBase"),
+                "url": branding.get("powered_by_url", "https://github.com/Hosuke/llmbase"),
+            },
+        })
+
     @app.route("/api/stats")
     def api_stats():
         cfg = load_config(base)
