@@ -1,8 +1,8 @@
 import { NavLink, Outlet, useNavigate } from 'react-router-dom';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Icon } from './Icon';
 import { useTheme } from '../lib/theme';
-import { useLang, LANG_LABELS, localizeTitle, type Lang } from '../lib/lang';
+import { useLang, LANG_OPTIONS, localizeTitle } from '../lib/lang';
 import { fetchBranding, getBranding, type Branding } from '../lib/branding';
 import { api, type Article } from '../lib/api';
 
@@ -16,8 +16,6 @@ const NAV = [
   { to: '/health', icon: 'health_and_safety', label: 'Health' },
 ];
 
-const LANGS: Lang[] = ['en', 'zh', 'ja'];
-
 export function Layout() {
   const navigate = useNavigate();
   const { theme, toggle } = useTheme();
@@ -26,23 +24,29 @@ export function Layout() {
   const [articles, setArticles] = useState<Article[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [langOpen, setLangOpen] = useState(false);
+  const langRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     fetchBranding().then(setBranding);
     api.getArticles().then(setArticles).catch(() => {});
   }, []);
 
-  const handleGlobalSearch = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter' && searchQuery.trim()) {
-      navigate(`/search?q=${encodeURIComponent(searchQuery)}`);
-    }
-  };
+  // Close lang dropdown on outside click
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (langRef.current && !langRef.current.contains(e.target as Node)) setLangOpen(false);
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, []);
+
+  const currentLangOption = LANG_OPTIONS.find(o => o.value === lang) || LANG_OPTIONS[0];
 
   return (
     <div className="flex h-screen overflow-hidden bg-bg">
       {/* Sidebar */}
       <aside className={`${sidebarOpen ? 'w-[260px]' : 'w-16'} bg-surface-container border-r border-outline-variant/30 flex flex-col flex-shrink-0 transition-all duration-200 card-shadow`}>
-        {/* Logo */}
         <div className="p-5 border-b border-outline-variant/30 cursor-pointer" onClick={() => navigate('/')}>
           {sidebarOpen ? (
             <>
@@ -54,21 +58,14 @@ export function Layout() {
           )}
         </div>
 
-        {/* Nav */}
         <nav className="flex-1 overflow-y-auto p-2.5">
           {NAV.map(n => (
-            <NavLink
-              key={n.to}
-              to={n.to}
-              end={n.to === '/'}
+            <NavLink key={n.to} to={n.to} end={n.to === '/'}
               className={({ isActive }) =>
                 `flex items-center gap-3 px-3.5 py-2.5 rounded-lg text-sm mb-0.5 transition-colors ${
-                  isActive
-                    ? 'bg-primary-container/30 text-primary font-medium'
-                    : 'text-on-surface-variant hover:bg-surface-high'
+                  isActive ? 'bg-primary-container/30 text-primary font-medium' : 'text-on-surface-variant hover:bg-surface-high'
                 }`
-              }
-            >
+              }>
               <Icon name={n.icon} className="text-[20px]" />
               {sidebarOpen && n.label}
             </NavLink>
@@ -80,11 +77,9 @@ export function Layout() {
                 Articles ({articles.length})
               </div>
               {articles.slice(0, 30).map(a => (
-                <div
-                  key={a.slug}
+                <div key={a.slug}
                   className="px-3.5 py-1.5 text-sm text-on-surface-variant hover:text-on-surface hover:bg-surface-high rounded cursor-pointer truncate transition-colors"
-                  onClick={() => navigate(`/wiki/${a.slug}`)}
-                >
+                  onClick={() => navigate(`/wiki/${a.slug}`)}>
                   {localizeTitle(a.title, lang)}
                 </div>
               ))}
@@ -92,7 +87,6 @@ export function Layout() {
           )}
         </nav>
 
-        {/* Bottom */}
         <div className="border-t border-outline-variant/30">
           {sidebarOpen && (
             <div className="px-5 py-3">
@@ -119,19 +113,35 @@ export function Layout() {
             <Icon name="search" className="absolute left-3 top-1/2 -translate-y-1/2 text-outline text-[18px]" />
             <input type="text" placeholder="Search across documents... ⌘K"
               className="w-full bg-surface-high border border-outline-variant/40 rounded-lg pl-10 pr-4 py-2 text-sm text-on-surface placeholder:text-outline outline-none focus:border-primary/60 transition-colors"
-              value={searchQuery} onChange={e => setSearchQuery(e.target.value)} onKeyDown={handleGlobalSearch} />
+              value={searchQuery} onChange={e => setSearchQuery(e.target.value)}
+              onKeyDown={e => { if (e.key === 'Enter' && searchQuery.trim()) navigate(`/search?q=${encodeURIComponent(searchQuery)}`); }} />
           </div>
 
-          {/* Language switcher */}
-          <div className="flex items-center bg-surface-high rounded-lg p-0.5">
-            {LANGS.map(l => (
-              <button key={l} onClick={() => setLang(l)}
-                className={`px-2.5 py-1 rounded-md text-xs font-medium transition-colors ${
-                  lang === l ? 'bg-primary text-on-primary' : 'text-on-surface-variant hover:text-on-surface'
-                }`}>
-                {LANG_LABELS[l]}
-              </button>
-            ))}
+          {/* Language selector dropdown */}
+          <div className="relative" ref={langRef}>
+            <button onClick={() => setLangOpen(!langOpen)}
+              className="flex items-center gap-1.5 px-3 py-2 bg-surface-high border border-outline-variant/40 rounded-lg text-sm hover:border-primary/50 transition-colors">
+              <Icon name="translate" className="text-[16px] text-primary" />
+              <span className="text-on-surface">{currentLangOption.label}</span>
+              <Icon name="expand_more" className="text-[16px] text-on-surface-variant" />
+            </button>
+
+            {langOpen && (
+              <div className="absolute right-0 top-full mt-1 bg-surface-container border border-outline-variant/40 rounded-xl shadow-lg z-50 py-1 min-w-[160px]">
+                {LANG_OPTIONS.map(opt => (
+                  <button key={opt.value}
+                    onClick={() => { setLang(opt.value); setLangOpen(false); }}
+                    className={`w-full text-left px-4 py-2.5 text-sm flex items-center gap-3 transition-colors ${
+                      lang === opt.value
+                        ? 'bg-primary-container/30 text-primary font-medium'
+                        : 'text-on-surface-variant hover:bg-surface-high'
+                    }`}>
+                    <span className="w-6 text-center font-medium">{opt.icon}</span>
+                    {opt.label}
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
 
           {/* Theme toggle */}
@@ -148,12 +158,10 @@ export function Layout() {
           </button>
         </header>
 
-        {/* Content */}
         <main className="flex-1 overflow-y-auto bg-bg">
           <Outlet />
         </main>
 
-        {/* Footer */}
         <footer className="h-8 bg-surface-container border-t border-outline-variant/20 flex items-center justify-center flex-shrink-0">
           <a href={branding.poweredBy.url} target="_blank" rel="noopener noreferrer"
             className="text-[11px] text-outline hover:text-primary transition-colors">

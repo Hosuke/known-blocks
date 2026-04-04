@@ -1,9 +1,13 @@
-import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
+import { createContext, useContext, useState, type ReactNode } from 'react';
 
-export type Lang = 'en' | 'zh' | 'ja';
+export type Lang = 'zh' | 'en' | 'ja' | 'zh-en';
 
-const LABELS: Record<Lang, string> = { en: 'EN', zh: '中', ja: '日' };
-const FULL_LABELS: Record<Lang, string> = { en: 'English', zh: '中文', ja: '日本語' };
+export const LANG_OPTIONS: { value: Lang; label: string; icon: string }[] = [
+  { value: 'zh', label: '中文', icon: '中' },
+  { value: 'en', label: 'English', icon: 'EN' },
+  { value: 'ja', label: '日本語', icon: '日' },
+  { value: 'zh-en', label: '中英双语', icon: '双' },
+];
 
 const LangContext = createContext<{
   lang: Lang;
@@ -29,7 +33,6 @@ export function LangProvider({ children }: { children: ReactNode }) {
 }
 
 export const useLang = () => useContext(LangContext);
-export { LABELS as LANG_LABELS, FULL_LABELS as LANG_FULL_LABELS };
 
 /**
  * Extract the localized part from a bilingual title like "English Title / 中文标题"
@@ -39,37 +42,48 @@ export function localizeTitle(title: string, lang: Lang): string {
   const parts = title.split('/').map(s => s.trim());
   if (parts.length < 2) return title;
 
-  // Detect which part is which language
   const hasCJK = (s: string) => /[\u4e00-\u9fff\u3400-\u4dbf]/.test(s);
-  const hasJP = (s: string) => /[\u3040-\u309f\u30a0-\u30ff]/.test(s);
+
+  if (lang === 'zh-en') return title; // Show both
 
   if (lang === 'zh' || lang === 'ja') {
-    // Prefer CJK part
     const cjk = parts.find(p => hasCJK(p));
     return cjk || parts[parts.length - 1];
   }
-  // English: prefer non-CJK part
-  const en = parts.find(p => !hasCJK(p) && !hasJP(p));
+  const en = parts.find(p => !hasCJK(p));
   return en || parts[0];
 }
 
 /**
- * Extract a language section from trilingual article content
+ * Extract language section(s) from trilingual article content
  */
 export function extractLangContent(content: string, lang: Lang): string {
-  const headers: Record<Lang, string[]> = {
-    en: ['## English'],
-    zh: ['## 中文'],
-    ja: ['## 日本語'],
+  if (lang === 'zh-en') {
+    // Bilingual: show both English and Chinese sections
+    const en = _extractSection(content, '## English');
+    const zh = _extractSection(content, '## 中文');
+    if (en && zh) return `## English\n\n${en}\n\n---\n\n## 中文\n\n${zh}`;
+    return content;
+  }
+
+  const headers: Record<string, string> = {
+    en: '## English',
+    zh: '## 中文',
+    ja: '## 日本語',
   };
 
-  const markers = headers[lang];
-  for (const marker of markers) {
-    const idx = content.indexOf(marker);
-    if (idx === -1) continue;
-    const start = idx + marker.length;
-    const nextH2 = content.indexOf('\n## ', start);
-    return (nextH2 === -1 ? content.slice(start) : content.slice(start, nextH2)).trim();
+  const marker = headers[lang];
+  if (marker) {
+    const section = _extractSection(content, marker);
+    if (section) return section;
   }
   return content;
+}
+
+function _extractSection(content: string, marker: string): string | null {
+  const idx = content.indexOf(marker);
+  if (idx === -1) return null;
+  const start = idx + marker.length;
+  const nextH2 = content.indexOf('\n## ', start);
+  return (nextH2 === -1 ? content.slice(start) : content.slice(start, nextH2)).trim();
 }
