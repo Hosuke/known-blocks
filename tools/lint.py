@@ -404,37 +404,70 @@ def _find_duplicate_candidates(articles: list[dict]) -> list[tuple[str, str]]:
     """Pre-filter: find article pairs that are likely duplicates.
 
     Uses cheap heuristics — no LLM call:
-    - Slug substring overlap (e.g., si-di vs si-di-buddhism)
+    - Slug substring overlap (ASCII: min 4 chars; CJK: any length)
     - High tag overlap (>= 60% Jaccard)
-    - Title similarity (shared CJK characters)
-    - Bilingual title cross-match (e.g., both have "仁" in Chinese title part)
+    - CJK substring matching across titles AND slugs
+      (仁 is substring of 仁爱 → candidate)
     """
+    import re
+    cjk_re = re.compile(r'[\u4e00-\u9fff\u3400-\u4dbf]')
+
     candidates = []
     n = len(articles)
 
-    # Extract CJK title parts for cross-matching
-    def _cjk_parts(title: str) -> set[str]:
-        """Extract CJK substrings from bilingual title."""
-        import re
-        parts = set()
-        for segment in title.split("/"):
-            segment = segment.strip()
-            # Extract CJK-only portion
-            cjk = re.sub(r'[^\u4e00-\u9fff\u3400-\u4dbf]', '', segment)
+    def _is_cjk(text: str) -> bool:
+        return bool(cjk_re.search(text))
+
+    def _extract_cjk(text: str) -> str:
+        """Extract all CJK characters from text."""
+        return re.sub(r'[^\u4e00-\u9fff\u3400-\u4dbf]', '', text)
+
+    def _all_cjk_names(article: dict) -> set[str]:
+        """Get all CJK names for an article: from title parts AND slug."""
+        names = set()
+        # From title: split by / and extract CJK
+        for part in article["title"].split("/"):
+            cjk = _extract_cjk(part.strip())
             if cjk:
-                parts.add(cjk)
-        return parts
+                names.add(cjk)
+        # From slug if it contains CJK
+        slug_cjk = _extract_cjk(article["slug"])
+        if slug_cjk:
+            names.add(slug_cjk)
+        return names
+
+    def _cjk_substring_match(names_a: set[str], names_b: set[str]) -> bool:
+        """Check if any CJK name from A is a substring of any from B, or vice versa.
+
+        To avoid false positives (仁 matching 仁者無敵), the shorter string
+        must be at least 50% of the longer string's length.
+        """
+        for a in names_a:
+            for b in names_b:
+                if a == b:
+                    return True
+                short, long = (a, b) if len(a) <= len(b) else (b, a)
+                if len(short) >= 1 and short in long and len(short) / len(long) >= 0.5:
+                    return True
+        return False
 
     for i in range(n):
         for j in range(i + 1, n):
             a, b = articles[i], articles[j]
             score = 0
 
-            # Slug similarity: one is substring of the other (min 4 chars to avoid false positives like "ren" in "renzhe")
-            if len(a["slug"]) >= 4 and a["slug"] in b["slug"]:
-                score += 2
-            elif len(b["slug"]) >= 4 and b["slug"] in a["slug"]:
-                score += 2
+            # Slug substring matching
+            a_slug, b_slug = a["slug"], b["slug"]
+            if _is_cjk(a_slug) or _is_cjk(b_slug):
+                # CJK slug: no minimum length
+                if a_slug in b_slug or b_slug in a_slug:
+                    score += 2
+            else:
+                # ASCII slug: min 4 chars to avoid "ren" in "renzhe" false positive
+                if len(a_slug) >= 4 and a_slug in b_slug:
+                    score += 2
+                elif len(b_slug) >= 4 and b_slug in a_slug:
+                    score += 2
 
             # Tag Jaccard similarity
             if a["tags"] and b["tags"]:
@@ -443,20 +476,12 @@ def _find_duplicate_candidates(articles: list[dict]) -> list[tuple[str, str]]:
                 if union > 0 and intersection / union >= 0.6:
                     score += 2
 
-            # Title character overlap (especially useful for CJK)
-            title_a_chars = set(a["title"].replace(" ", "").replace("/", "").lower())
-            title_b_chars = set(b["title"].replace(" ", "").replace("/", "").lower())
-            if title_a_chars and title_b_chars:
-                t_intersection = len(title_a_chars & title_b_chars)
-                t_union = len(title_a_chars | title_b_chars)
-                if t_union > 0 and t_intersection / t_union >= 0.5:
-                    score += 1
-
-            # Bilingual CJK title match: if both have identical CJK title part
-            cjk_a = _cjk_parts(a["title"])
-            cjk_b = _cjk_parts(b["title"])
-            if cjk_a and cjk_b and cjk_a & cjk_b:
-                score += 3  # Strong signal: same Chinese concept name
+            # CJK name substring matching (the key fix)
+            # Collects CJK from title parts AND slug, then does substring comparison
+            cjk_a = _all_cjk_names(a)
+            cjk_b = _all_cjk_names(b)
+            if cjk_a and cjk_b and _cjk_substring_match(cjk_a, cjk_b):
+                score += 3
 
             if score >= 2:
                 candidates.append((a["slug"], b["slug"]))
@@ -464,7 +489,7 @@ def _find_duplicate_candidates(articles: list[dict]) -> list[tuple[str, str]]:
     return candidates
 
 
-def merge_duplicates(base_dir: Path | None = None, max_merges: int = 5) -> list[str]:
+def merge_duplicates(base_dir: Path | None = None, max_merges: int = 15) -> list[str]:
     """Merge confirmed duplicate articles using LLM.
 
     For each duplicate pair:
