@@ -286,6 +286,56 @@ def create_web_app(base_dir: Path | None = None):
             Path(tmp_path).unlink()
             return jsonify({"status": "ok", "path": str(path), "filename": f.filename})
 
+    @app.route("/api/articles/<slug>", methods=["DELETE"])
+    def api_delete_article(slug):
+        """Delete a wiki article by slug."""
+        cfg = load_config(base)
+        concepts_dir = Path(cfg["paths"]["concepts"])
+        article_path = concepts_dir / f"{slug}.md"
+        if article_path.exists():
+            article_path.unlink()
+            return jsonify({"status": "ok", "deleted": slug})
+        return jsonify({"status": "error", "message": "Not found"})
+
+    @app.route("/api/wiki/clean", methods=["POST"])
+    def api_clean_wiki():
+        """Remove garbage/empty stub articles and update taxonomy."""
+        cfg = load_config(base)
+        concepts_dir = Path(cfg["paths"]["concepts"])
+        removed = []
+        for f in sorted(concepts_dir.glob("*.md")):
+            post = frontmatter.load(str(f))
+            title = post.metadata.get("title", "")
+            summary = post.metadata.get("summary", "")
+            content = post.content.strip()
+            if (
+                "English Title / 中文标题" in title
+                or "One-line summary in English" in summary
+                or "The user says" in summary
+                or "has not been fully written" in content
+                or "has not been written yet" in content
+                or "尚未完成撰写" in content
+                or len(content) < 50
+            ):
+                f.unlink()
+                removed.append(f.stem)
+        if removed:
+            rebuild_index(base)
+        return jsonify({"status": "ok", "removed": len(removed), "slugs": removed})
+
+    @app.route("/api/taxonomy/update", methods=["POST"])
+    def api_update_taxonomy():
+        """Upload a new taxonomy.json."""
+        data = request.json
+        if not data or "categories" not in data:
+            return jsonify({"status": "error", "message": "Provide {categories: [...]}"})
+        cfg = load_config(base)
+        meta_dir = Path(cfg["paths"]["meta"])
+        meta_dir.mkdir(parents=True, exist_ok=True)
+        path = meta_dir / "taxonomy.json"
+        path.write_text(json.dumps(data, indent=2, ensure_ascii=False), encoding="utf-8")
+        return jsonify({"status": "ok", "categories": len(data["categories"])})
+
     @app.route("/api/compile", methods=["POST"])
     def api_compile():
         articles = compile_new(base)
