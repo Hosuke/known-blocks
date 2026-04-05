@@ -403,18 +403,22 @@ def _write_article(article: dict, concepts_dir: Path) -> Path | None:
                 _merge_into(existing_path, article)
                 return existing_path
 
-    # Layer 3: CJK substring scan — catches 四端说 matching 四端
+    # Layer 3: CJK substring scan — catches 四端说 matching 四端, 仁 matching 仁
     new_cjk = _re.sub(r'[^\u4e00-\u9fff\u3400-\u4dbf]', '', title)
-    if new_cjk and len(new_cjk) >= 2:
+    if new_cjk:
         for md_file in concepts_dir.glob("*.md"):
             existing_post = frontmatter.load(str(md_file))
             existing_title = existing_post.metadata.get("title", "")
             existing_cjk = _re.sub(r'[^\u4e00-\u9fff\u3400-\u4dbf]', '', existing_title)
             if not existing_cjk:
                 continue
-            # Check substring relationship with length ratio >= 67%
+            # Exact CJK match (handles single chars: 仁 == 仁)
+            if new_cjk == existing_cjk:
+                _merge_into(md_file, article)
+                return md_file
+            # Substring match for 2+ chars (四端 in 四端说, ratio >= 60%)
             short, long = (new_cjk, existing_cjk) if len(new_cjk) <= len(existing_cjk) else (existing_cjk, new_cjk)
-            if short in long and len(short) / len(long) >= 0.6:
+            if len(short) >= 2 and short in long and len(short) / len(long) >= 0.6:
                 _merge_into(md_file, article)
                 return md_file
 
