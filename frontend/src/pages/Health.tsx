@@ -52,10 +52,26 @@ export function Health() {
     setLoadingFix(true);
     try {
       const res = await api.lintFix();
-      setFixes(res.fixes);
-      // Re-run check to see the result
-      const check = await api.lint(false);
-      if (check.results) setResults(check.results);
+      if (res.fixes) {
+        // Synchronous response (local dev)
+        setFixes(res.fixes);
+        const check = await api.lint(false);
+        if (check.results) setResults(check.results);
+      } else {
+        // Async response (production) — pipeline running in background
+        setFixes([res.message || 'Auto-fix pipeline started in background. Refresh in 1-2 minutes.']);
+        // Poll for results after delay
+        setTimeout(async () => {
+          try {
+            const check = await api.lint(false);
+            if (check.results) setResults(check.results);
+            const health = await api.getHealth();
+            if (health.report?.fixes_applied) setFixes(health.report.fixes_applied);
+          } catch { /* */ }
+          setLoadingFix(false);
+        }, 60000);
+        return;
+      }
     } catch { /* */ }
     setLoadingFix(false);
   }
