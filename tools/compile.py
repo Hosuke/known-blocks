@@ -339,7 +339,14 @@ def _parse_update_block(block: str) -> dict | None:
 
 
 def _write_article(article: dict, concepts_dir: Path) -> Path | None:
-    """Write or update an article file. Merges into existing articles."""
+    """Write or update an article file. Merges into existing articles.
+
+    Before creating a new article, checks the alias map to see if this
+    concept already exists under a different slug (e.g., 'mencius' vs
+    'mengzi'). If so, merges into the existing article instead.
+    """
+    from .resolve import build_aliases, resolve_link
+
     slug = article["slug"]
     article_path = concepts_dir / f"{slug}.md"
 
@@ -357,16 +364,36 @@ def _write_article(article: dict, concepts_dir: Path) -> Path | None:
             article_path.write_text(frontmatter.dumps(existing), encoding="utf-8")
         return article_path
 
-    # New article
-    if article.get("type") in ("new", "update") or not article_path.exists():
-        post = frontmatter.Post(article.get("content", ""))
-        post.metadata["title"] = article.get("title", slug)
-        post.metadata["summary"] = article.get("summary", "")
-        post.metadata["tags"] = article.get("tags", [])
-        post.metadata["created"] = datetime.now(timezone.utc).isoformat()
-        post.metadata["updated"] = datetime.now(timezone.utc).isoformat()
-        article_path.write_text(frontmatter.dumps(post), encoding="utf-8")
-        return article_path
+    # Before creating new: check if an alias points to an existing article
+    aliases = build_aliases(concepts_dir)
+    title = article.get("title", slug)
+    # Try resolving by slug, title, and title parts
+    for candidate in [slug, title] + [p.strip() for p in title.split("/") if p.strip()]:
+        resolved = resolve_link(candidate, aliases)
+        if resolved and resolved != slug:
+            existing_path = concepts_dir / f"{resolved}.md"
+            if existing_path.exists():
+                # Merge into existing article under the resolved slug
+                existing = frontmatter.load(str(existing_path))
+                new_content = article.get("content", "")
+                if new_content and new_content not in existing.content:
+                    existing.content += f"\n\n---\n\n{new_content}"
+                    existing.metadata["updated"] = datetime.now(timezone.utc).isoformat()
+                    old_tags = set(existing.metadata.get("tags", []))
+                    new_tags = set(article.get("tags", []))
+                    existing.metadata["tags"] = sorted(old_tags | new_tags)
+                    existing_path.write_text(frontmatter.dumps(existing), encoding="utf-8")
+                return existing_path
+
+    # Truly new article
+    post = frontmatter.Post(article.get("content", ""))
+    post.metadata["title"] = article.get("title", slug)
+    post.metadata["summary"] = article.get("summary", "")
+    post.metadata["tags"] = article.get("tags", [])
+    post.metadata["created"] = datetime.now(timezone.utc).isoformat()
+    post.metadata["updated"] = datetime.now(timezone.utc).isoformat()
+    article_path.write_text(frontmatter.dumps(post), encoding="utf-8")
+    return article_path
 
     return None
 
