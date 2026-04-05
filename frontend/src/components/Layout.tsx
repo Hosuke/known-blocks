@@ -4,7 +4,7 @@ import { Icon } from './Icon';
 import { useTheme } from '../lib/theme';
 import { useLang, LANG_OPTIONS, localizeTitle } from '../lib/lang';
 import { fetchBranding, getBranding, type Branding } from '../lib/branding';
-import { api, type Article, type Collection } from '../lib/api';
+import { api, type Article, type TaxonomyCategory } from '../lib/api';
 
 const NAV = [
   { to: '/', icon: 'dashboard', label: 'Dashboard' },
@@ -22,7 +22,7 @@ export function Layout() {
   const { lang, setLang } = useLang();
   const [branding, setBranding] = useState<Branding>(getBranding());
   const [articles, setArticles] = useState<Article[]>([]);
-  const [collections, setCollections] = useState<Collection[]>([]);
+  const [taxonomy, setTaxonomy] = useState<TaxonomyCategory[]>([]);
   const [expandedCats, setExpandedCats] = useState<Set<string>>(new Set());
   const [searchQuery, setSearchQuery] = useState('');
   const [sidebarOpen, setSidebarOpen] = useState(true);
@@ -32,8 +32,13 @@ export function Layout() {
   useEffect(() => {
     fetchBranding().then(setBranding);
     api.getArticles().then(setArticles).catch(() => {});
-    api.getCollections().then(setCollections).catch(() => {});
   }, []);
+
+  // Reload taxonomy when language changes
+  useEffect(() => {
+    const l = lang === 'zh-en' ? 'zh' : lang;
+    api.getTaxonomy(l).then(setTaxonomy).catch(() => {});
+  }, [lang]);
 
   const toggleCat = (id: string) => {
     setExpandedCats(prev => {
@@ -82,27 +87,53 @@ export function Layout() {
             </NavLink>
           ))}
 
-          {sidebarOpen && collections.length > 0 && (
+          {sidebarOpen && taxonomy.length > 0 && (
             <>
               <div className="text-[11px] text-on-surface-variant tracking-widest uppercase px-3.5 pt-5 pb-1.5">
-                Categories ({articles.length})
+                {articles.length} articles
               </div>
-              {collections.map(col => (
-                <div key={col.id}>
+              {taxonomy.map(cat => (
+                <div key={cat.id}>
+                  {/* Top-level category */}
                   <div
-                    className="flex items-center gap-2 px-3.5 py-2 text-sm text-on-surface-variant hover:text-on-surface hover:bg-surface-high rounded cursor-pointer transition-colors"
-                    onClick={() => toggleCat(col.id)}>
-                    <Icon name={expandedCats.has(col.id) ? 'expand_more' : 'chevron_right'} className="text-[16px]" />
-                    <span className="truncate flex-1">{col.label}</span>
-                    <span className="text-[11px] text-outline">{col.count}</span>
+                    className="flex items-center gap-2 px-3.5 py-2 text-sm font-medium text-on-surface hover:bg-surface-high rounded cursor-pointer transition-colors"
+                    onClick={() => toggleCat(cat.id)}>
+                    <Icon name={expandedCats.has(cat.id) ? 'expand_more' : 'chevron_right'} className="text-[16px] text-primary" />
+                    <span className="truncate flex-1">{cat.label}</span>
+                    <span className="text-[11px] text-outline">{cat.total}</span>
                   </div>
-                  {expandedCats.has(col.id) && col.articles.map(a => (
-                    <div key={a.slug}
-                      className="pl-9 pr-3.5 py-1 text-sm text-on-surface-variant hover:text-on-surface hover:bg-surface-high rounded cursor-pointer truncate transition-colors"
-                      onClick={() => navigate(`/wiki/${a.slug}`)}>
-                      {localizeTitle(a.title, lang)}
-                    </div>
-                  ))}
+
+                  {expandedCats.has(cat.id) && (
+                    <>
+                      {/* Sub-categories */}
+                      {cat.children.map(sub => (
+                        <div key={sub.id}>
+                          <div
+                            className="flex items-center gap-2 pl-7 pr-3.5 py-1.5 text-sm text-on-surface-variant hover:text-on-surface hover:bg-surface-high rounded cursor-pointer transition-colors"
+                            onClick={() => toggleCat(sub.id)}>
+                            <Icon name={expandedCats.has(sub.id) ? 'expand_more' : 'chevron_right'} className="text-[14px]" />
+                            <span className="truncate flex-1">{sub.label}</span>
+                            <span className="text-[10px] text-outline">{sub.count}</span>
+                          </div>
+                          {expandedCats.has(sub.id) && sub.articles.map(a => (
+                            <div key={a.slug}
+                              className="pl-12 pr-3.5 py-1 text-sm text-on-surface-variant hover:text-on-surface hover:bg-surface-high rounded cursor-pointer truncate transition-colors"
+                              onClick={() => navigate(`/wiki/${a.slug}`)}>
+                              {localizeTitle(a.title, lang)}
+                            </div>
+                          ))}
+                        </div>
+                      ))}
+                      {/* Direct articles under this category */}
+                      {cat.articles.map(a => (
+                        <div key={a.slug}
+                          className="pl-9 pr-3.5 py-1 text-sm text-on-surface-variant hover:text-on-surface hover:bg-surface-high rounded cursor-pointer truncate transition-colors"
+                          onClick={() => navigate(`/wiki/${a.slug}`)}>
+                          {localizeTitle(a.title, lang)}
+                        </div>
+                      ))}
+                    </>
+                  )}
                 </div>
               ))}
             </>

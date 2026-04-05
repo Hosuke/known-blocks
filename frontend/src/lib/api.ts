@@ -63,8 +63,18 @@ export interface Collection {
   articles: { slug: string; title: string; summary: string }[];
 }
 
+export interface TaxonomyCategory {
+  id: string;
+  label: string;
+  count: number;
+  total: number;
+  articles: { slug: string; title: string }[];
+  children: TaxonomyCategory[];
+}
+
 export const api = {
   getCollections: () => get<{ collections: Collection[] }>('/api/collections').then(d => d.collections),
+  getTaxonomy: (lang: string) => get<{ categories: TaxonomyCategory[] }>(`/api/taxonomy?lang=${lang}`).then(d => d.categories),
   getStats: () => get<Stats>('/api/stats'),
   getArticles: () => get<{ articles: Article[] }>('/api/articles').then(d => d.articles),
   getArticle: (slug: string) => get<Article>('/api/articles/' + slug),

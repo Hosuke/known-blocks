@@ -1,115 +1,171 @@
-"""Taxonomy generator — auto-generate hierarchical categories from wiki articles."""
+"""Taxonomy — hierarchical categories with multilingual labels."""
 
 import json
+import re
 from pathlib import Path
+from collections import defaultdict
 
 import frontmatter
 
 from .config import load_config
-from .llm import chat
 
-SYSTEM_PROMPT = """You are a classical knowledge taxonomy specialist.
-Generate a hierarchical category structure from the given article tags and titles.
-Follow the tradition of Chinese bibliography (四库全书 classification) for Chinese classics,
-and standard academic taxonomy for other domains."""
+# Pre-defined top-level categories with multilingual labels
+# Articles are mapped by matching their tags against these patterns
+HIERARCHY = [
+    {
+        "id": "confucianism",
+        "label": {"en": "Confucianism", "zh": "儒家", "ja": "儒教"},
+        "match": ["confuci", "analects", "mencius", "mengzi", "lunyu", "junzi", "ren", "li-", "xiao",
+                  "benevolence", "virtue", "filial", "ritual", "propriety", "four-books", "five-classics",
+                  "doctrine-of-the-mean", "great-learning", "zhongyong", "daxue"],
+        "children": [
+            {"id": "analects", "label": {"en": "Analerta", "zh": "论语", "ja": "論語"},
+             "match": ["analects", "lunyu", "xue-er", "confucius-analects"]},
+            {"id": "mencius", "label": {"en": "Mencius", "zh": "孟子", "ja": "孟子"},
+             "match": ["mencius", "mengzi", "mencius-"]},
+            {"id": "daxue", "label": {"en": "Great Learning", "zh": "大学", "ja": "大学"},
+             "match": ["great-learning", "daxue", "sincerity", "self-cultivation"]},
+            {"id": "zhongyong", "label": {"en": "Doctrine of the Mean", "zh": "中庸", "ja": "中庸"},
+             "match": ["mean", "zhongyong", "central-harmony", "zhonghe"]},
+            {"id": "confucian-ethics", "label": {"en": "Ethics & Virtues", "zh": "伦理道德", "ja": "倫理道徳"},
+             "match": ["ethics", "virtue", "moral", "benevolent", "governance", "trust"]},
+        ]
+    },
+    {
+        "id": "buddhism",
+        "label": {"en": "Buddhism", "zh": "佛教", "ja": "仏教"},
+        "match": ["buddh", "sutra", "dharma", "nirvana", "bodhisattva", "arhat", "tathagata",
+                  "agama", "mahayana", "meditation", "karmic", "sangha", "tripitaka",
+                  "brahma", "contemplation", "defilement", "liberation", "eight-noble"],
+        "children": [
+            {"id": "agama", "label": {"en": "Āgama Sūtras", "zh": "阿含经", "ja": "阿含経"},
+             "match": ["agama", "changahan", "shi-bao"]},
+            {"id": "cosmology", "label": {"en": "Cosmology", "zh": "宇宙观", "ja": "宇宙論"},
+             "match": ["cosmolog", "heaven", "caste", "realm", "world"]},
+            {"id": "practice", "label": {"en": "Practice & Path", "zh": "修行", "ja": "修行"},
+             "match": ["meditat", "practice", "path", "contemplat", "liberation", "stages"]},
+            {"id": "doctrine", "label": {"en": "Doctrine", "zh": "教义", "ja": "教義"},
+             "match": ["doctrine", "dependent", "aggregate", "noble", "dharma", "truth"]},
+        ]
+    },
+    {
+        "id": "daoism",
+        "label": {"en": "Daoism", "zh": "道家", "ja": "道教"},
+        "match": ["dao", "tao", "laozi", "zhuangzi", "wuwei", "yin-yang", "daodejing"],
+        "children": []
+    },
+    {
+        "id": "mohism",
+        "label": {"en": "Mohism", "zh": "墨家", "ja": "墨家"},
+        "match": ["mohis", "mozi", "jian-ai", "universal-love"],
+        "children": []
+    },
+    {
+        "id": "classics",
+        "label": {"en": "Classical Studies", "zh": "经学", "ja": "経学"},
+        "match": ["classic", "text-stud", "hermeneutic", "translation", "manuscript", "canon",
+                  "commentary", "scholarship", "textual", "philolog"],
+        "children": []
+    },
+]
 
 
-def generate_taxonomy(base_dir: Path | None = None) -> dict:
-    """Analyze all wiki articles and generate a hierarchical taxonomy."""
+def build_taxonomy(base_dir: Path | None = None, lang: str = "zh") -> list[dict]:
+    """Build hierarchical taxonomy from articles, with labels in the requested language."""
     cfg = load_config(base_dir)
     concepts_dir = Path(cfg["paths"]["concepts"])
-    meta_dir = Path(cfg["paths"]["meta"])
 
-    # Collect all article metadata
+    if not concepts_dir.exists():
+        return []
+
+    # Load all articles
     articles = []
-    all_tags = set()
-    all_books = set()
-
     for md_file in sorted(concepts_dir.glob("*.md")):
         post = frontmatter.load(str(md_file))
-        tags = post.metadata.get("tags", [])
-        all_tags.update(tags)
         articles.append({
             "slug": md_file.stem,
             "title": post.metadata.get("title", md_file.stem),
-            "tags": tags,
+            "tags": [t.lower().replace(" ", "-") for t in post.metadata.get("tags", [])],
             "summary": post.metadata.get("summary", ""),
         })
 
-    # Also check raw docs for book/source metadata
-    raw_dir = Path(cfg["paths"]["raw"])
-    if raw_dir.exists():
-        for d in raw_dir.iterdir():
-            idx = d / "index.md"
-            if idx.exists():
-                post = frontmatter.load(str(idx))
-                book = post.metadata.get("book", "")
-                if book:
-                    all_books.add(book)
+    # Assign articles to categories
+    assigned = set()
+    result = []
 
-    if not articles:
-        return {"categories": []}
+    for cat in HIERARCHY:
+        cat_articles, child_cats = _match_category(cat, articles, assigned, lang)
+        if cat_articles or child_cats:
+            entry = {
+                "id": cat["id"],
+                "label": cat["label"].get(lang, cat["label"].get("en", cat["id"])),
+                "count": len(cat_articles),
+                "articles": cat_articles,
+                "children": child_cats,
+            }
+            # Total count includes children
+            entry["total"] = entry["count"] + sum(c["count"] for c in child_cats)
+            result.append(entry)
 
-    # Ask LLM to generate taxonomy
-    prompt = f"""Given these wiki articles about classical texts, generate a hierarchical taxonomy.
+    # Collect unassigned into "Other"
+    unassigned = [a for a in articles if a["slug"] not in assigned]
+    if unassigned:
+        other_label = {"en": "Other", "zh": "其他", "ja": "その他"}
+        result.append({
+            "id": "other",
+            "label": other_label.get(lang, "Other"),
+            "count": len(unassigned),
+            "total": len(unassigned),
+            "articles": [{"slug": a["slug"], "title": a["title"]} for a in unassigned],
+            "children": [],
+        })
 
-Articles ({len(articles)} total):
-{json.dumps([{"title": a["title"], "tags": a["tags"]} for a in articles[:50]], ensure_ascii=False, indent=2)}
+    return result
 
-All tags: {sorted(all_tags)}
-Source books: {sorted(all_books)}
 
-Generate a JSON taxonomy with this structure:
-{{
-  "categories": [
-    {{
-      "id": "jing",
-      "label": "經部",
-      "label_en": "Classics",
-      "children": [
-        {{"id": "sishu", "label": "四書", "label_en": "Four Books", "tags": ["confucianism", "analects", "mencius"]}},
-        {{"id": "wujing", "label": "五經", "label_en": "Five Classics", "tags": ["poetry", "history"]}}
-      ]
-    }},
-    ...
-  ]
-}}
+def _match_category(cat: dict, articles: list, assigned: set, lang: str) -> tuple[list, list]:
+    """Match articles to a category and its children."""
+    cat_patterns = [p.lower() for p in cat.get("match", [])]
 
-Rules:
-- Use traditional Chinese bibliography categories where applicable
-- Each leaf node has a "tags" array mapping to existing article tags
-- Include both Chinese and English labels
-- Group logically: 經部 (classics), 子部 (philosophers), 佛部 (Buddhism), 道部 (Daoism), etc.
-- Keep it practical: 2-3 levels max
-- Only output valid JSON, no other text"""
+    # Process children first (more specific matches)
+    child_results = []
+    for child in cat.get("children", []):
+        child_patterns = [p.lower() for p in child.get("match", [])]
+        child_articles = []
+        for a in articles:
+            if a["slug"] in assigned:
+                continue
+            slug_tags = a["slug"] + " " + " ".join(a["tags"])
+            if any(p in slug_tags for p in child_patterns):
+                child_articles.append({"slug": a["slug"], "title": a["title"]})
+                assigned.add(a["slug"])
+        if child_articles:
+            child_results.append({
+                "id": child["id"],
+                "label": child["label"].get(lang, child["label"].get("en", child["id"])),
+                "count": len(child_articles),
+                "articles": child_articles,
+                "children": [],
+            })
 
-    response = chat(prompt, system=SYSTEM_PROMPT, max_tokens=4096)
+    # Then match remaining to parent
+    parent_articles = []
+    for a in articles:
+        if a["slug"] in assigned:
+            continue
+        slug_tags = a["slug"] + " " + " ".join(a["tags"])
+        if any(p in slug_tags for p in cat_patterns):
+            parent_articles.append({"slug": a["slug"], "title": a["title"]})
+            assigned.add(a["slug"])
 
-    # Parse JSON from response
-    try:
-        # Find JSON in response
-        start = response.find("{")
-        end = response.rfind("}") + 1
-        if start >= 0 and end > start:
-            taxonomy = json.loads(response[start:end])
-        else:
-            taxonomy = {"categories": []}
-    except json.JSONDecodeError:
-        taxonomy = {"categories": []}
-
-    # Save taxonomy
-    meta_dir.mkdir(parents=True, exist_ok=True)
-    taxonomy_path = meta_dir / "taxonomy.json"
-    taxonomy_path.write_text(json.dumps(taxonomy, indent=2, ensure_ascii=False), encoding="utf-8")
-
-    return taxonomy
+    return parent_articles, child_results
 
 
 def load_taxonomy(base_dir: Path | None = None) -> dict:
-    """Load existing taxonomy."""
+    """Load cached taxonomy."""
     cfg = load_config(base_dir)
     meta_dir = Path(cfg["paths"]["meta"])
-    taxonomy_path = meta_dir / "taxonomy.json"
-    if taxonomy_path.exists():
-        return json.loads(taxonomy_path.read_text())
+    path = meta_dir / "taxonomy.json"
+    if path.exists():
+        return json.loads(path.read_text())
     return {"categories": []}

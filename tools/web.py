@@ -62,20 +62,11 @@ def create_web_app(base_dir: Path | None = None):
 
     @app.route("/api/taxonomy")
     def api_taxonomy():
-        """Get or generate hierarchical category taxonomy."""
-        from .taxonomy import load_taxonomy, generate_taxonomy
-        taxonomy = load_taxonomy(base)
-        if not taxonomy.get("categories"):
-            # Auto-generate on first request
-            taxonomy = generate_taxonomy(base)
-        return jsonify(taxonomy)
-
-    @app.route("/api/taxonomy/rebuild", methods=["POST"])
-    def api_taxonomy_rebuild():
-        """Regenerate taxonomy from current articles."""
-        from .taxonomy import generate_taxonomy
-        taxonomy = generate_taxonomy(base)
-        return jsonify({"status": "ok", "categories": len(taxonomy.get("categories", []))})
+        """Get hierarchical category taxonomy. ?lang=zh|en|ja"""
+        from .taxonomy import build_taxonomy
+        lang = request.args.get("lang", "zh")
+        categories = build_taxonomy(base, lang)
+        return jsonify({"categories": categories})
 
     @app.route("/api/collections")
     def api_collections():
