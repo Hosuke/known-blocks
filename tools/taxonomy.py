@@ -86,11 +86,19 @@ def generate_taxonomy(base_dir: Path | None = None) -> dict:
 
     Called by the worker periodically. This is the expensive operation
     that invokes the LLM. Results are cached to taxonomy.json.
+
+    WILL NOT overwrite a locked taxonomy — returns existing instead.
     """
     cfg = load_config(base_dir)
     concepts_dir = Path(cfg["paths"]["concepts"])
     meta_dir = Path(cfg["paths"]["meta"])
     meta_dir.mkdir(parents=True, exist_ok=True)
+
+    # Respect locked taxonomy
+    existing = load_taxonomy(base_dir)
+    if existing.get("locked"):
+        logger.info("[taxonomy] Taxonomy is locked, skipping generation")
+        return existing
 
     if not concepts_dir.exists():
         return {"categories": []}
