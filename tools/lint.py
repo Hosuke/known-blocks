@@ -37,6 +37,7 @@ def lint(base_dir: Path | None = None) -> dict:
         "broken_links": check_broken_links(cfg),
         "orphans": check_orphans(cfg),
         "missing_metadata": check_missing_metadata(cfg),
+        "uncategorized": check_uncategorized(cfg, base_dir),
     }
 
     # Count total issues
@@ -158,6 +159,75 @@ def check_missing_metadata(cfg: dict) -> list[str]:
             issues.append(f"Missing tags: {slug}")
 
     return issues
+
+
+def check_uncategorized(cfg: dict, base_dir: Path | None = None) -> list[str]:
+    """Find articles that fall into 'Other' (no taxonomy category matched)."""
+    from .taxonomy import build_taxonomy
+    categories = build_taxonomy(base_dir, lang="en")
+    issues = []
+    for cat in categories:
+        if cat["id"] == "other":
+            for a in cat.get("articles", []):
+                issues.append(f"Uncategorized article: {a['slug']} (tags don't match any category)")
+    return issues
+
+
+def fix_uncategorized(base_dir: Path | None = None, max_fixes: int = 10) -> list[str]:
+    """Use LLM to suggest better tags for uncategorized articles so they get classified."""
+    from .taxonomy import HIERARCHY
+    cfg = load_config(base_dir)
+    ensure_dirs(cfg)
+    concepts_dir = Path(cfg["paths"]["concepts"])
+
+    # Get uncategorized articles
+    uncategorized = check_uncategorized(cfg, base_dir)
+    if not uncategorized:
+        return []
+
+    # Build a list of known category keywords for the LLM prompt
+    cat_summary = []
+    for cat in HIERARCHY:
+        if cat["id"] == "non-target":
+            continue
+        sample_tags = cat["match"][:8]
+        cat_summary.append(f"- {cat['label']['zh']} ({cat['label']['en']}): {', '.join(sample_tags)}")
+
+    cat_text = "\n".join(cat_summary)
+    fixes = []
+
+    for issue in uncategorized[:max_fixes]:
+        slug = issue.split(":")[1].strip().split(" ")[0]
+        article_path = concepts_dir / f"{slug}.md"
+        if not article_path.exists():
+            continue
+
+        post = frontmatter.load(str(article_path))
+        current_tags = post.metadata.get("tags", [])
+        title = post.metadata.get("title", slug)
+        content_preview = post.content[:1000]
+
+        prompt = (
+            f"This article is uncategorized. Suggest 1-3 additional tags so it matches a category.\n\n"
+            f"Title: {title}\nCurrent tags: {', '.join(current_tags)}\n"
+            f"Content preview: {content_preview}\n\n"
+            f"Available categories and their matching keywords:\n{cat_text}\n\n"
+            f"Reply with ONLY comma-separated new tags to add (lowercase). "
+            f"Pick tags that match the category keywords above. No explanation."
+        )
+
+        try:
+            response = chat(prompt, max_tokens=128)
+            new_tags = [t.strip().lower() for t in response.strip().split(",") if t.strip()]
+            if new_tags:
+                merged = list(set(current_tags + new_tags))
+                post.metadata["tags"] = merged
+                article_path.write_text(frontmatter.dumps(post), encoding="utf-8")
+                fixes.append(f"Re-tagged {slug}: added {new_tags}")
+        except Exception:
+            pass
+
+    return fixes
 
 
 def fix_broken_links(base_dir: Path | None = None, max_stubs: int = 10) -> list[str]:
@@ -320,5 +390,9 @@ def auto_fix(base_dir: Path | None = None) -> list[str]:
         max_stubs = health_cfg.get("max_stubs_per_run", 10)
         link_fixes = fix_broken_links(base_dir, max_stubs)
         fixes.extend(link_fixes)
+
+    # Fix uncategorized articles by suggesting better tags
+    tag_fixes = fix_uncategorized(base_dir)
+    fixes.extend(tag_fixes)
 
     return fixes
