@@ -31,7 +31,7 @@ export function QA() {
     api.getTones().then(setTones).catch(() => setTones(FALLBACK_TONES));
   }, []);
 
-  const { recording, recordStep, startTrail } = useTrail();
+  const { recording, recordStep, startTrailAndRecord } = useTrail();
 
   async function ask(deep: boolean) {
     if (!question.trim() || loading) return;
@@ -42,21 +42,24 @@ export function QA() {
       setAnswer(res.answer);
       setHistory(prev => [{ question, answer: res.answer }, ...prev]);
 
-      // Deep Research → auto-create research trail from consulted articles
+      // Trail recording: deep research or regular question
       if (deep && res.consulted && res.consulted.length > 0) {
-        // Start a new trail if not already recording
-        if (!recording) {
-          const trailName = question.length > 20 ? question.slice(0, 20) + '…' : question;
-          startTrail(trailName);
-        }
-        // Record the query step
-        recordStep({ type: 'query', question });
-        // Record each consulted article
-        for (const art of res.consulted) {
-          recordStep({ type: 'article', slug: art.slug, title: art.title });
+        if (recording) {
+          // Already recording → append to current trail
+          recordStep({ type: 'query', question });
+          for (const a of res.consulted) {
+            recordStep({ type: 'article', slug: a.slug, title: a.title });
+          }
+        } else {
+          // Not recording → start new trail from this research
+          const trailName = question.length > 30 ? question.slice(0, 30) + '…' : question;
+          const steps = [
+            { type: 'query' as const, question },
+            ...res.consulted.map(a => ({ type: 'article' as const, slug: a.slug, title: a.title })),
+          ];
+          startTrailAndRecord(trailName, steps);
         }
       } else if (recording) {
-        // Regular question while recording → just record the query
         recordStep({ type: 'query', question });
       }
     } catch (e) {

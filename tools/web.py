@@ -228,8 +228,11 @@ def create_web_app(base_dir: Path | None = None):
             return []
         slugs = data.get(slug, [])
         result = []
+        concepts_resolved = str(concepts_dir.resolve()) + "/"
         for s in slugs:
-            p = concepts_dir / f"{s}.md"
+            p = (concepts_dir / f"{s}.md").resolve()
+            if not (str(p) + "/").startswith(concepts_resolved):
+                continue  # Path traversal guard
             if p.exists():
                 post = frontmatter.load(str(p))
                 result.append({"slug": s, "title": post.metadata.get("title", s)})
@@ -281,54 +284,64 @@ def create_web_app(base_dir: Path | None = None):
         atomic_write_json(path, data)
 
     @app.route("/api/trails")
+    @require_auth
     def api_trails():
         """List all research trails."""
         return jsonify(_load_trails())
 
+    import threading as _threading
+    _trail_lock = _threading.Lock()
+
     @app.route("/api/trails", methods=["POST"])
+    @require_auth
     def api_trails_save():
         """Add a step to a trail (or create a new trail)."""
         import uuid
         from datetime import datetime, timezone
-        data = request.json or {}
-        step = data.get("step", {})
+        data = request.get_json(silent=True) or {}
+        step = data.get("step")
+        if step and not isinstance(step, dict):
+            return jsonify({"status": "error", "message": "step must be a dict"}), 400
+        step = step or {}
         trail_id = data.get("trail_id")
         name = data.get("name", "")
 
-        trails_data = _load_trails()
-        trails = trails_data.get("trails", [])
-        now = datetime.now(timezone.utc).isoformat()
+        with _trail_lock:
+            trails_data = _load_trails()
+            trails = trails_data.get("trails", [])
+            now = datetime.now(timezone.utc).isoformat()
 
-        if trail_id:
-            # Add step to existing trail
-            trail = next((t for t in trails if t["id"] == trail_id), None)
-            if trail:
-                step["ts"] = now
-                trail["steps"].append(step)
-                trail["updated"] = now
+            if trail_id:
+                trail = next((t for t in trails if t["id"] == trail_id), None)
+                if trail:
+                    step["ts"] = now  # Server timestamp always wins
+                    trail["steps"].append(step)
+                    trail["updated"] = now
+                else:
+                    return jsonify({"status": "error", "message": "Trail not found"}), 404
             else:
-                return jsonify({"status": "error", "message": "Trail not found"}), 404
-        else:
-            # Create new trail
-            trail = {
-                "id": uuid.uuid4().hex[:12],
-                "name": name or f"Trail {len(trails) + 1}",
-                "created": now,
-                "updated": now,
-                "steps": [{"ts": now, **step}] if step else [],
-            }
-            trails.append(trail)
+                # Create new trail
+                trail = {
+                    "id": uuid.uuid4().hex[:12],
+                    "name": name or f"Trail {len(trails) + 1}",
+                    "created": now,
+                    "updated": now,
+                    "steps": [{**step, "ts": now}] if step.get("type") else [],
+                }
+                trails.append(trail)
 
-        trails_data["trails"] = trails
-        _save_trails(trails_data)
-        return jsonify({"trail": trail})
+            trails_data["trails"] = trails
+            _save_trails(trails_data)
+            return jsonify({"trail": trail})
 
     @app.route("/api/trails/<trail_id>/delete", methods=["POST"])
+    @require_auth
     def api_trail_delete(trail_id):
         """Delete a research trail."""
-        trails_data = _load_trails()
-        trails_data["trails"] = [t for t in trails_data.get("trails", []) if t["id"] != trail_id]
-        _save_trails(trails_data)
+        with _trail_lock:
+            trails_data = _load_trails()
+            trails_data["trails"] = [t for t in trails_data.get("trails", []) if t["id"] != trail_id]
+            _save_trails(trails_data)
         return jsonify({"status": "ok"})
 
     @app.route("/api/xici")

@@ -26,6 +26,21 @@
 - tools/taxonomy.py — emergent LLM-generated categories
 - wiki/_meta/ — aliases.json, taxonomy.json, health.json, backlinks.json
 
+## Commit Process (MANDATORY)
+Before EVERY git commit, you MUST:
+1. Run `cd frontend && npx tsc --noEmit` — TypeScript check
+2. Run `python -c "from tools.lint import lint; print('OK')"` — Python import check
+3. Run Codex review on staged changes and WAIT for the result:
+   ```
+   codex exec --sandbox read-only -C . \
+     --output-last-message /tmp/codex-review-result.txt \
+     "Review the staged git diff for bugs, security, edge cases. file:line format. Say LGTM if clean."
+   ```
+4. Read the Codex review output. If there are HIGH issues, fix them BEFORE committing.
+5. Only then run `git commit`
+
+Do NOT skip Codex review. Do NOT commit while Codex is still running.
+
 ## CI Process
 - TypeScript check: `cd frontend && npx tsc --noEmit`
 - Python import check: `python -c "from tools.lint import lint; print('OK')"`
