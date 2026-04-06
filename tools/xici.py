@@ -88,10 +88,27 @@ def generate_xici(base_dir: Path | None = None, lang: str = "zh") -> dict:
 
     if not zh_text or zh_xici.get("article_count", 0) != len(articles):
         # Need to (re)generate the 文言文 base
-        overview = "\n".join(
-            f"- {a['title']}: {a['summary']} [tags: {', '.join(a['tags'])}]"
-            for a in articles
-        )
+        # For large KBs, use compact summary (tag frequencies + sample titles)
+        # to avoid token overflow
+        if len(articles) <= 80:
+            overview = "\n".join(
+                f"- {a['title']}: {a['summary']}"
+                for a in articles
+            )
+        else:
+            # Compact: top themes + sample titles per theme
+            from collections import defaultdict
+            theme_articles: dict[str, list[str]] = defaultdict(list)
+            for a in articles:
+                for t in a.get("tags", [])[:3]:
+                    if not t.startswith("category:") and len(theme_articles[t]) < 4:
+                        theme_articles[t].append(a["title"])
+            top_themes = sorted(theme_articles.items(), key=lambda x: -len(x[1]))[:15]
+            overview = f"Knowledge base has {len(articles)} articles across these themes:\n"
+            overview += "\n".join(
+                f"- {tag} ({len(titles)} articles): {', '.join(titles[:3])}"
+                for tag, titles in top_themes
+            )
         style = LANG_STYLES["zh"]
         prompt = (
             f"Here are {len(articles)} articles in a personal knowledge base:\n\n"

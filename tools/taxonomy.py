@@ -84,8 +84,11 @@ Rules:
 def generate_taxonomy(base_dir: Path | None = None) -> dict:
     """Use LLM to generate taxonomy from current articles, save to cache.
 
-    Called by the worker periodically. This is the expensive operation
-    that invokes the LLM. Results are cached to taxonomy.json.
+    For large KBs (100+ articles), uses a two-phase approach:
+    Phase 1: LLM generates top-level categories from tag summary (cheap)
+    Phase 2: Assigns articles to categories by tag matching (no LLM)
+
+    For small KBs (<100 articles), sends all articles to LLM in one shot.
 
     WILL NOT overwrite a locked taxonomy — returns existing instead.
     """
@@ -117,29 +120,20 @@ def generate_taxonomy(base_dir: Path | None = None) -> dict:
     if not articles:
         return {"categories": []}
 
-    # Format articles for the prompt
-    article_lines = []
-    for a in articles:
-        tags_str = ", ".join(a["tags"]) if a["tags"] else "none"
-        article_lines.append(f'- slug: {a["slug"]} | title: {a["title"]} | tags: {tags_str} | summary: {a["summary"]}')
-    articles_text = "\n".join(article_lines)
-
-    prompt = TAXONOMY_PROMPT_TEMPLATE.format(count=len(articles), articles=articles_text)
-
     try:
-        response = chat(prompt, system=TAXONOMY_SYSTEM_PROMPT, max_tokens=cfg["llm"]["max_tokens"])
-        tree = _parse_taxonomy_response(response)
+        if len(articles) <= 100:
+            tree = _generate_single_pass(articles, cfg)
+        else:
+            tree = _generate_two_phase(articles, cfg)
 
         if tree:
-            # Validate: ensure all articles are assigned, fix if not
             tree = _ensure_complete_assignment(tree, articles)
             result = {"categories": tree, "generated": True}
         else:
             logger.warning("[taxonomy] LLM returned invalid taxonomy, falling back to tag-based")
             result = {"categories": _fallback_taxonomy(articles), "generated": False}
-
     except Exception as e:
-        logger.error(f"[taxonomy] LLM taxonomy generation failed: {e}, using fallback")
+        logger.error(f"[taxonomy] Taxonomy generation failed: {e}, using fallback")
         result = {"categories": _fallback_taxonomy(articles), "generated": False}
 
     # Save cache
@@ -151,6 +145,138 @@ def generate_taxonomy(base_dir: Path | None = None) -> dict:
     _sync_taxonomy_to_tags(result.get("categories", []), concepts_dir)
 
     return result
+
+
+def _generate_single_pass(articles: list[dict], cfg: dict) -> list[dict] | None:
+    """Small KB: send all articles to LLM in one prompt."""
+    article_lines = []
+    for a in articles:
+        tags_str = ", ".join(a["tags"][:5]) if a["tags"] else "none"
+        article_lines.append(f'- {a["slug"]} | {a["title"]} | {tags_str}')
+    articles_text = "\n".join(article_lines)
+    prompt = TAXONOMY_PROMPT_TEMPLATE.format(count=len(articles), articles=articles_text)
+    response = chat(prompt, system=TAXONOMY_SYSTEM_PROMPT, max_tokens=cfg["llm"]["max_tokens"])
+    return _parse_taxonomy_response(response)
+
+
+def _generate_two_phase(articles: list[dict], cfg: dict) -> list[dict] | None:
+    """Large KB (100+ articles): two-phase taxonomy to avoid token overflow.
+
+    Phase 1: LLM sees ONLY tag frequencies + sample titles → generates category structure
+    Phase 2: Articles assigned to categories by tag/title matching (no LLM needed)
+    """
+    from collections import Counter
+
+    # Phase 1: Build a compact summary for the LLM
+    tag_counter = Counter()
+    title_samples: dict[str, list[str]] = {}
+    for a in articles:
+        for t in a.get("tags", []):
+            t_lower = t.lower()
+            if t_lower.startswith("category:"):
+                continue
+            tag_counter[t_lower] += 1
+            title_samples.setdefault(t_lower, [])
+            if len(title_samples[t_lower]) < 3:
+                title_samples[t_lower].append(a["title"])
+
+    # Top 40 tags with sample titles
+    tag_summary = []
+    for tag, count in tag_counter.most_common(40):
+        samples = title_samples.get(tag, [])[:3]
+        sample_str = "; ".join(samples)
+        tag_summary.append(f"- {tag} ({count} articles): {sample_str}")
+    tag_text = "\n".join(tag_summary)
+
+    phase1_prompt = f"""This knowledge base has {len(articles)} articles. Here are the most common tags and sample titles:
+
+{tag_text}
+
+Based on these tags and topics, create a DEEP hierarchical taxonomy (category tree).
+Do NOT assign article slugs — just create the category structure with IDs and trilingual labels.
+
+Produce a JSON array where each category has:
+{{
+  "id": "kebab-case-id",
+  "label": {{"en": "English Name", "zh": "中文名", "ja": "日本語名"}},
+  "match_tags": ["tag1", "tag2"],
+  "children": [...]
+}}
+
+match_tags = which tags should map to this category.
+Children inherit parent match_tags. A tag should appear in only ONE category's match_tags.
+Output ONLY the JSON array."""
+
+    logger.info(f"[taxonomy] Phase 1: generating category structure from {len(tag_counter)} tags...")
+    response = chat(phase1_prompt, system=TAXONOMY_SYSTEM_PROMPT, max_tokens=cfg["llm"]["max_tokens"])
+    category_tree = _parse_taxonomy_response(response)
+
+    if not category_tree:
+        return None
+
+    # Phase 2: Assign articles to categories by matching tags
+    logger.info(f"[taxonomy] Phase 2: assigning {len(articles)} articles to categories...")
+    _assign_articles_to_tree(category_tree, articles)
+
+    return category_tree
+
+
+def _assign_articles_to_tree(tree: list[dict], articles: list[dict]):
+    """Assign articles to categories based on match_tags (no LLM needed).
+
+    Each article goes to the most specific (deepest) matching category.
+    """
+    # Build flat mapping: tag → (node, depth)
+    tag_to_node: dict[str, tuple[dict, int]] = {}
+
+    def _index_tags(nodes, depth=0):
+        for node in nodes:
+            for tag in node.get("match_tags", []):
+                tag_lower = tag.lower()
+                # Deeper node wins (more specific)
+                if tag_lower not in tag_to_node or depth > tag_to_node[tag_lower][1]:
+                    tag_to_node[tag_lower] = (node, depth)
+            _index_tags(node.get("children", []), depth + 1)
+
+    _index_tags(tree)
+
+    # Assign each article to its best-matching category
+    assigned = set()
+    for a in articles:
+        best_node = None
+        best_depth = -1
+        for tag in a.get("tags", []):
+            t_lower = tag.lower()
+            if t_lower.startswith("category:"):
+                continue
+            if t_lower in tag_to_node:
+                node, depth = tag_to_node[t_lower]
+                if depth > best_depth:
+                    best_node = node
+                    best_depth = depth
+
+        if best_node is not None:
+            best_node.setdefault("article_slugs", []).append(a["slug"])
+            assigned.add(a["slug"])
+
+    # Unassigned → "other"
+    unassigned = [a["slug"] for a in articles if a["slug"] not in assigned]
+    if unassigned:
+        tree.append({
+            "id": "other",
+            "label": {"en": "Other", "zh": "其他", "ja": "その他"},
+            "children": [],
+            "article_slugs": unassigned,
+        })
+
+    # Clean up match_tags from output (not needed in cache)
+    def _clean(nodes):
+        for n in nodes:
+            n.pop("match_tags", None)
+            n.setdefault("article_slugs", [])
+            _clean(n.get("children", []))
+
+    _clean(tree)
 
 
 def _sync_taxonomy_to_tags(tree: list[dict], concepts_dir: Path, path: list[str] | None = None):
