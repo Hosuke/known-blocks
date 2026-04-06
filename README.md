@@ -6,6 +6,9 @@
 
 [![GitHub stars](https://img.shields.io/github/stars/Hosuke/llmbase?style=social)](https://github.com/Hosuke/llmbase)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](https://opensource.org/licenses/MIT)
+[![Python 3.11+](https://img.shields.io/badge/Python-3.11+-blue.svg)](https://www.python.org)
+[![MCP Compatible](https://img.shields.io/badge/MCP-Compatible-purple.svg)](https://modelcontextprotocol.io/)
+[![Deploy on Railway](https://img.shields.io/badge/Deploy-Railway-blueviolet.svg)](https://railway.app)
 
 Inspired by [Karpathy's LLM Knowledge Base pattern](https://x.com/karpathy/status/2039805659525644595) ([detailed design](https://gist.github.com/karpathy/442a6bf555914893e9891c11519de94f)) — raw data goes in, an LLM compiles it into a structured, interlinked wiki, and you query & enhance it over time.
 
@@ -233,6 +236,45 @@ Key endpoints:
 | GET | `/api/health` | Last health report |
 | GET | `/api/aliases` | Wiki-link alias map |
 | GET | `/api/refs/plugins` | Reference source plugins |
+
+## MCP Server (AI Client Integration)
+
+LLMBase exposes a [Model Context Protocol](https://modelcontextprotocol.io/) server, so any MCP-compatible AI client can interact with your knowledge base directly — no HTTP, no curl, no custom integration.
+
+**Supported clients**: Claude Code, Cursor, Windsurf, ClawHub, and any MCP-compatible tool.
+
+### Setup
+
+Add to your AI client's MCP settings:
+
+```json
+{
+  "mcpServers": {
+    "llmbase": {
+      "command": "python",
+      "args": ["-m", "tools.mcp_server", "--base-dir", "/path/to/your/kb"]
+    }
+  }
+}
+```
+
+### Available Tools
+
+| Tool | Description |
+|------|-------------|
+| `kb_search` | Full-text search |
+| `kb_ask` | Deep research query with tone modes |
+| `kb_get` | Get article by slug or alias (`空`, `kong`, `emptiness` all work) |
+| `kb_list` | List articles, filter by tag |
+| `kb_backlinks` | Find articles that cite a given article |
+| `kb_taxonomy` | Category tree (multilingual) |
+| `kb_stats` | Article count, word count |
+| `kb_xici` | Guided reading (导读) |
+| `kb_ingest` | Ingest a URL |
+| `kb_compile` | Compile raw docs into wiki |
+| `kb_lint` | Health check / auto-fix |
+
+See [MCP Server Guide →](docs/mcp-server.md)
 
 ## Design Philosophy
 
