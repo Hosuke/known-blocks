@@ -153,6 +153,28 @@ health:
 
 The worker runs alongside the web server — no separate process needed. Health checks auto-generate stub articles for broken links and persist reports to `wiki/_meta/health.json`.
 
+## Security
+
+Write endpoints (ingest, compile, delete, clean, etc.) are protected by an API secret when deployed to the cloud.
+
+| Scenario | Behavior |
+|----------|----------|
+| **Local dev** (no `PORT` env) | All endpoints open, no auth needed |
+| **Cloud deploy** (`PORT` set, no secret) | Auto-generates a 32-byte random secret |
+| **Cloud deploy** (manual secret) | Set `LLMBASE_API_SECRET` env var |
+| **Frontend** (same-origin) | Auth cookie set automatically on page load |
+| **External API** | Requires `Authorization: Bearer <secret>` header |
+
+```bash
+# Optional: set your own secret
+LLMBASE_API_SECRET=your-secret-here
+
+# Or let it auto-generate (logged on startup: first 8 chars)
+# Check Railway logs for: "Auto-generated API secret: xxxxxxxx..."
+```
+
+Read endpoints (`GET /api/articles`, `/api/search`, `/api/taxonomy`) are always open — the knowledge base is meant to be readable.
+
 ## Deployment
 
 ```bash
@@ -352,6 +374,20 @@ llmbase/
 ├── Dockerfile             # Docker 部署
 └── pyproject.toml
 ```
+
+### 安全
+
+写入类 API（摄入、编译、删除、清理等）在云端部署时自动受 API Secret 保护。
+
+| 场景 | 行为 |
+|------|------|
+| **本地开发** | 全开，无需认证 |
+| **云端部署**（未设密钥） | 自动生成 32 字节随机密钥 |
+| **云端部署**（手动设密钥） | 设置 `LLMBASE_API_SECRET` 环境变量 |
+| **前端**（同源访问） | 页面加载时自动种 cookie，免输入 |
+| **外部 API 调用** | 需带 `Authorization: Bearer <密钥>` |
+
+读取类 API（文章、搜索、分类）始终开放——知识库本身是可读的。
 
 ### 部署方式
 
