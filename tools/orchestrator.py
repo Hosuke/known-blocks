@@ -1,0 +1,358 @@
+"""Learning orchestrator — the brain that decides what to learn next.
+
+Works like a curious researcher: checks what's missing, follows broken links,
+tracks trends, and occasionally browses reference material out of curiosity.
+
+Uses a priority queue model:
+  P0: Foundation concepts missing (blockchain, EVM, gas, etc.)
+  P1: Broken wiki-links (concepts referenced but no article exists)
+  P2: Trending protocols not yet covered (DefiLlama top-N)
+  P3: Structured traversal (EIPs, ethereum.org docs)
+  P4: Deepen shallow articles (stubs)
+  P5: Curiosity — random browsing (spellbook, rekt.news)
+"""
+
+import json
+import logging
+import random
+import time
+from datetime import datetime, timezone
+from pathlib import Path
+
+from .config import load_config, ensure_dirs
+
+logger = logging.getLogger("llmbase.orchestrator")
+
+# Foundational concepts every blockchain knowledge base should cover
+FOUNDATIONS = [
+    "blockchain",
+    "ethereum",
+    "smart-contract",
+    "evm",
+    "gas",
+    "consensus",
+    "proof-of-stake",
+    "proof-of-work",
+    "erc-20",
+    "erc-721",
+    "defi",
+    "amm",
+    "lending-protocol",
+    "flash-loan",
+    "liquidity-pool",
+    "oracle",
+    "bridge",
+    "layer-2",
+    "rollup",
+    "mev",
+    "dao",
+    "governance",
+    "stablecoin",
+    "yield-farming",
+    "staking",
+    "nft",
+    "wallet",
+    "private-key",
+    "transaction",
+    "block",
+    "merkle-tree",
+    "hash-function",
+    "token",
+    "dex",
+    "cex",
+    "impermanent-loss",
+    "slippage",
+    "tvl",
+    "airdrop",
+    "tokenomics",
+    "liquid-staking",
+    "restaking",
+    "account-abstraction",
+    "zero-knowledge-proof",
+    "optimistic-rollup",
+    "zk-rollup",
+]
+
+
+def _get_state_file(base_dir: Path) -> Path:
+    meta_dir = Path(load_config(base_dir)["paths"]["meta"])
+    meta_dir.mkdir(parents=True, exist_ok=True)
+    return meta_dir / "orchestrator_state.json"
+
+
+def _load_state(base_dir: Path) -> dict:
+    sf = _get_state_file(base_dir)
+    if sf.exists():
+        return json.loads(sf.read_text())
+    return {
+        "history": [],
+        "total_learned": 0,
+        "last_run": None,
+    }
+
+
+def _save_state(base_dir: Path, state: dict):
+    sf = _get_state_file(base_dir)
+    sf.write_text(json.dumps(state, indent=2, ensure_ascii=False))
+
+
+def _article_exists(concept_slug: str, base_dir: Path) -> bool:
+    """Check if a wiki article exists for a concept (by slug or alias)."""
+    cfg = load_config(base_dir)
+    concepts_dir = Path(cfg["paths"]["concepts"])
+
+    # Direct slug match
+    if (concepts_dir / f"{concept_slug}.md").exists():
+        return True
+
+    # Check aliases
+    aliases_path = Path(cfg["paths"]["meta"]) / "aliases.json"
+    if aliases_path.exists():
+        try:
+            aliases = json.loads(aliases_path.read_text())
+            if concept_slug in aliases:
+                return True
+            # Also check if any alias maps to this slug
+            for alias, target in aliases.items():
+                if target == concept_slug:
+                    return True
+        except (json.JSONDecodeError, KeyError):
+            pass
+
+    return False
+
+
+def _get_broken_links(base_dir: Path) -> list[str]:
+    """Get broken wiki-links from the latest lint/health report."""
+    cfg = load_config(base_dir)
+    health_path = Path(cfg["paths"]["meta"]) / "health.json"
+    if not health_path.exists():
+        return []
+
+    try:
+        report = json.loads(health_path.read_text())
+        results = report.get("results", {})
+        broken = results.get("broken_links", [])
+        # Each broken link entry is typically {"source": "article", "target": "missing-concept"}
+        if isinstance(broken, list):
+            targets = []
+            for b in broken:
+                if isinstance(b, dict):
+                    targets.append(b.get("target", ""))
+                elif isinstance(b, str):
+                    targets.append(b)
+            return [t for t in targets if t]
+    except (json.JSONDecodeError, KeyError):
+        pass
+    return []
+
+
+def _find_stub_articles(base_dir: Path) -> list[str]:
+    """Find articles that are stubs or very short (need deepening)."""
+    cfg = load_config(base_dir)
+    concepts_dir = Path(cfg["paths"]["concepts"])
+    if not concepts_dir.exists():
+        return []
+
+    stubs = []
+    for md_file in concepts_dir.glob("*.md"):
+        content = md_file.read_text(encoding="utf-8")
+        # Consider it a stub if content is under 500 chars (excluding frontmatter)
+        parts = content.split("---", 2)
+        body = parts[2] if len(parts) >= 3 else content
+        if len(body.strip()) < 500:
+            stubs.append(md_file.stem)
+    return stubs
+
+
+# ─── Learning strategies ────────────────────────────────────
+
+def _learn_foundations(batch_size: int, base_dir: Path) -> list[str]:
+    """P0: Learn foundational concepts that are missing."""
+    from . import web_research
+
+    missing = [c for c in FOUNDATIONS if not _article_exists(c, base_dir)]
+    if not missing:
+        return []
+
+    results = []
+    for concept in missing[:batch_size]:
+        logger.info(f"[orchestrator] P0 foundation: {concept}")
+        path = web_research.research_concept(concept, base_dir)
+        if path:
+            results.append(concept)
+        time.sleep(2)
+    return results
+
+
+def _learn_broken_links(batch_size: int, base_dir: Path) -> list[str]:
+    """P1: Research concepts referenced in wiki but with no article."""
+    from . import web_research
+
+    broken = _get_broken_links(base_dir)
+    if not broken:
+        return []
+
+    results = []
+    for concept in broken[:batch_size]:
+        logger.info(f"[orchestrator] P1 broken link: {concept}")
+        path = web_research.research_concept(concept, base_dir)
+        if path:
+            results.append(concept)
+        time.sleep(2)
+    return results
+
+
+def _learn_trending(batch_size: int, base_dir: Path) -> list[str]:
+    """P2: Learn about top DeFi protocols not yet covered."""
+    try:
+        from . import defillama
+        return defillama.learn(batch_size=batch_size, base_dir=base_dir)
+    except Exception as e:
+        logger.error(f"[orchestrator] Trend learning failed: {e}")
+        return []
+
+
+def _learn_structured(batch_size: int, base_dir: Path) -> list[str]:
+    """P3: Systematic traversal of EIPs and ethereum.org docs."""
+    results = []
+    half = max(1, batch_size // 2)
+
+    # EIPs
+    try:
+        from . import eips
+        r = eips.learn(batch_size=half, base_dir=base_dir)
+        results.extend(r)
+    except Exception as e:
+        logger.error(f"[orchestrator] EIP learning failed: {e}")
+
+    # Ethereum docs
+    try:
+        from . import ethdocs
+        r = ethdocs.learn(batch_size=half, base_dir=base_dir)
+        results.extend(r)
+    except Exception as e:
+        logger.error(f"[orchestrator] Ethdocs learning failed: {e}")
+
+    return results
+
+
+def _learn_deepen(batch_size: int, base_dir: Path) -> list[str]:
+    """P4: Deepen shallow/stub articles with additional sources."""
+    from . import web_research
+
+    stubs = _find_stub_articles(base_dir)
+    if not stubs:
+        return []
+
+    results = []
+    for slug in stubs[:batch_size]:
+        logger.info(f"[orchestrator] P4 deepen: {slug}")
+        # Search for more info about this concept
+        concept = slug.replace("-", " ")
+        path = web_research.research_concept(concept, base_dir)
+        if path:
+            results.append(slug)
+        time.sleep(2)
+    return results
+
+
+def _learn_curiosity(batch_size: int, base_dir: Path) -> list[str]:
+    """P5: Random browsing — spellbook, rekt.news, L2Beat."""
+    sources = ["spellbook", "rekt", "l2beat"]
+    source = random.choice(sources)
+    logger.info(f"[orchestrator] P5 curiosity: browsing {source}")
+
+    try:
+        if source == "spellbook":
+            from . import spellbook_browse
+            return spellbook_browse.learn(batch_size=batch_size, base_dir=base_dir)
+        elif source == "rekt":
+            from . import rekt
+            return rekt.learn(batch_size=batch_size, base_dir=base_dir)
+        elif source == "l2beat":
+            from . import l2beat
+            return l2beat.learn(batch_size=batch_size, base_dir=base_dir)
+    except Exception as e:
+        logger.error(f"[orchestrator] Curiosity ({source}) failed: {e}")
+    return []
+
+
+# ─── Main orchestrator ──────────────────────────────────────
+
+def learn(batch_size: int = 5, base_dir: Path | None = None) -> list[str]:
+    """Main entry point: decide what to learn and execute.
+
+    Priority order:
+      P0: Foundation concepts
+      P1: Broken wiki-links
+      P2: Trending protocols (DefiLlama)
+      P3: Structured traversal (EIPs, ethereum.org)
+      P4: Deepen stubs
+      P5: Curiosity browsing
+    """
+    base = Path(base_dir) if base_dir else Path.cwd()
+    state = _load_state(base)
+    cfg = load_config(base)
+    curiosity_ratio = cfg.get("orchestrator", {}).get("curiosity_ratio", 0.2)
+
+    results = []
+    strategy_used = "none"
+
+    # Curiosity roll: occasionally skip priorities and just explore
+    if random.random() < curiosity_ratio:
+        strategy_used = "curiosity"
+        results = _learn_curiosity(batch_size, base)
+    else:
+        # Try strategies in priority order until one produces results
+        strategies = [
+            ("foundation", _learn_foundations),
+            ("broken_links", _learn_broken_links),
+            ("trending", _learn_trending),
+            ("structured", _learn_structured),
+            ("deepen", _learn_deepen),
+            ("curiosity", _learn_curiosity),
+        ]
+
+        for name, strategy_fn in strategies:
+            results = strategy_fn(batch_size, base)
+            if results:
+                strategy_used = name
+                break
+
+    # Update state
+    state["history"].append({
+        "strategy": strategy_used,
+        "timestamp": datetime.now(timezone.utc).isoformat(),
+        "items_learned": len(results),
+        "items": results[:10],  # Keep first 10 for reference
+    })
+    # Keep only last 100 history entries
+    state["history"] = state["history"][-100:]
+    state["total_learned"] += len(results)
+    state["last_run"] = datetime.now(timezone.utc).isoformat()
+    _save_state(base, state)
+
+    logger.info(
+        f"[orchestrator] Strategy={strategy_used}, learned={len(results)} items"
+    )
+    return results
+
+
+def status(base_dir: Path | None = None) -> dict:
+    """Get orchestrator status and learning history."""
+    base = Path(base_dir) if base_dir else Path.cwd()
+    state = _load_state(base)
+
+    # Count coverage
+    missing_foundations = [
+        c for c in FOUNDATIONS if not _article_exists(c, base)
+    ]
+
+    return {
+        "total_learned": state.get("total_learned", 0),
+        "last_run": state.get("last_run"),
+        "foundation_coverage": f"{len(FOUNDATIONS) - len(missing_foundations)}/{len(FOUNDATIONS)}",
+        "missing_foundations": missing_foundations[:10],
+        "recent_history": state.get("history", [])[-5:],
+    }

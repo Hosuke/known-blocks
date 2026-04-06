@@ -1,0 +1,454 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&amp;family=Noto+Serif+SC:wght@400;700&amp;family=JetBrains+Mono:wght@400;500&amp;family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "tertiary-fixed": "#abf4ac",
+                    "surface-container-lowest": "#ffffff",
+                    "on-tertiary": "#ffffff",
+                    "on-primary-fixed-variant": "#293ca0",
+                    "primary-fixed": "#dee0ff",
+                    "on-surface": "#1a1c1c",
+                    "inverse-primary": "#bac3ff",
+                    "on-secondary-fixed": "#001f25",
+                    "on-secondary": "#ffffff",
+                    "surface-container": "#eeeeee",
+                    "error": "#ba1a1a",
+                    "on-tertiary-fixed": "#002107",
+                    "background": "#f9f9f9",
+                    "surface-container-highest": "#e2e2e2",
+                    "surface": "#f9f9f9",
+                    "surface-container-low": "#f3f3f3",
+                    "inverse-surface": "#2f3131",
+                    "on-secondary-container": "#006573",
+                    "tertiary-container": "#23672f",
+                    "surface-tint": "#4355b9",
+                    "error-container": "#ffdad6",
+                    "on-background": "#1a1c1c",
+                    "secondary-container": "#58e6ff",
+                    "secondary-fixed-dim": "#44d8f1",
+                    "outline-variant": "#c5c5d4",
+                    "on-surface-variant": "#454652",
+                    "on-tertiary-container": "#9ce39d",
+                    "surface-bright": "#f9f9f9",
+                    "on-error-container": "#93000a",
+                    "tertiary": "#004e1a",
+                    "on-primary-container": "#cacfff",
+                    "inverse-on-surface": "#f1f1f1",
+                    "secondary-fixed": "#a1efff",
+                    "on-error": "#ffffff",
+                    "surface-container-high": "#e8e8e8",
+                    "on-primary": "#ffffff",
+                    "primary": "#24389c",
+                    "primary-container": "#3f51b5",
+                    "outline": "#757684",
+                    "primary-fixed-dim": "#bac3ff",
+                    "on-primary-fixed": "#00105c",
+                    "secondary": "#006876",
+                    "tertiary-fixed-dim": "#90d792",
+                    "surface-dim": "#dadada",
+                    "on-tertiary-fixed-variant": "#07521d",
+                    "surface-variant": "#e2e2e2",
+                    "on-secondary-fixed-variant": "#004e59"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px"
+            },
+            "fontFamily": {
+                    "headline": ["Inter"],
+                    "body": ["Noto Serif SC"],
+                    "label": ["Inter"],
+                    "mono": ["JetBrains Mono"]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        body { font-family: 'Inter', sans-serif; }
+        .scholarly-text { font-family: 'Noto Serif SC', serif; line-height: 1.8; }
+        .glass-ai {
+            background: rgba(88, 230, 255, 0.1);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(0, 104, 118, 0.1);
+        }
+        .editorial-shadow {
+            box-shadow: 0 32px 64px -4px rgba(26, 28, 28, 0.06);
+        }
+    </style>
+</head>
+<body class="bg-background text-on-surface min-h-screen flex">
+<!-- SideNavBar (Shared Component) -->
+<aside class="w-[260px] h-screen sticky top-0 left-0 bg-slate-100 dark:bg-slate-900 flex flex-col py-6 px-4 no-border tonal-shift">
+<div class="mb-8 px-2 flex items-center gap-3">
+<div class="w-10 h-10 rounded-xl bg-primary flex items-center justify-center text-white overflow-hidden">
+<img alt="LLMBase Curator" class="w-full h-full object-cover" data-alt="Stylized geometric robot icon with minimalist indigo and white shapes representing digital intelligence" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDmaknvVmciaDX1aGkHcsDJPKns2jVURhReLbYULjxkeBf4Pi6UlPCZfGEApOccMqmFL9Ae6DOBnz-gzYrdPoCexQjWSwSJlZfH2fCIr6MChKlyn-OJpoVCn2-4YW7ZNn0GRHcUilgTagqevAbBKm8vXvk89R9B-I0D6e8H9CtWyqdKddG3eq2pkXvNe3vPew52ypR0YElEFVo1JhjkYuFBKmvJC0tlsjFGsDh1shGPS2Jyog86pnPPoW9Hnfes-4bGkcX6olUusQ"/>
+</div>
+<div>
+<h1 class="text-xl font-black tracking-tighter text-indigo-900 dark:text-white leading-none">LLMBase</h1>
+<p class="text-[10px] uppercase tracking-widest text-slate-500 font-bold mt-1">The Scholarly Synthesis</p>
+</div>
+</div>
+<nav class="flex-1 space-y-1">
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-slate-500 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-800 transition-colors duration-150 ease-out font-sans text-sm tracking-tight font-medium" href="#">
+<span class="material-symbols-outlined">dashboard</span>
+                Dashboard
+            </a>
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-slate-500 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-800 transition-colors duration-150 ease-out font-sans text-sm tracking-tight font-medium" href="#">
+<span class="material-symbols-outlined">menu_book</span>
+                Wiki
+            </a>
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-slate-500 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-800 transition-colors duration-150 ease-out font-sans text-sm tracking-tight font-medium" href="#">
+<span class="material-symbols-outlined">search</span>
+                Search
+            </a>
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-slate-500 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-800 transition-colors duration-150 ease-out font-sans text-sm tracking-tight font-medium" href="#">
+<span class="material-symbols-outlined">forum</span>
+                Q&amp;A
+            </a>
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-slate-500 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-800 transition-colors duration-150 ease-out font-sans text-sm tracking-tight font-medium" href="#">
+<span class="material-symbols-outlined">hub</span>
+                Graph
+            </a>
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-indigo-700 dark:text-indigo-300 font-bold border-r-2 border-indigo-700 bg-slate-200 dark:bg-slate-800 transition-colors duration-150 ease-out font-sans text-sm tracking-tight" href="#">
+<span class="material-symbols-outlined">input</span>
+                Ingest
+            </a>
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-indigo-700 dark:text-indigo-300 font-bold border-r-2 border-indigo-700 bg-slate-200 dark:bg-slate-800 transition-colors duration-150 ease-out font-sans text-sm tracking-tight" href="#">
+<span class="material-symbols-outlined">monitor_heart</span>
+                Health
+            </a>
+</nav>
+<div class="mt-auto pt-6 space-y-1">
+<button class="w-full mb-6 bg-gradient-to-br from-primary to-primary-container text-white py-3 rounded-xl font-semibold text-sm flex items-center justify-center gap-2 shadow-lg shadow-primary/20 hover:scale-[0.98] transition-transform duration-150">
+<span class="material-symbols-outlined text-sm">add</span>
+                New Entry
+            </button>
+<a class="flex items-center gap-3 px-3 py-2 rounded-xl text-slate-500 hover:bg-slate-200 transition-colors text-sm font-medium" href="#">
+<span class="material-symbols-outlined">settings</span>
+                Settings
+            </a>
+<a class="flex items-center gap-3 px-3 py-2 rounded-xl text-slate-500 hover:bg-slate-200 transition-colors text-sm font-medium" href="#">
+<span class="material-symbols-outlined">help</span>
+                Support
+            </a>
+</div>
+</aside>
+<!-- Main Content Area -->
+<main class="flex-1 flex flex-col min-h-screen relative">
+<!-- TopNavBar (Shared Component) -->
+<header class="w-full sticky top-0 z-40 bg-white/80 backdrop-blur-xl flex items-center justify-between px-8 py-3 border-b border-slate-200/15">
+<div class="flex items-center flex-1 max-w-xl">
+<div class="relative w-full group">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-primary transition-colors">search</span>
+<input class="w-full pl-10 pr-4 py-2 bg-surface-container-low border-none rounded-full text-sm focus:ring-2 focus:ring-primary/10 transition-all outline-none" placeholder="Search the synthesis..." type="text"/>
+</div>
+</div>
+<div class="flex items-center gap-4">
+<button class="text-slate-600 hover:text-indigo-500 transition-colors">
+<span class="material-symbols-outlined">dark_mode</span>
+</button>
+<div class="h-6 w-[1px] bg-slate-200 mx-2"></div>
+<button class="bg-primary/5 text-primary px-5 py-2 rounded-full font-semibold text-sm hover:bg-primary/10 transition-colors">
+                    Compile
+                </button>
+</div>
+</header>
+<!-- Dynamic Content Canvas -->
+<div class="p-8 max-w-7xl mx-auto w-full space-y-8">
+<!-- Tabbed Header -->
+<div class="flex flex-col gap-1">
+<h2 class="text-3xl font-black tracking-tight text-on-surface font-headline">Knowledge Ingestion &amp; Integrity</h2>
+<p class="text-on-surface-variant font-medium">Maintain the purity and connectivity of your scholarly base.</p>
+</div>
+<!-- Tab Switcher -->
+<div class="flex gap-2 p-1 bg-surface-container rounded-2xl w-fit">
+<button class="px-6 py-2.5 rounded-xl bg-surface-container-lowest text-primary font-bold shadow-sm text-sm">Ingest Documents</button>
+<button class="px-6 py-2.5 rounded-xl text-on-surface-variant hover:text-on-surface font-semibold text-sm transition-colors">Wiki Health (Lint)</button>
+</div>
+<!-- Ingest Section (Active State) -->
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+<!-- Input Controls -->
+<div class="lg:col-span-4 space-y-6">
+<div class="bg-surface-container-lowest p-6 rounded-xl border border-outline-variant/15 editorial-shadow">
+<div class="flex items-center gap-2 mb-4">
+<span class="material-symbols-outlined text-primary">cloud_upload</span>
+<h3 class="font-bold text-sm uppercase tracking-wider text-on-surface-variant">Data Sources</h3>
+</div>
+<!-- Mini Tabs for Source Type -->
+<div class="flex border-b border-outline-variant/20 mb-6">
+<button class="flex-1 pb-3 text-xs font-bold border-b-2 border-primary text-primary">FILE</button>
+<button class="flex-1 pb-3 text-xs font-bold text-outline hover:text-on-surface transition-colors">URL</button>
+<button class="flex-1 pb-3 text-xs font-bold text-outline hover:text-on-surface transition-colors">DIRECTORY</button>
+</div>
+<!-- Dropzone -->
+<div class="group relative border-2 border-dashed border-outline-variant rounded-xl p-8 transition-all hover:border-primary/50 hover:bg-primary/5 cursor-pointer text-center">
+<div class="flex flex-col items-center gap-3">
+<div class="w-12 h-12 rounded-full bg-surface-container flex items-center justify-center group-hover:scale-110 transition-transform">
+<span class="material-symbols-outlined text-outline">upload_file</span>
+</div>
+<div class="space-y-1">
+<p class="text-sm font-bold">Drop files here</p>
+<p class="text-[11px] text-outline">PDF, Markdown, HTML, or JSON</p>
+</div>
+</div>
+</div>
+<div class="mt-6 space-y-4">
+<div>
+<label class="text-[10px] font-bold text-on-surface-variant uppercase mb-2 block">Compilation Logic</label>
+<select class="w-full bg-surface-container-low border-none rounded-lg text-sm p-3 focus:ring-2 focus:ring-primary/20">
+<option>Standard Synthesis</option>
+<option>Strict Scholarly (Citations)</option>
+<option>Cross-Reference Only</option>
+</select>
+</div>
+<button class="w-full bg-primary text-white py-3 rounded-xl font-bold text-sm hover:opacity-90 transition-opacity">
+                                Compile All New
+                            </button>
+</div>
+</div>
+<!-- Health Pulse -->
+<div class="bg-surface-container p-6 rounded-xl space-y-4">
+<div class="flex justify-between items-center">
+<span class="text-xs font-bold text-on-surface-variant uppercase">Current Integrity</span>
+<span class="text-xs font-black text-primary">94.2%</span>
+</div>
+<div class="h-2 w-full bg-outline-variant/30 rounded-full overflow-hidden">
+<div class="h-full bg-primary w-[94%]"></div>
+</div>
+<p class="text-[11px] text-on-surface-variant leading-relaxed">
+                            Your synthesis is healthy. 12 broken links detected in the "Neural Networks" cluster.
+                        </p>
+</div>
+</div>
+<!-- Documents List (Standard Bento Layout) -->
+<div class="lg:col-span-8 bg-surface-container-lowest rounded-xl border border-outline-variant/15 editorial-shadow overflow-hidden">
+<div class="p-6 border-b border-outline-variant/10 flex justify-between items-center">
+<h3 class="font-bold text-on-surface">Raw Documents</h3>
+<div class="flex gap-2">
+<button class="p-2 rounded-lg hover:bg-surface-container transition-colors"><span class="material-symbols-outlined text-lg">filter_list</span></button>
+<button class="p-2 rounded-lg hover:bg-surface-container transition-colors"><span class="material-symbols-outlined text-lg">more_vert</span></button>
+</div>
+</div>
+<div class="overflow-x-auto">
+<table class="w-full text-left">
+<thead>
+<tr class="bg-surface-container-low">
+<th class="px-6 py-3 text-[10px] font-bold text-outline uppercase">Title</th>
+<th class="px-6 py-3 text-[10px] font-bold text-outline uppercase">Type</th>
+<th class="px-6 py-3 text-[10px] font-bold text-outline uppercase">Status</th>
+<th class="px-6 py-3 text-[10px] font-bold text-outline uppercase text-right">Date</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-outline-variant/10">
+<tr class="hover:bg-surface-container-low transition-colors group">
+<td class="px-6 py-4">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-primary/60">article</span>
+<span class="text-sm font-semibold">Recursive_Memory_Retrieval.pdf</span>
+</div>
+</td>
+<td class="px-6 py-4"><span class="text-xs font-mono text-outline">application/pdf</span></td>
+<td class="px-6 py-4">
+<span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-tertiary-fixed text-on-tertiary-fixed text-[10px] font-bold">
+<span class="w-1 h-1 rounded-full bg-on-tertiary-fixed"></span> COMPLIED
+                                        </span>
+</td>
+<td class="px-6 py-4 text-right text-xs text-outline font-medium">Oct 12, 2023</td>
+</tr>
+<tr class="hover:bg-surface-container-low transition-colors group">
+<td class="px-6 py-4">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-primary/60">link</span>
+<span class="text-sm font-semibold">arXiv:2401.0345v1</span>
+</div>
+</td>
+<td class="px-6 py-4"><span class="text-xs font-mono text-outline">text/html</span></td>
+<td class="px-6 py-4">
+<span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-secondary-fixed text-on-secondary-fixed text-[10px] font-bold">
+<span class="w-1 h-1 rounded-full bg-on-secondary-fixed"></span> ANALYZING
+                                        </span>
+</td>
+<td class="px-6 py-4 text-right text-xs text-outline font-medium">Just now</td>
+</tr>
+<tr class="hover:bg-surface-container-low transition-colors group">
+<td class="px-6 py-4">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-primary/60">description</span>
+<span class="text-sm font-semibold">Internal_Graph_Structure.md</span>
+</div>
+</td>
+<td class="px-6 py-4"><span class="text-xs font-mono text-outline">text/markdown</span></td>
+<td class="px-6 py-4">
+<span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-surface-container-highest text-on-surface-variant text-[10px] font-bold">
+<span class="w-1 h-1 rounded-full bg-on-surface-variant"></span> PENDING
+                                        </span>
+</td>
+<td class="px-6 py-4 text-right text-xs text-outline font-medium">Oct 11, 2023</td>
+</tr>
+<tr class="hover:bg-surface-container-low transition-colors group">
+<td class="px-6 py-4">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-error/60">warning</span>
+<span class="text-sm font-semibold">Corrupt_Metadata_Chunk.json</span>
+</div>
+</td>
+<td class="px-6 py-4"><span class="text-xs font-mono text-outline">application/json</span></td>
+<td class="px-6 py-4">
+<span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-error-container text-on-error-container text-[10px] font-bold">
+<span class="w-1 h-1 rounded-full bg-error"></span> ERROR
+                                        </span>
+</td>
+<td class="px-6 py-4 text-right text-xs text-outline font-medium">Oct 09, 2023</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</div>
+<!-- Wiki Health (Below main grid in this view) -->
+<div class="space-y-6 pt-8">
+<div class="flex items-center justify-between">
+<h3 class="text-xl font-black font-headline">Structural Health Overview</h3>
+<button class="text-primary text-sm font-bold flex items-center gap-1 hover:underline">
+                        Run Deep Analysis <span class="material-symbols-outlined text-sm">bolt</span>
+</button>
+</div>
+<!-- Health Bento Cards -->
+<div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+<div class="bg-surface-container-lowest p-6 rounded-xl border border-outline-variant/15 flex flex-col gap-2">
+<span class="text-[10px] font-bold text-outline uppercase tracking-widest">Structural Issues</span>
+<div class="flex items-baseline gap-2">
+<span class="text-2xl font-black">24</span>
+<span class="text-xs font-bold text-error">-3.4%</span>
+</div>
+</div>
+<div class="bg-surface-container-lowest p-6 rounded-xl border border-outline-variant/15 flex flex-col gap-2">
+<span class="text-[10px] font-bold text-outline uppercase tracking-widest">Broken Links</span>
+<div class="flex items-baseline gap-2">
+<span class="text-2xl font-black">12</span>
+<span class="text-xs font-bold text-primary">STABLE</span>
+</div>
+</div>
+<div class="bg-surface-container-lowest p-6 rounded-xl border border-outline-variant/15 flex flex-col gap-2">
+<span class="text-[10px] font-bold text-outline uppercase tracking-widest">Orphan Articles</span>
+<div class="flex items-baseline gap-2">
+<span class="text-2xl font-black">8</span>
+<span class="text-xs font-bold text-tertiary-container">+2 New</span>
+</div>
+</div>
+<div class="bg-surface-container-lowest p-6 rounded-xl border border-outline-variant/15 flex flex-col gap-2">
+<span class="text-[10px] font-bold text-outline uppercase tracking-widest">Missing Metadata</span>
+<div class="flex items-baseline gap-2">
+<span class="text-2xl font-black">41</span>
+<span class="text-xs font-bold text-error">CRITICAL</span>
+</div>
+</div>
+</div>
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+<!-- Issues Accordion List -->
+<div class="lg:col-span-7 space-y-4">
+<!-- Category Header -->
+<div class="bg-surface-container-low p-4 rounded-xl flex items-center justify-between group cursor-pointer hover:bg-surface-container transition-colors">
+<div class="flex items-center gap-4">
+<div class="w-8 h-8 rounded-full bg-error-container text-error flex items-center justify-center">
+<span class="material-symbols-outlined text-lg">link_off</span>
+</div>
+<div>
+<h4 class="font-bold text-sm">Broken Links (12 Instances)</h4>
+<p class="text-[11px] text-on-surface-variant">Dangling references in "Cognitive Architectures" cluster.</p>
+</div>
+</div>
+<div class="flex items-center gap-4">
+<button class="px-4 py-1.5 rounded-full bg-primary text-white text-[10px] font-bold hover:scale-105 transition-transform">AUTO-FIX</button>
+<span class="material-symbols-outlined text-outline group-hover:text-primary">expand_more</span>
+</div>
+</div>
+<!-- Open Accordion Content -->
+<div class="bg-surface-container-lowest rounded-xl border border-outline-variant/15 p-1 space-y-1">
+<div class="p-4 flex items-center justify-between hover:bg-surface-container-low rounded-lg transition-colors group">
+<div class="flex flex-col">
+<span class="text-xs font-bold text-primary hover:underline cursor-pointer">@wiki/Transformers_Loss_Functions</span>
+<span class="text-[10px] text-outline">References non-existent node: "Gradient_Explosion_Fixes"</span>
+</div>
+<button class="opacity-0 group-hover:opacity-100 p-2 text-primary transition-opacity">
+<span class="material-symbols-outlined">edit_square</span>
+</button>
+</div>
+<div class="p-4 flex items-center justify-between hover:bg-surface-container-low rounded-lg transition-colors group">
+<div class="flex flex-col">
+<span class="text-xs font-bold text-primary hover:underline cursor-pointer">@wiki/Tokenization_Strategies</span>
+<span class="text-[10px] text-outline">Malformed citation in Footer paragraph 2</span>
+</div>
+<button class="opacity-0 group-hover:opacity-100 p-2 text-primary transition-opacity">
+<span class="material-symbols-outlined">edit_square</span>
+</button>
+</div>
+</div>
+<div class="bg-surface-container-low p-4 rounded-xl flex items-center justify-between group cursor-pointer hover:bg-surface-container transition-colors opacity-70">
+<div class="flex items-center gap-4">
+<div class="w-8 h-8 rounded-full bg-tertiary-fixed text-on-tertiary-fixed flex items-center justify-center">
+<span class="material-symbols-outlined text-lg">database</span>
+</div>
+<div>
+<h4 class="font-bold text-sm">Missing Metadata (41 Instances)</h4>
+<p class="text-[11px] text-on-surface-variant">Articles lacking 'author' or 'publication_date' tags.</p>
+</div>
+</div>
+<span class="material-symbols-outlined text-outline">expand_more</span>
+</div>
+</div>
+<!-- Deep Analysis Section -->
+<div class="lg:col-span-5">
+<div class="glass-ai rounded-2xl p-8 border border-secondary/10 relative overflow-hidden h-full">
+<div class="absolute -top-12 -right-12 w-32 h-32 bg-secondary-container/20 blur-3xl rounded-full"></div>
+<div class="flex items-center gap-3 mb-6">
+<div class="w-10 h-10 rounded-full bg-secondary-fixed flex items-center justify-center text-on-secondary-fixed">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">auto_awesome</span>
+</div>
+<h4 class="font-black font-headline text-on-surface">Curator's Analysis Report</h4>
+</div>
+<div class="scholarly-text text-sm text-on-surface-variant space-y-4">
+<p><strong>概览 (Executive Summary):</strong> The current knowledge graph exhibits strong clustering within technical documentation, but suffers from "Thematic Isolation." Several core articles are functionally isolated from the main semantic web.</p>
+<ul class="list-disc pl-5 space-y-2 text-xs">
+<li><strong>语义漂移 (Semantic Drift):</strong> Recent ingests related to "Vector DBs" lack proper anchoring to the "Database Management" root.</li>
+<li><strong>信息碎片化 (Information Fragmentation):</strong> 14 short-form entries could be synthesized into a single authoritative "Technical Overview" article.</li>
+<li><strong>语言质量 (Quality Check):</strong> CJK text segments are rendering correctly, though Japanese nomenclature needs standardization across 3 documents.</li>
+</ul>
+<div class="pt-6 border-t border-secondary/10">
+<p class="text-xs italic font-serif opacity-70">"Synthesized by LLMBase v4.2. Analytical confidence: 91%."</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Floating Contextual Action -->
+<div class="fixed bottom-8 right-8 group">
+<button class="w-14 h-14 bg-gradient-to-br from-secondary to-on-secondary-container text-white rounded-full flex items-center justify-center shadow-xl shadow-secondary/30 transition-all hover:scale-110 active:scale-95 group-hover:rotate-12">
+<span class="material-symbols-outlined text-3xl">psychology</span>
+</button>
+<div class="absolute bottom-full right-0 mb-4 opacity-0 group-hover:opacity-100 translate-y-4 group-hover:translate-y-0 transition-all pointer-events-none">
+<div class="bg-surface-container-lowest text-on-surface px-4 py-2 rounded-xl text-xs font-bold shadow-xl border border-outline-variant/10 whitespace-nowrap">
+                    Ask Curator about Health
+                </div>
+</div>
+</div>
+</main>
+</body></html>

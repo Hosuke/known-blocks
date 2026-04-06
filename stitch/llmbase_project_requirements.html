@@ -1,0 +1,30 @@
+# LLMBase Project Overview
+Design a modern, responsive web frontend for **LLMBase** — an LLM-powered personal knowledge base. The app has a REST API backend (Flask) and needs a React SPA frontend. The design should feel like a hybrid between **Obsidian** (knowledge graph + markdown wiki) and **Perplexity** (AI-powered Q&A with citations).
+
+## Tech Stack
+- React 18 + TypeScript + Tailwind CSS
+- shadcn/ui components
+- react-markdown + remark-gfm
+- D3.js (for graph visualization)
+
+## Design Principles
+- **Hybrid Aesthetic**: "Digital Garden" meets "AI Assistant". Clean, functional, and data-rich.
+- **Wiki-Link Centric**: Seamless internal linking via `[[target]]` syntax.
+- **Multilingual Support**: Beautiful CJK rendering using Noto Serif SC for body text.
+- **Knowledge Feedback**: Q&A outputs flow back into the wiki.
+
+## Core Pages
+1. **Dashboard**: Stats and recent activity.
+2. **Wiki Browser**: Filterable grid of articles.
+3. **Article Detail**: High-fidelity markdown rendering with backlinks and TOC.
+4. **Search**: Full-text discovery with relevance scoring.
+5. **Q&A**: Perplexity-style interface with citations and "File back" capability.
+6. **Knowledge Graph**: Interactive D3.js force-directed visualization.
+7. **Ingest**: Multi-source document adding (URL, File, Directory).
+8. **Lint & Health**: Quality assurance for the knowledge base.
+
+## Visual Specs
+- **Typography**: Inter (UI), JetBrains Mono (Code), Noto Serif SC (CJK Body).
+- **Radius**: 12px cards, 8px buttons.
+- **Grid**: 8px system.
+- **Motion**: Subtle 150ms transitions.

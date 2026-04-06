@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>LLMBase | Knowledge Graph</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&amp;family=Noto+Serif+SC:wght@400;700&amp;family=JetBrains+Mono&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<style>
+        body { font-family: 'Inter', sans-serif; }
+        .serif-content { font-family: 'Noto Serif SC', serif; }
+        .mono-text { font-family: 'JetBrains Mono', monospace; }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .graph-gradient {
+            background: radial-gradient(circle at center, #ffffff 0%, #f9f9f9 100%);
+        }
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.4);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+        }
+    </style>
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "tertiary-fixed": "#abf4ac",
+                      "surface-container-lowest": "#ffffff",
+                      "on-tertiary": "#ffffff",
+                      "on-primary-fixed-variant": "#293ca0",
+                      "primary-fixed": "#dee0ff",
+                      "on-surface": "#1a1c1c",
+                      "inverse-primary": "#bac3ff",
+                      "on-secondary-fixed": "#001f25",
+                      "on-secondary": "#ffffff",
+                      "surface-container": "#eeeeee",
+                      "error": "#ba1a1a",
+                      "on-tertiary-fixed": "#002107",
+                      "background": "#f9f9f9",
+                      "surface-container-highest": "#e2e2e2",
+                      "surface": "#f9f9f9",
+                      "surface-container-low": "#f3f3f3",
+                      "inverse-surface": "#2f3131",
+                      "on-secondary-container": "#006573",
+                      "tertiary-container": "#23672f",
+                      "surface-tint": "#4355b9",
+                      "error-container": "#ffdad6",
+                      "on-background": "#1a1c1c",
+                      "secondary-container": "#58e6ff",
+                      "secondary-fixed-dim": "#44d8f1",
+                      "outline-variant": "#c5c5d4",
+                      "on-surface-variant": "#454652",
+                      "on-tertiary-container": "#9ce39d",
+                      "surface-bright": "#f9f9f9",
+                      "on-error-container": "#93000a",
+                      "tertiary": "#004e1a",
+                      "on-primary-container": "#cacfff",
+                      "inverse-on-surface": "#f1f1f1",
+                      "secondary-fixed": "#a1efff",
+                      "on-error": "#ffffff",
+                      "surface-container-high": "#e8e8e8",
+                      "on-primary": "#ffffff",
+                      "primary": "#24389c",
+                      "primary-container": "#3f51b5",
+                      "outline": "#757684",
+                      "primary-fixed-dim": "#bac3ff",
+                      "on-primary-fixed": "#00105c",
+                      "secondary": "#006876",
+                      "tertiary-fixed-dim": "#90d792",
+                      "surface-dim": "#dadada",
+                      "on-tertiary-fixed-variant": "#07521d",
+                      "surface-variant": "#e2e2e2",
+                      "on-secondary-fixed-variant": "#004e59"
+              },
+              "borderRadius": {
+                      "DEFAULT": "0.25rem",
+                      "lg": "0.5rem",
+                      "xl": "0.75rem",
+                      "full": "9999px"
+              },
+              "fontFamily": {
+                      "headline": ["Inter"],
+                      "body": ["Noto Serif SC"],
+                      "label": ["Inter"]
+              }
+            },
+          }
+        }
+    </script>
+</head>
+<body class="bg-surface text-on-surface antialiased flex min-h-screen">
+<!-- SideNavBar Component -->
+<aside class="w-[260px] h-screen sticky top-0 left-0 bg-slate-100 dark:bg-slate-900 flex flex-col h-full py-6 px-4 no-border tonal-shift">
+<div class="mb-8 px-2 flex items-center gap-3">
+<div class="w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-primary-container flex items-center justify-center text-white">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">hub</span>
+</div>
+<div>
+<h1 class="text-xl font-black tracking-tighter text-indigo-900 dark:text-white leading-none">LLMBase</h1>
+<p class="text-[10px] uppercase tracking-widest text-slate-500 font-bold mt-1">The Scholarly Synthesis</p>
+</div>
+</div>
+<button class="mb-8 w-full py-3 px-4 rounded-xl bg-gradient-to-r from-primary to-primary-container text-on-primary font-bold text-sm flex items-center justify-center gap-2 hover:opacity-90 transition-all active:scale-95">
+<span class="material-symbols-outlined text-sm">add</span>
+            New Entry
+        </button>
+<nav class="flex-1 space-y-1">
+<!-- Dashboard -->
+<a class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 dark:text-slate-400 font-sans text-sm tracking-tight font-medium hover:bg-slate-200 dark:hover:bg-slate-800 transition-colors duration-150 ease-out" href="#">
+<span class="material-symbols-outlined" data-icon="dashboard">dashboard</span>
+                Dashboard
+            </a>
+<!-- Wiki -->
+<a class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 dark:text-slate-400 font-sans text-sm tracking-tight font-medium hover:bg-slate-200 dark:hover:bg-slate-800 transition-colors duration-150 ease-out" href="#">
+<span class="material-symbols-outlined" data-icon="menu_book">menu_book</span>
+                Wiki
+            </a>
+<!-- Search -->
+<a class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 dark:text-slate-400 font-sans text-sm tracking-tight font-medium hover:bg-slate-200 dark:hover:bg-slate-800 transition-colors duration-150 ease-out" href="#">
+<span class="material-symbols-outlined" data-icon="search">search</span>
+                Search
+            </a>
+<!-- Q&A -->
+<a class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 dark:text-slate-400 font-sans text-sm tracking-tight font-medium hover:bg-slate-200 dark:hover:bg-slate-800 transition-colors duration-150 ease-out" href="#">
+<span class="material-symbols-outlined" data-icon="forum">forum</span>
+                Q&amp;A
+            </a>
+<!-- Graph (Active) -->
+<a class="flex items-center gap-3 px-4 py-3 rounded-xl text-indigo-700 dark:text-indigo-300 font-bold border-r-2 border-indigo-700 font-sans text-sm tracking-tight hover:bg-slate-200 dark:hover:bg-slate-800 transition-colors duration-150 ease-out" href="/graph">
+<span class="material-symbols-outlined" data-icon="hub" style="font-variation-settings: 'FILL' 1;">hub</span>
+                Graph
+            </a>
+<!-- Ingest -->
+<a class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 dark:text-slate-400 font-sans text-sm tracking-tight font-medium hover:bg-slate-200 dark:hover:bg-slate-800 transition-colors duration-150 ease-out" href="#">
+<span class="material-symbols-outlined" data-icon="input">input</span>
+                Ingest
+            </a>
+<!-- Health -->
+<a class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 dark:text-slate-400 font-sans text-sm tracking-tight font-medium hover:bg-slate-200 dark:hover:bg-slate-800 transition-colors duration-150 ease-out" href="#">
+<span class="material-symbols-outlined" data-icon="monitor_heart">monitor_heart</span>
+                Health
+            </a>
+</nav>
+<div class="mt-auto pt-6 border-t border-slate-200/50 dark:border-slate-800/50 space-y-1">
+<a class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 dark:text-slate-400 font-sans text-sm tracking-tight font-medium hover:bg-slate-200 dark:hover:bg-slate-800 transition-colors duration-150 ease-out" href="#">
+<span class="material-symbols-outlined" data-icon="settings">settings</span>
+                Settings
+            </a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 dark:text-slate-400 font-sans text-sm tracking-tight font-medium hover:bg-slate-200 dark:hover:bg-slate-800 transition-colors duration-150 ease-out" href="#">
+<span class="material-symbols-outlined" data-icon="help">help</span>
+                Support
+            </a>
+</div>
+</aside>
+<!-- Main Content Area -->
+<main class="flex-1 flex flex-col relative h-screen overflow-hidden">
+<!-- TopNavBar Component -->
+<header class="w-full sticky top-0 z-40 bg-white/80 dark:bg-slate-950/80 backdrop-blur-xl flex items-center justify-between px-8 py-3 border-b border-slate-200/15 dark:border-slate-800/15">
+<div class="flex items-center gap-6">
+<div class="flex items-center bg-surface-container-low px-4 py-2 rounded-full w-96 focus-within:ring-2 focus-within:ring-indigo-500/10 transition-all">
+<span class="material-symbols-outlined text-outline text-lg" data-icon="search">search</span>
+<input class="bg-transparent border-none focus:ring-0 text-sm w-full font-sans ml-2 placeholder:text-outline/60" placeholder="Search nodes or relationships..." type="text"/>
+</div>
+</div>
+<div class="flex items-center gap-4">
+<button class="p-2 rounded-full text-slate-600 dark:text-slate-400 hover:text-indigo-500 transition-colors">
+<span class="material-symbols-outlined" data-icon="dark_mode">dark_mode</span>
+</button>
+<button class="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-2 rounded-full text-sm font-semibold transition-all shadow-sm">
+                    Compile
+                </button>
+<div class="w-8 h-8 rounded-full bg-slate-200 overflow-hidden">
+<img alt="LLMBase Curator" data-alt="Portrait of a scholarly digital avatar with glasses and a thoughtful expression in a minimalist vector style" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCj55Fn15t0Ys5RY-p8f2iHVMOWkqJDCEVcWJVHhgqhwomDeQXiUUS3liqY15Vu444Avt0JwqewTz4FPgz0zRbF0DSHP3zVVn6ajZqYsrrGWa0VEkr-BTf08KJYfvl5fMBfWTx1Lv5WcOv6N0i7tYAsJYaowqspgx8TKXe0yQoquYYEmk9qr6OaoOicHlZA3HEYuoaI0RU7Eezw4IVdGgs6Zc0RFBXYdZar9nwe_0kHbpNjhVlwPy6oTNYRvfyxlS2k6woZWpXncA"/>
+</div>
+</div>
+</header>
+<!-- Knowledge Graph Canvas -->
+<div class="flex-1 relative graph-gradient overflow-hidden">
+<!-- Simulated SVG Graph Layer -->
+<svg class="absolute inset-0 w-full h-full" viewbox="0 0 1000 1000">
+<!-- Background Connections (Edges) -->
+<g class="stroke-outline-variant opacity-20">
+<line stroke-width="1" x1="200" x2="400" y1="300" y2="450"></line>
+<line stroke-width="2" x1="400" x2="600" y1="450" y2="200"></line>
+<line stroke-width="1" x1="600" x2="800" y1="200" y2="500"></line>
+<line stroke-width="3" x1="400" x2="300" y1="450" y2="700"></line>
+<line stroke-width="1" x1="300" x2="700" y1="700" y2="800"></line>
+<line stroke-width="1" x1="600" x2="150" y1="200" y2="150"></line>
+</g>
+<!-- Active Connections (High Focus) -->
+<g class="stroke-primary/40">
+<line stroke-width="4" x1="500" x2="400" y1="500" y2="450"></line>
+<line stroke-width="4" x1="500" x2="600" y1="500" y2="550"></line>
+<line stroke-width="2" x1="500" x2="520" y1="500" y2="350"></line>
+</g>
+<!-- Nodes (Articles) -->
+<!-- Core Node -->
+<circle class="fill-primary transition-all cursor-pointer hover:r-20" cx="500" cy="500" r="16"></circle>
+<text class="serif-content text-[12px] font-bold fill-on-surface" text-anchor="middle" x="500" y="535">Neural Architecture</text>
+<!-- Satellite Nodes -->
+<circle class="fill-secondary transition-all cursor-pointer hover:r-16" cx="400" cy="450" r="12"></circle>
+<text class="serif-content text-[10px] fill-on-surface-variant" text-anchor="middle" x="400" y="480">Attention Mechanisms</text>
+<circle class="fill-tertiary transition-all cursor-pointer hover:r-14" cx="600" cy="550" r="10"></circle>
+<text class="serif-content text-[10px] fill-on-surface-variant" text-anchor="middle" x="600" y="580">Backpropagation</text>
+<circle class="fill-primary-container transition-all cursor-pointer hover:r-12" cx="520" cy="350" r="8"></circle>
+<circle class="fill-outline-variant" cx="200" cy="300" r="6"></circle>
+<circle class="fill-outline-variant" cx="800" cy="500" r="7"></circle>
+<circle class="fill-secondary-container" cx="300" cy="700" r="14"></circle>
+<text class="serif-content text-[10px] fill-on-surface-variant" text-anchor="middle" x="300" y="735">Transformer Models</text>
+<circle class="fill-outline-variant" cx="600" cy="200" r="5"></circle>
+</svg>
+<!-- Interaction Overlays -->
+<!-- Zoom Controls (Bottom Left) -->
+<div class="absolute bottom-10 left-10 flex flex-col gap-2">
+<div class="glass-panel p-1 rounded-xl shadow-sm border border-white/20 flex flex-col">
+<button class="w-10 h-10 flex items-center justify-center text-slate-600 hover:text-primary transition-colors">
+<span class="material-symbols-outlined">add</span>
+</button>
+<div class="h-[1px] w-6 mx-auto bg-slate-200/40"></div>
+<button class="w-10 h-10 flex items-center justify-center text-slate-600 hover:text-primary transition-colors">
+<span class="material-symbols-outlined">remove</span>
+</button>
+</div>
+<button class="glass-panel w-10 h-10 flex items-center justify-center rounded-xl shadow-sm border border-white/20 text-slate-600 hover:text-primary">
+<span class="material-symbols-outlined">center_focus_strong</span>
+</button>
+</div>
+<!-- Control Panel (Top Right Overlay) -->
+<div class="absolute top-8 right-8 w-72 glass-panel rounded-2xl border border-white/30 shadow-xl p-6 flex flex-col gap-6">
+<div>
+<h3 class="font-headline font-bold text-sm tracking-tight flex items-center gap-2 mb-4">
+<span class="material-symbols-outlined text-primary text-lg">tune</span>
+                        Graph Settings
+                    </h3>
+<!-- Layout Options -->
+<div class="space-y-2">
+<p class="text-[10px] font-bold uppercase tracking-wider text-outline">Layout Engine</p>
+<div class="grid grid-cols-3 gap-1 p-1 bg-surface-container-low rounded-lg">
+<button class="py-1.5 text-[10px] font-bold bg-white shadow-sm rounded-md text-primary">Force</button>
+<button class="py-1.5 text-[10px] font-bold text-outline hover:text-primary transition-colors">Radial</button>
+<button class="py-1.5 text-[10px] font-bold text-outline hover:text-primary transition-colors">Tree</button>
+</div>
+</div>
+</div>
+<!-- Filters -->
+<div class="space-y-4">
+<p class="text-[10px] font-bold uppercase tracking-wider text-outline">Filter by Tag</p>
+<div class="flex flex-wrap gap-2">
+<span class="px-3 py-1 bg-primary/10 text-primary text-[11px] font-bold rounded-full border border-primary/20 cursor-pointer hover:bg-primary/20 transition-all">#AI</span>
+<span class="px-3 py-1 bg-secondary/10 text-secondary text-[11px] font-bold rounded-full border border-secondary/20 cursor-pointer hover:bg-secondary/20 transition-all">#Research</span>
+<span class="px-3 py-1 bg-tertiary/10 text-tertiary text-[11px] font-bold rounded-full border border-tertiary/20 cursor-pointer hover:bg-tertiary/20 transition-all">#History</span>
+<span class="px-3 py-1 bg-surface-container text-outline text-[11px] font-bold rounded-full border border-transparent cursor-pointer hover:bg-surface-container-high transition-all">#Biology</span>
+</div>
+</div>
+<!-- Toggles -->
+<div class="space-y-3 pt-2 border-t border-slate-200/20">
+<label class="flex items-center justify-between cursor-pointer group">
+<span class="text-xs font-medium text-on-surface-variant group-hover:text-on-surface">Show Node Labels</span>
+<div class="relative inline-flex items-center cursor-pointer">
+<input checked="" class="sr-only peer" type="checkbox"/>
+<div class="w-9 h-5 bg-slate-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-primary"></div>
+</div>
+</label>
+<label class="flex items-center justify-between cursor-pointer group">
+<span class="text-xs font-medium text-on-surface-variant group-hover:text-on-surface">Color by Density</span>
+<div class="relative inline-flex items-center cursor-pointer">
+<input class="sr-only peer" type="checkbox"/>
+<div class="w-9 h-5 bg-slate-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-primary"></div>
+</div>
+</label>
+<label class="flex items-center justify-between cursor-pointer group">
+<span class="text-xs font-medium text-on-surface-variant group-hover:text-on-surface">Orphan articles</span>
+<div class="relative inline-flex items-center cursor-pointer">
+<input class="sr-only peer" type="checkbox"/>
+<div class="w-9 h-5 bg-slate-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-primary"></div>
+</div>
+</label>
+</div>
+<!-- Stats Footer -->
+<div class="mt-4 p-4 bg-primary/5 rounded-xl border border-primary/10">
+<div class="flex justify-between items-end">
+<div>
+<p class="text-[10px] uppercase font-bold text-primary/60 tracking-widest">Total Nodes</p>
+<p class="text-2xl font-black text-primary leading-tight">1,284</p>
+</div>
+<div class="text-right">
+<p class="text-[10px] uppercase font-bold text-primary/60 tracking-widest">Links</p>
+<p class="text-xl font-bold text-primary leading-tight">4.2k</p>
+</div>
+</div>
+</div>
+</div>
+<!-- Legend (Bottom Right) -->
+<div class="absolute bottom-8 right-8 glass-panel px-4 py-2 rounded-full border border-white/20 shadow-sm flex items-center gap-6">
+<div class="flex items-center gap-2">
+<div class="w-2.5 h-2.5 rounded-full bg-primary"></div>
+<span class="text-[10px] font-bold text-on-surface-variant">Core Concept</span>
+</div>
+<div class="flex items-center gap-2">
+<div class="w-2.5 h-2.5 rounded-full bg-secondary"></div>
+<span class="text-[10px] font-bold text-on-surface-variant">Methodology</span>
+</div>
+<div class="flex items-center gap-2">
+<div class="w-2.5 h-2.5 rounded-full bg-tertiary"></div>
+<span class="text-[10px] font-bold text-on-surface-variant">Historical</span>
+</div>
+</div>
+<!-- Hover Detail Card (Contextual) -->
+<div class="absolute top-1/2 left-[55%] -translate-y-1/2 w-64 glass-panel rounded-xl shadow-2xl border border-white/40 p-4 transform translate-x-4 pointer-events-none opacity-0 transition-opacity">
+<div class="serif-content mb-2">
+<h4 class="font-bold text-sm">Neural Architecture</h4>
+<p class="text-[11px] text-on-surface-variant italic">Ref: Wiki/Deep-Learning</p>
+</div>
+<p class="text-[11px] text-on-surface-variant line-clamp-3 leading-relaxed mb-3">
+                    The arrangement of neurons, layers, and connectivity in a neural network. This specific cluster highlights the evolution from MLPs to modern Transformers.
+                </p>
+<div class="flex justify-between items-center text-[10px] mono-text text-primary font-bold">
+<span>1,420 WORDS</span>
+<span>12 LINKS</span>
+</div>
+</div>
+</div>
+<!-- Semantic Shell Footer (Status Bar) -->
+<footer class="h-8 bg-surface-container-low border-t border-slate-200/10 flex items-center px-6 justify-between text-[10px] font-medium text-outline">
+<div class="flex items-center gap-4">
+<div class="flex items-center gap-1.5">
+<span class="w-1.5 h-1.5 rounded-full bg-green-500"></span>
+<span>Engine: Force Directed V3</span>
+</div>
+<span>Render: 14ms</span>
+</div>
+<div class="flex items-center gap-4">
+<span>Viewport: 1920x1080</span>
+<span class="text-primary font-bold">SCHOLARLY MODE ACTIVE</span>
+</div>
+</footer>
+</main>
+</body></html>

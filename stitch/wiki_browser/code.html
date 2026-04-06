@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&amp;family=Noto+Serif+SC:wght@400;700&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<style>
+        body { font-family: 'Inter', sans-serif; }
+        .font-serif-cjk { font-family: 'Noto Serif SC', serif; }
+        .font-mono-jb { font-family: 'JetBrains Mono', monospace; }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .ai-glass {
+            background: rgba(88, 230, 255, 0.08);
+            backdrop-filter: blur(12px);
+        }
+        .editorial-shadow {
+            box-shadow: 0 32px 64px -4px rgba(26, 28, 28, 0.06);
+        }
+        .card-glow:hover {
+            box-shadow: 0 0 0 2px rgba(0, 104, 118, 0.1);
+        }
+    </style>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "tertiary-fixed": "#abf4ac",
+                        "surface-container-lowest": "#ffffff",
+                        "on-tertiary": "#ffffff",
+                        "on-primary-fixed-variant": "#293ca0",
+                        "primary-fixed": "#dee0ff",
+                        "on-surface": "#1a1c1c",
+                        "inverse-primary": "#bac3ff",
+                        "on-secondary-fixed": "#001f25",
+                        "on-secondary": "#ffffff",
+                        "surface-container": "#eeeeee",
+                        "error": "#ba1a1a",
+                        "on-tertiary-fixed": "#002107",
+                        "background": "#f9f9f9",
+                        "surface-container-highest": "#e2e2e2",
+                        "surface": "#f9f9f9",
+                        "surface-container-low": "#f3f3f3",
+                        "inverse-surface": "#2f3131",
+                        "on-secondary-container": "#006573",
+                        "tertiary-container": "#23672f",
+                        "surface-tint": "#4355b9",
+                        "error-container": "#ffdad6",
+                        "on-background": "#1a1c1c",
+                        "secondary-container": "#58e6ff",
+                        "secondary-fixed-dim": "#44d8f1",
+                        "outline-variant": "#c5c5d4",
+                        "on-surface-variant": "#454652",
+                        "on-tertiary-container": "#9ce39d",
+                        "surface-bright": "#f9f9f9",
+                        "on-error-container": "#93000a",
+                        "tertiary": "#004e1a",
+                        "on-primary-container": "#cacfff",
+                        "inverse-on-surface": "#f1f1f1",
+                        "secondary-fixed": "#a1efff",
+                        "on-error": "#ffffff",
+                        "surface-container-high": "#e8e8e8",
+                        "on-primary": "#ffffff",
+                        "primary": "#24389c",
+                        "primary-container": "#3f51b5",
+                        "outline": "#757684",
+                        "primary-fixed-dim": "#bac3ff",
+                        "on-primary-fixed": "#00105c",
+                        "secondary": "#006876",
+                        "tertiary-fixed-dim": "#90d792",
+                        "surface-dim": "#dadada",
+                        "on-tertiary-fixed-variant": "#07521d",
+                        "surface-variant": "#e2e2e2",
+                        "on-secondary-fixed-variant": "#004e59"
+                    },
+                    borderRadius: {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-surface text-on-surface flex min-h-screen">
+<!-- SideNavBar -->
+<aside class="w-[260px] h-screen sticky top-0 left-0 bg-slate-100 dark:bg-slate-900 flex flex-col py-6 px-4 shrink-0 overflow-y-auto">
+<div class="mb-8 px-2 flex items-center gap-3">
+<div class="w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-primary-container flex items-center justify-center text-white">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">auto_stories</span>
+</div>
+<div>
+<h1 class="text-xl font-black tracking-tighter text-indigo-900 dark:text-white">LLMBase</h1>
+<p class="text-[10px] uppercase tracking-widest text-slate-500 font-bold">The Scholarly Synthesis</p>
+</div>
+</div>
+<button class="mb-8 w-full py-3 px-4 rounded-xl bg-gradient-to-r from-primary to-primary-container text-white font-bold text-sm flex items-center justify-center gap-2 transition-transform duration-150 active:scale-95 shadow-lg shadow-primary/20">
+<span class="material-symbols-outlined text-[20px]">add</span>
+            New Entry
+        </button>
+<nav class="flex-1 space-y-1">
+<!-- Nav Item: Dashboard -->
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-500 dark:text-slate-400 font-medium text-sm hover:bg-slate-200 dark:hover:bg-slate-800 transition-colors duration-150" href="#">
+<span class="material-symbols-outlined">dashboard</span>
+                Dashboard
+            </a>
+<!-- Nav Item: Wiki (ACTIVE) -->
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-indigo-700 dark:text-indigo-300 font-bold text-sm bg-slate-200/50 dark:bg-slate-800/50 border-r-2 border-indigo-700 transition-colors duration-150" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">menu_book</span>
+                Wiki
+            </a>
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-500 dark:text-slate-400 font-medium text-sm hover:bg-slate-200 dark:hover:bg-slate-800 transition-colors duration-150" href="#">
+<span class="material-symbols-outlined">search</span>
+                Search
+            </a>
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-500 dark:text-slate-400 font-medium text-sm hover:bg-slate-200 dark:hover:bg-slate-800 transition-colors duration-150" href="#">
+<span class="material-symbols-outlined">forum</span>
+                Q&amp;A
+            </a>
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-500 dark:text-slate-400 font-medium text-sm hover:bg-slate-200 dark:hover:bg-slate-800 transition-colors duration-150" href="#">
+<span class="material-symbols-outlined">hub</span>
+                Graph
+            </a>
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-500 dark:text-slate-400 font-medium text-sm hover:bg-slate-200 dark:hover:bg-slate-800 transition-colors duration-150" href="#">
+<span class="material-symbols-outlined">input</span>
+                Ingest
+            </a>
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-500 dark:text-slate-400 font-medium text-sm hover:bg-slate-200 dark:hover:bg-slate-800 transition-colors duration-150" href="#">
+<span class="material-symbols-outlined">monitor_heart</span>
+                Health
+            </a>
+</nav>
+<div class="mt-auto pt-6 space-y-1">
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-500 dark:text-slate-400 font-medium text-sm hover:bg-slate-200 dark:hover:bg-slate-800 transition-colors duration-150" href="#">
+<span class="material-symbols-outlined">settings</span>
+                Settings
+            </a>
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-500 dark:text-slate-400 font-medium text-sm hover:bg-slate-200 dark:hover:bg-slate-800 transition-colors duration-150" href="#">
+<span class="material-symbols-outlined">help</span>
+                Support
+            </a>
+<div class="mt-4 flex items-center gap-3 px-2">
+<div class="w-8 h-8 rounded-full overflow-hidden bg-surface-container-high border-2 border-white dark:border-slate-800">
+<img alt="LLMBase Curator" data-alt="Stylized flat illustration avatar of a curator with glasses and professional attire" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBpD29cPBBtnZRFpnjsgpud6BmaUG-b1pxnGFf2NI9RtqboXMAxZHLcdSe96T-6wmDKAMooiHkWSgNNhydSqVo1KMqFj16qRnjsLinErLXvxzfFkJM7GeUKecq5GEVr9CC0f_0MMo-AZQDOBVFKrnubXbNIIiTCgEvXIXdx_rvRrm0dDki6k0DR0cm3FXP3mGpFnzs8755Z83B-kvBhU04a_RKHp4qOkG8n3aNnfaHoL-oWn5zjUQ6E92vWWqKWSHCY7Wqlj-QGPw"/>
+</div>
+<div class="flex flex-col">
+<span class="text-xs font-bold text-slate-900 dark:text-white">Curator Mode</span>
+<span class="text-[10px] text-slate-500">v2.4.0-pro</span>
+</div>
+</div>
+</div>
+</aside>
+<main class="flex-1 flex flex-col min-w-0">
+<!-- TopNavBar -->
+<header class="w-full sticky top-0 z-40 bg-white/80 dark:bg-slate-950/80 backdrop-blur-xl border-b border-slate-200/15 dark:border-slate-800/15 flex items-center justify-between px-8 py-3">
+<div class="flex items-center gap-4 flex-1 max-w-xl">
+<div class="relative w-full group">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-[20px] group-focus-within:text-primary transition-colors">search</span>
+<input class="w-full pl-10 pr-4 py-2 bg-surface-container-low border-none rounded-xl text-sm focus:ring-2 focus:ring-primary/10 font-medium placeholder:text-slate-400 transition-all" placeholder="Search the Scholarly Synthesis..." type="text"/>
+</div>
+</div>
+<div class="flex items-center gap-6">
+<div class="flex items-center gap-4 text-slate-600 dark:text-slate-400 font-semibold text-sm">
+<button class="hover:text-indigo-500 transition-colors duration-150">Docs</button>
+<button class="hover:text-indigo-500 transition-colors duration-150">API</button>
+</div>
+<div class="h-6 w-px bg-slate-200 dark:bg-slate-800"></div>
+<div class="flex items-center gap-3">
+<button class="w-10 h-10 flex items-center justify-center rounded-lg hover:bg-slate-100 dark:hover:bg-slate-900 transition-colors">
+<span class="material-symbols-outlined">dark_mode</span>
+</button>
+<button class="bg-primary hover:bg-primary-container text-white px-5 py-2 rounded-xl text-sm font-bold transition-all shadow-md shadow-primary/10">
+                        Compile
+                    </button>
+</div>
+</div>
+</header>
+<!-- Wiki Content Canvas -->
+<div class="flex-1 px-10 py-10 max-w-[1400px] mx-auto w-full">
+<!-- Browse Header -->
+<section class="mb-12">
+<div class="flex flex-col md:flex-row md:items-end justify-between gap-6">
+<div>
+<nav class="flex items-center gap-2 text-xs font-bold text-primary mb-3 uppercase tracking-widest">
+<span class="opacity-60">Library</span>
+<span class="material-symbols-outlined text-[14px]">chevron_right</span>
+<span>Scholarly Wiki</span>
+</nav>
+<h2 class="text-4xl font-black tracking-tight text-on-surface mb-2">Wiki Browser</h2>
+<p class="text-on-surface-variant font-serif-cjk text-lg">Explore synthesized knowledge and curated insights from your ingested documents.</p>
+</div>
+<div class="flex items-center gap-2 bg-surface-container-low p-1 rounded-xl">
+<button class="px-4 py-2 bg-surface-container-lowest rounded-lg shadow-sm text-sm font-bold text-primary">Grid</button>
+<button class="px-4 py-2 hover:bg-surface-container-high rounded-lg text-sm font-medium text-on-surface-variant transition-colors">List</button>
+</div>
+</div>
+</section>
+<!-- Filter Bar -->
+<section class="mb-10 bg-surface-container-lowest rounded-2xl p-4 editorial-shadow flex flex-wrap items-center gap-4 border border-outline-variant/15">
+<div class="flex-1 min-w-[240px] relative">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-outline text-[18px]">filter_list</span>
+<input class="w-full pl-10 pr-4 py-2.5 bg-surface-container-low border-none rounded-xl text-sm focus:ring-2 focus:ring-primary/5" placeholder="Filter articles by title or keyword..." type="text"/>
+</div>
+<!-- Tag Chips -->
+<div class="flex items-center gap-2 overflow-x-auto pb-1 md:pb-0 scrollbar-hide">
+<button class="whitespace-nowrap px-4 py-1.5 rounded-full bg-secondary-container/20 text-on-secondary-container text-xs font-bold border border-secondary-container/30">Philosophy</button>
+<button class="whitespace-nowrap px-4 py-1.5 rounded-full bg-tertiary-container/10 text-tertiary-container text-xs font-bold hover:bg-tertiary-container/20 transition-colors">Machine Learning</button>
+<button class="whitespace-nowrap px-4 py-1.5 rounded-full bg-surface-container-high text-on-surface-variant text-xs font-bold hover:bg-surface-container-highest transition-colors">Neuroscience</button>
+<button class="whitespace-nowrap px-4 py-1.5 rounded-full bg-surface-container-high text-on-surface-variant text-xs font-bold hover:bg-surface-container-highest transition-colors">Linguistics</button>
+<button class="w-8 h-8 flex items-center justify-center rounded-full bg-surface-container-low text-outline hover:text-primary transition-colors">
+<span class="material-symbols-outlined text-[18px]">add</span>
+</button>
+</div>
+<div class="h-8 w-px bg-outline-variant/30 hidden md:block"></div>
+<div class="relative min-w-[160px]">
+<select class="w-full pl-4 pr-10 py-2.5 bg-surface-container-low border-none rounded-xl text-sm font-semibold text-on-surface focus:ring-2 focus:ring-primary/5 appearance-none">
+<option>Alphabetical</option>
+<option>Newest</option>
+<option>Most linked</option>
+</select>
+<span class="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-outline pointer-events-none text-[20px]">expand_more</span>
+</div>
+</section>
+<!-- Article Grid -->
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+<!-- Article Card 1 -->
+<article class="group bg-surface-container-lowest rounded-xl p-6 editorial-shadow transition-all duration-300 card-glow flex flex-col border border-outline-variant/10">
+<div class="flex items-center justify-between mb-4">
+<div class="px-3 py-1 rounded-full bg-tertiary-container/10 text-tertiary-container text-[10px] font-black uppercase tracking-wider">
+                            Verified Analysis
+                        </div>
+<span class="text-[10px] font-mono-jb text-outline uppercase font-bold">Ref: LX-402</span>
+</div>
+<h3 class="text-xl font-bold text-on-surface mb-3 group-hover:text-primary transition-colors leading-tight">The Ontology of Generative Latent Spaces</h3>
+<p class="text-on-surface-variant font-serif-cjk text-sm leading-relaxed mb-6 line-clamp-3">
+                        生成模型中的潜空间本体论探讨了高维向量如何表征语义连续性。本文通过对拓扑结构的深入分析，揭示了概念在概率空间中的聚合规律。
+                    </p>
+<div class="mt-auto pt-6 border-t border-outline-variant/10 flex items-center justify-between">
+<div class="flex items-center gap-2">
+<span class="px-2.5 py-1 rounded-lg bg-surface-container text-on-surface-variant text-[10px] font-bold">Philosophy</span>
+<span class="px-2.5 py-1 rounded-lg bg-surface-container text-on-surface-variant text-[10px] font-bold">AI</span>
+</div>
+<div class="flex items-center gap-1.5 text-outline">
+<span class="material-symbols-outlined text-[16px]">menu_book</span>
+<span class="text-[11px] font-bold">1,240 words</span>
+</div>
+</div>
+</article>
+<!-- Article Card 2 -->
+<article class="group bg-surface-container-lowest rounded-xl p-6 editorial-shadow transition-all duration-300 card-glow flex flex-col border border-outline-variant/10">
+<div class="flex items-center justify-between mb-4">
+<div class="px-3 py-1 rounded-full bg-secondary-container/20 text-on-secondary-container text-[10px] font-black uppercase tracking-wider">
+                            Draft Synthesis
+                        </div>
+<span class="text-[10px] font-mono-jb text-outline uppercase font-bold">Ref: NS-881</span>
+</div>
+<h3 class="text-xl font-bold text-on-surface mb-3 group-hover:text-primary transition-colors leading-tight">Synaptic Plasticity vs. Weight Decay</h3>
+<p class="text-on-surface-variant font-serif-cjk text-sm leading-relaxed mb-6 line-clamp-3">
+                        A comparative study between biological neural forgetting and artificial weight regularization. Understanding the "Critical Period" in both mammalian brains and transformer training.
+                    </p>
+<div class="mt-auto pt-6 border-t border-outline-variant/10 flex items-center justify-between">
+<div class="flex items-center gap-2">
+<span class="px-2.5 py-1 rounded-lg bg-surface-container text-on-surface-variant text-[10px] font-bold">Neuroscience</span>
+</div>
+<div class="flex items-center gap-1.5 text-outline">
+<span class="material-symbols-outlined text-[16px]">menu_book</span>
+<span class="text-[11px] font-bold">3,150 words</span>
+</div>
+</div>
+</article>
+<!-- Article Card 3 -->
+<article class="group bg-surface-container-lowest rounded-xl p-6 editorial-shadow transition-all duration-300 card-glow flex flex-col border border-outline-variant/10">
+<div class="flex items-center justify-between mb-4">
+<div class="px-3 py-1 rounded-full bg-primary-container/10 text-primary text-[10px] font-black uppercase tracking-wider">
+                            Comprehensive Wiki
+                        </div>
+<span class="text-[10px] font-mono-jb text-outline uppercase font-bold">Ref: LG-012</span>
+</div>
+<h3 class="text-xl font-bold text-on-surface mb-3 group-hover:text-primary transition-colors leading-tight">Morphological Shifts in LLM Fine-tuning</h3>
+<p class="text-on-surface-variant font-serif-cjk text-sm leading-relaxed mb-6 line-clamp-3">
+                        微调过程中的形态转变研究。探讨了模型在特定领域数据训练下，其语言输出风格与语法结构的演化路径及其对人类交互的影响。
+                    </p>
+<div class="mt-auto pt-6 border-t border-outline-variant/10 flex items-center justify-between">
+<div class="flex items-center gap-2">
+<span class="px-2.5 py-1 rounded-lg bg-surface-container text-on-surface-variant text-[10px] font-bold">Linguistics</span>
+<span class="px-2.5 py-1 rounded-lg bg-surface-container text-on-surface-variant text-[10px] font-bold">Synthesis</span>
+</div>
+<div class="flex items-center gap-1.5 text-outline">
+<span class="material-symbols-outlined text-[16px]">menu_book</span>
+<span class="text-[11px] font-bold">890 words</span>
+</div>
+</div>
+</article>
+<!-- Article Card 4 (AI Glass Variant) -->
+<article class="group ai-glass rounded-xl p-6 editorial-shadow transition-all duration-300 card-glow flex flex-col border border-secondary/10">
+<div class="flex items-center justify-between mb-4">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-secondary text-[18px]" style="font-variation-settings: 'FILL' 1;">auto_awesome</span>
+<span class="text-[10px] font-black uppercase tracking-wider text-secondary">AI Suggested</span>
+</div>
+<span class="text-[10px] font-mono-jb text-outline uppercase font-bold">PROPOSED</span>
+</div>
+<h3 class="text-xl font-bold text-on-surface mb-3 group-hover:text-primary transition-colors leading-tight">Quantization &amp; The Loss of Poetic Nuance</h3>
+<p class="text-on-surface-variant font-serif-cjk text-sm leading-relaxed mb-6 line-clamp-3">
+                        Does 4-bit quantization destroy the "soul" of literary generation? A heuristic evaluation of creative drift in compressed language models.
+                    </p>
+<div class="mt-auto pt-6 border-t border-secondary/10 flex items-center justify-between">
+<div class="flex items-center gap-2">
+<span class="px-2.5 py-1 rounded-lg bg-secondary-container/30 text-on-secondary-container text-[10px] font-bold">Literature</span>
+</div>
+<div class="flex items-center gap-1.5 text-outline">
+<button class="text-[11px] font-black text-secondary hover:underline underline-offset-4">Generate Entry</button>
+</div>
+</div>
+</article>
+<!-- Article Card 5 -->
+<article class="group bg-surface-container-lowest rounded-xl p-6 editorial-shadow transition-all duration-300 card-glow flex flex-col border border-outline-variant/10">
+<div class="flex items-center justify-between mb-4">
+<div class="px-3 py-1 rounded-full bg-tertiary-container/10 text-tertiary-container text-[10px] font-black uppercase tracking-wider">
+                            Cross-Linked
+                        </div>
+<span class="text-[10px] font-mono-jb text-outline uppercase font-bold">Ref: ET-552</span>
+</div>
+<h3 class="text-xl font-bold text-on-surface mb-3 group-hover:text-primary transition-colors leading-tight">Ethics of Recursive Knowledge Loops</h3>
+<p class="text-on-surface-variant font-serif-cjk text-sm leading-relaxed mb-6 line-clamp-3">
+                        递归知识循环的伦理学分析。当AI开始学习由AI生成的Wiki条目时，知识的真实性与多样性将面临怎样的挑战与重构？
+                    </p>
+<div class="mt-auto pt-6 border-t border-outline-variant/10 flex items-center justify-between">
+<div class="flex items-center gap-2">
+<span class="px-2.5 py-1 rounded-lg bg-surface-container text-on-surface-variant text-[10px] font-bold">Ethics</span>
+<span class="px-2.5 py-1 rounded-lg bg-surface-container text-on-surface-variant text-[10px] font-bold">Systems</span>
+</div>
+<div class="flex items-center gap-1.5 text-outline">
+<span class="material-symbols-outlined text-[16px]">menu_book</span>
+<span class="text-[11px] font-bold">2,440 words</span>
+</div>
+</div>
+</article>
+<!-- Empty State Placeholder (Normally Hidden) -->
+<div class="hidden col-span-full flex flex-col items-center justify-center py-24 text-center">
+<div class="w-64 h-64 mb-8">
+<img alt="Empty Library" data-alt="Minimalist drawing of an empty bookshelf with soft shadows and scholarly aesthetic" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBkZC-0OntCyGWgf7Jq2i89E4DXnLOX7_nmqAsAksppW9z8eMY1OunZoi7hiFoTMgPZUtgbH3kE-IGGYhD5K3xG0fI1CDOy6X9nuMZnDxiyS9PiWGp1ZvrkT6RJ4rniS2ud89CnLI_1LqzPI0YdXVnQDcwCCodgkbG1oBoI5z574IkviRhBP7IweOhlpEt3qBXGYT3oDREj0ZAibf3OC8OkcvejytQ7vz8WbamPXT8yyJdsYI3MZtfZBYTa-xaJ9TIdOHByfG5WfQ"/>
+</div>
+<h4 class="text-2xl font-bold text-on-surface mb-2">No articles yet</h4>
+<p class="text-on-surface-variant font-serif-cjk max-w-md mx-auto mb-8">
+                        Ingest some documents and compile them to start building your Scholarly Synthesis.
+                    </p>
+<button class="bg-primary text-white px-8 py-3 rounded-xl font-bold flex items-center gap-2 hover:bg-primary-container transition-all">
+<span class="material-symbols-outlined">input</span>
+                        Begin Ingestion
+                    </button>
+</div>
+</div>
+<!-- Footer Pagination / Info -->
+<footer class="mt-20 pt-10 border-t border-outline-variant/20 flex flex-col md:flex-row items-center justify-between gap-6">
+<div class="text-xs font-medium text-outline">
+                    Showing <span class="text-on-surface font-bold">5</span> of <span class="text-on-surface font-bold">142</span> synthesized entries
+                </div>
+<div class="flex items-center gap-2">
+<button class="w-10 h-10 flex items-center justify-center rounded-lg border border-outline-variant/30 text-outline hover:bg-surface-container-low transition-colors">
+<span class="material-symbols-outlined">chevron_left</span>
+</button>
+<button class="w-10 h-10 flex items-center justify-center rounded-lg bg-primary text-white font-bold text-sm">1</button>
+<button class="w-10 h-10 flex items-center justify-center rounded-lg hover:bg-surface-container-low text-on-surface font-bold text-sm transition-colors">2</button>
+<button class="w-10 h-10 flex items-center justify-center rounded-lg hover:bg-surface-container-low text-on-surface font-bold text-sm transition-colors">3</button>
+<span class="px-2 text-outline">...</span>
+<button class="w-10 h-10 flex items-center justify-center rounded-lg hover:bg-surface-container-low text-on-surface font-bold text-sm transition-colors">12</button>
+<button class="w-10 h-10 flex items-center justify-center rounded-lg border border-outline-variant/30 text-outline hover:bg-surface-container-low transition-colors">
+<span class="material-symbols-outlined">chevron_right</span>
+</button>
+</div>
+</footer>
+</div>
+</main>
+<!-- FAB for quick entry (Contextual) -->
+<button class="fixed bottom-8 right-8 w-14 h-14 bg-gradient-to-br from-primary to-primary-container text-white rounded-2xl shadow-xl shadow-primary/30 flex items-center justify-center hover:scale-105 active:scale-95 transition-transform z-50">
+<span class="material-symbols-outlined" style="font-variation-settings: 'wght' 600;">edit_note</span>
+</button>
+</body></html>

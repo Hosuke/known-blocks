@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&amp;family=Noto+Serif+SC:wght@300;400;600;700&amp;family=JetBrains+Mono&amp;family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "on-surface": "#dce1fb",
+                        "surface-container-high": "#23293c",
+                        "on-tertiary-fixed-variant": "#005137",
+                        "on-primary-fixed-variant": "#2f3aa3",
+                        "tertiary-container": "#006848",
+                        "secondary-fixed": "#a2eeff",
+                        "surface-container-highest": "#2e3447",
+                        "primary-container": "#444fb7",
+                        "surface-dim": "#0c1324",
+                        "on-primary-fixed": "#000767",
+                        "secondary": "#5de6ff",
+                        "surface-variant": "#2e3447",
+                        "on-tertiary": "#003825",
+                        "secondary-container": "#00cbe6",
+                        "error-container": "#93000a",
+                        "error": "#ffb4ab",
+                        "on-primary": "#131e8c",
+                        "on-error-container": "#ffdad6",
+                        "tertiary-fixed": "#68fcbf",
+                        "surface-container-low": "#151b2d",
+                        "inverse-surface": "#dce1fb",
+                        "surface-tint": "#bdc2ff",
+                        "inverse-on-surface": "#2a3043",
+                        "outline": "#8f909e",
+                        "surface-bright": "#33394c",
+                        "primary-fixed-dim": "#bdc2ff",
+                        "on-background": "#dce1fb",
+                        "on-secondary-container": "#00515d",
+                        "tertiary": "#45dfa4",
+                        "on-secondary": "#00363e",
+                        "on-surface-variant": "#c5c5d4",
+                        "surface": "#0c1324",
+                        "surface-container-lowest": "#070d1f",
+                        "on-error": "#690005",
+                        "inverse-primary": "#4953bc",
+                        "on-tertiary-container": "#55ecb0",
+                        "on-primary-container": "#cccfff",
+                        "background": "#0c1324",
+                        "outline-variant": "#454652",
+                        "surface-container": "#191f31",
+                        "secondary-fixed-dim": "#2fd9f4",
+                        "on-secondary-fixed": "#001f25",
+                        "primary": "#bdc2ff",
+                        "primary-fixed": "#e0e0ff",
+                        "on-tertiary-fixed": "#002114",
+                        "on-secondary-fixed-variant": "#004e5a",
+                        "tertiary-fixed-dim": "#45dfa4"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "fontFamily": {
+                        "headline": ["Noto Serif SC"],
+                        "body": ["Noto Serif SC"],
+                        "label": ["Inter"]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .citation-badge {
+            font-size: 0.65rem;
+            vertical-align: super;
+            margin-left: 2px;
+        }
+    </style>
+</head>
+<body class="bg-surface-dim text-on-surface font-body selection:bg-secondary/30 selection:text-secondary">
+<div class="flex min-h-screen">
+<!-- SideNavBar Component -->
+<aside class="w-[260px] h-screen sticky left-0 top-0 bg-[#0c1324] shadow-[20px_0_40px_rgba(0,0,0,0.4)] flex flex-col py-8 px-6 space-y-6 border-r border-outline-variant/10">
+<div class="flex items-center space-x-3 mb-4">
+<span class="font-['Noto_Serif_SC'] italic text-xl tracking-tighter text-[#bdc2ff]">LLMBase</span>
+</div>
+<nav class="flex-grow space-y-1">
+<a class="flex items-center space-x-3 h-10 transition-colors pl-4 text-slate-400 hover:text-slate-200 hover:bg-[#191f31] rounded-lg" href="#">
+<span class="material-symbols-outlined" data-icon="dashboard">dashboard</span>
+<span class="font-['Noto_Serif_SC'] text-sm tracking-wide">Dashboard</span>
+</a>
+<a class="flex items-center space-x-3 h-10 transition-colors pl-4 text-slate-400 hover:text-slate-200 hover:bg-[#191f31] rounded-lg" href="#">
+<span class="material-symbols-outlined" data-icon="auto_stories">auto_stories</span>
+<span class="font-['Noto_Serif_SC'] text-sm tracking-wide">Wiki</span>
+</a>
+<a class="flex items-center space-x-3 h-10 transition-colors pl-4 text-slate-400 hover:text-slate-200 hover:bg-[#191f31] rounded-lg" href="#">
+<span class="material-symbols-outlined" data-icon="search">search</span>
+<span class="font-['Noto_Serif_SC'] text-sm tracking-wide">Search</span>
+</a>
+<a class="flex items-center space-x-3 h-10 text-[#bdc2ff] font-semibold border-l-2 border-[#5de6ff] pl-4 bg-[#191f31] rounded-r-lg" href="#">
+<span class="material-symbols-outlined" data-icon="forum">forum</span>
+<span class="font-['Noto_Serif_SC'] text-sm tracking-wide">Q&amp;A</span>
+</a>
+<a class="flex items-center space-x-3 h-10 transition-colors pl-4 text-slate-400 hover:text-slate-200 hover:bg-[#191f31] rounded-lg" href="#">
+<span class="material-symbols-outlined" data-icon="hub">hub</span>
+<span class="font-['Noto_Serif_SC'] text-sm tracking-wide">Graph</span>
+</a>
+<a class="flex items-center space-x-3 h-10 transition-colors pl-4 text-slate-400 hover:text-slate-200 hover:bg-[#191f31] rounded-lg" href="#">
+<span class="material-symbols-outlined" data-icon="upload_file">upload_file</span>
+<span class="font-['Noto_Serif_SC'] text-sm tracking-wide">Ingest</span>
+</a>
+<a class="flex items-center space-x-3 h-10 transition-colors pl-4 text-slate-400 hover:text-slate-200 hover:bg-[#191f31] rounded-lg" href="#">
+<span class="material-symbols-outlined" data-icon="monitor_heart">monitor_heart</span>
+<span class="font-['Noto_Serif_SC'] text-sm tracking-wide">Health</span>
+</a>
+</nav>
+<button class="w-full py-2.5 bg-primary-container text-on-primary-container rounded-lg font-label text-xs uppercase tracking-widest hover:brightness-110 transition-all">
+                Compile Knowledge
+            </button>
+<div class="pt-6 border-t border-outline-variant/10 space-y-1">
+<a class="flex items-center space-x-3 h-10 transition-colors pl-4 text-slate-400 hover:text-slate-200 rounded-lg" href="#">
+<span class="material-symbols-outlined" data-icon="settings">settings</span>
+<span class="font-['Noto_Serif_SC'] text-sm tracking-wide">Settings</span>
+</a>
+<a class="flex items-center space-x-3 h-10 transition-colors pl-4 text-slate-400 hover:text-slate-200 rounded-lg" href="#">
+<span class="material-symbols-outlined" data-icon="help_outline">help_outline</span>
+<span class="font-['Noto_Serif_SC'] text-sm tracking-wide">Support</span>
+</a>
+</div>
+</aside>
+<!-- Main Content Canvas -->
+<main class="flex-1 flex flex-col min-w-0 bg-surface-dim">
+<!-- TopNavBar Component -->
+<header class="h-16 w-full sticky top-0 z-50 bg-[#0c1324]/70 backdrop-blur-xl flex justify-between items-center px-12 border-b border-outline-variant/5">
+<div class="flex items-center max-w-md w-full">
+<div class="relative w-full group">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 text-sm">search</span>
+<input class="w-full bg-surface-container-lowest border-none rounded-full py-1.5 pl-10 pr-4 text-xs font-label focus:ring-1 focus:ring-secondary/30 transition-all placeholder:text-slate-600" placeholder="Search archive..." type="text"/>
+</div>
+</div>
+<div class="flex items-center space-x-6">
+<div class="flex items-center space-x-4">
+<button class="text-slate-400 hover:text-secondary transition-colors">
+<span class="material-symbols-outlined" data-icon="dark_mode">dark_mode</span>
+</button>
+<button class="text-slate-400 hover:text-secondary transition-colors">
+<span class="material-symbols-outlined" data-icon="settings">settings</span>
+</button>
+</div>
+<div class="h-8 w-[1px] bg-outline-variant/20"></div>
+<button class="flex items-center space-x-2 bg-primary-container/20 px-4 py-1.5 rounded-full text-primary hover:bg-primary-container/30 transition-all">
+<span class="font-label text-xs uppercase tracking-widest font-bold">Compile</span>
+<span class="text-[10px] text-primary/60 font-mono">Cmd+K</span>
+</button>
+<img class="h-8 w-8 rounded-full border border-primary/20 object-cover" data-alt="Close up portrait of a sophisticated person with scholarly glasses and neutral expression in soft studio lighting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuD20PavlFFAXd7ADv3fEbvZwW9Zv5EPtskZzTDeJeHgyXv_XuWt9Zo6hqQIHkl9Z9Pvv-fQjvi8DXRR4dWejNaxmzmzvGmeKtrzf80-XGv4JGFQUiuD5p3X8okHCFbzyUGxkZ050NrNA1QHGQNEAOE5Qy5vTfd3avdmuO4-i4FzhYlTHlEtHrMs4lw9K677r2YvwJOgBQ8vs9IWstebvwDDo_Fgifocsb7jR6ScS82rfa9Z4STryePzMsmnmOmnvzlEoflfMYQBRQ"/>
+</div>
+</header>
+<!-- Q&A Content Area -->
+<div class="flex-1 overflow-y-auto px-12 py-12 flex flex-col items-center">
+<div class="max-w-3xl w-full space-y-12 pb-32">
+<!-- Header Statement -->
+<div class="space-y-2">
+<span class="font-label text-[10px] uppercase tracking-[0.3em] text-secondary">Editorial Intelligence</span>
+<h1 class="text-4xl font-headline font-light text-on-surface">Curate Insights.</h1>
+</div>
+<!-- Input Section (Perplexity Style) -->
+<section class="w-full bg-surface-container rounded-xl shadow-xl overflow-hidden focus-within:ring-1 focus-within:ring-secondary/40 transition-all">
+<div class="p-4">
+<textarea class="w-full min-h-[120px] bg-transparent border-none focus:ring-0 text-lg font-body placeholder:text-slate-600 resize-none" placeholder="Ask LLMBase anything about your curated wiki..."></textarea>
+</div>
+<div class="px-4 py-3 bg-surface-container-high/50 flex items-center justify-between">
+<div class="flex items-center space-x-4">
+<label class="flex items-center space-x-2 cursor-pointer group">
+<div class="relative w-10 h-5 bg-surface-container-lowest rounded-full transition-colors group-hover:bg-surface-container-highest">
+<div class="absolute left-1 top-1 w-3 h-3 bg-slate-500 rounded-full transition-all"></div>
+</div>
+<span class="font-label text-xs text-slate-400 group-hover:text-slate-200">Deep Research</span>
+</label>
+<label class="flex items-center space-x-2 cursor-pointer group">
+<input class="rounded-sm bg-surface-container-lowest border-outline-variant text-secondary focus:ring-secondary/20 h-4 w-4" type="checkbox"/>
+<span class="font-label text-xs text-slate-400 group-hover:text-slate-200">File back to Wiki</span>
+</label>
+</div>
+<div class="flex items-center space-x-3">
+<button class="p-2 text-slate-400 hover:text-primary transition-colors">
+<span class="material-symbols-outlined" data-icon="attach_file">attach_file</span>
+</button>
+<button class="px-6 py-2 bg-gradient-to-br from-primary to-primary-container text-on-primary font-label text-xs uppercase tracking-widest font-bold rounded-lg shadow-lg shadow-primary/10 hover:shadow-primary/20 active:scale-95 transition-all">
+                                    Ask
+                                </button>
+</div>
+</div>
+</section>
+<!-- Answer Area -->
+<article class="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
+<div class="flex items-start space-x-6">
+<div class="w-8 h-8 rounded-full bg-secondary/10 flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined text-secondary text-sm" data-icon="auto_awesome" style="font-variation-settings: 'FILL' 1;">auto_awesome</span>
+</div>
+<div class="space-y-6">
+<h2 class="text-xl font-headline font-semibold text-secondary">The Synthesis</h2>
+<div class="prose prose-invert max-w-none text-slate-300 leading-relaxed space-y-6">
+<p class="text-lg">
+                                        According to the internal knowledge graph, the concept of <span class="text-primary font-medium">Digital Curation</span> has shifted from simple data management to a form of <span class="italic">editorial intelligence</span>.<sup class="text-secondary citation-badge cursor-pointer hover:underline">[1]</sup> This transition marks the end of the "Information Overload" era, replacing it with a structured, scholarly approach to retrieval.
+                                    </p>
+<div class="bg-surface-container-lowest p-6 rounded-lg border-l-2 border-secondary space-y-2 italic">
+<p class="text-on-surface/90">"The curator does not simply collect; they distill the signal from the noise, creating a persistent record of validated truth."</p>
+<cite class="block font-label text-[10px] uppercase tracking-wider text-slate-500">— Editorial Principles, Vol 4.</cite>
+</div>
+<p>
+                                        Key pillars identified in your recent ingestions include:
+                                    </p>
+<ul class="space-y-3 list-none pl-0">
+<li class="flex items-start space-x-3">
+<span class="text-secondary mt-1 text-sm">●</span>
+<span><strong>Tonal Depth:</strong> Using luminosity and spatial hierarchy rather than borders to define boundaries.<sup class="text-secondary citation-badge cursor-pointer hover:underline">[2]</sup></span>
+</li>
+<li class="flex items-start space-x-3">
+<span class="text-secondary mt-1 text-sm">●</span>
+<span><strong>Scholarly Contrast:</strong> The juxtaposition of Noto Serif SC and Inter creates a dialogue between history and technology.<sup class="text-secondary citation-badge cursor-pointer hover:underline">[3]</sup></span>
+</li>
+</ul>
+</div>
+<!-- Citations Section -->
+<section class="pt-8 border-t border-outline-variant/10">
+<h4 class="font-label text-[10px] uppercase tracking-[0.2em] text-slate-500 mb-4">Referenced Sources</h4>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+<a class="group p-4 bg-surface-container rounded-lg hover:bg-surface-container-high transition-all flex items-start space-x-3" href="#">
+<div class="bg-surface-container-lowest p-2 rounded text-[10px] font-mono text-secondary">01</div>
+<div>
+<div class="text-sm font-semibold group-hover:text-primary transition-colors">Manifesto for Editorial AI</div>
+<div class="text-[10px] text-slate-500 font-label">Curated: 12 Oct 2023 • Wiki/Theory</div>
+</div>
+</a>
+<a class="group p-4 bg-surface-container rounded-lg hover:bg-surface-container-high transition-all flex items-start space-x-3" href="#">
+<div class="bg-surface-container-lowest p-2 rounded text-[10px] font-mono text-secondary">02</div>
+<div>
+<div class="text-sm font-semibold group-hover:text-primary transition-colors">Visual Design Systems</div>
+<div class="text-[10px] text-slate-500 font-label">Curated: 05 Nov 2023 • Wiki/Design</div>
+</div>
+</a>
+</div>
+</section>
+</div>
+</div>
+</article>
+<!-- Related Queries -->
+<section class="space-y-4">
+<h4 class="font-label text-[10px] uppercase tracking-[0.2em] text-slate-500">Explore Further</h4>
+<div class="flex flex-wrap gap-2">
+<button class="px-4 py-2 bg-surface-container-lowest border border-outline-variant/20 rounded-full text-xs font-label hover:border-secondary/50 hover:text-secondary transition-all">
+                                How does LLMBase handle contradictory citations?
+                            </button>
+<button class="px-4 py-2 bg-surface-container-lowest border border-outline-variant/20 rounded-full text-xs font-label hover:border-secondary/50 hover:text-secondary transition-all">
+                                Generate a summary of Tonal Layering
+                            </button>
+<button class="px-4 py-2 bg-surface-container-lowest border border-outline-variant/20 rounded-full text-xs font-label hover:border-secondary/50 hover:text-secondary transition-all">
+                                Archive this synthesis to "Core Design Theory"
+                            </button>
+</div>
+</section>
+</div>
+</div>
+<!-- Footer Meta -->
+<footer class="mt-auto py-6 px-12 flex justify-between items-center text-[10px] font-label text-slate-600 border-t border-outline-variant/5">
+<div class="flex items-center space-x-4">
+<span>STATUS: ALL NODES SYNCHRONIZED</span>
+<span class="w-1.5 h-1.5 rounded-full bg-tertiary"></span>
+</div>
+<div class="flex items-center space-x-8">
+<span>LATENCY: 42MS</span>
+<span>© 2024 DIGITAL CURATOR INSTANCE</span>
+</div>
+</footer>
+</main>
+</div>
+</body></html>

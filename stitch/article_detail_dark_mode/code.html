@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>LLMBase | Digital Curator Knowledge Detail</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&amp;family=Noto+Serif+SC:wght@300;400;700&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "on-surface": "#dce1fb",
+                        "surface-container-high": "#23293c",
+                        "on-tertiary-fixed-variant": "#005137",
+                        "on-primary-fixed-variant": "#2f3aa3",
+                        "tertiary-container": "#006848",
+                        "secondary-fixed": "#a2eeff",
+                        "surface-container-highest": "#2e3447",
+                        "primary-container": "#444fb7",
+                        "surface-dim": "#0c1324",
+                        "on-primary-fixed": "#000767",
+                        "secondary": "#5de6ff",
+                        "surface-variant": "#2e3447",
+                        "on-tertiary": "#003825",
+                        "secondary-container": "#00cbe6",
+                        "error-container": "#93000a",
+                        "error": "#ffb4ab",
+                        "on-primary": "#131e8c",
+                        "on-error-container": "#ffdad6",
+                        "tertiary-fixed": "#68fcbf",
+                        "surface-container-low": "#151b2d",
+                        "inverse-surface": "#dce1fb",
+                        "surface-tint": "#bdc2ff",
+                        "inverse-on-surface": "#2a3043",
+                        "outline": "#8f909e",
+                        "surface-bright": "#33394c",
+                        "primary-fixed-dim": "#bdc2ff",
+                        "on-background": "#dce1fb",
+                        "on-secondary-container": "#00515d",
+                        "tertiary": "#45dfa4",
+                        "on-secondary": "#00363e",
+                        "on-surface-variant": "#c5c5d4",
+                        "surface": "#0c1324",
+                        "surface-container-lowest": "#070d1f",
+                        "on-error": "#690005",
+                        "inverse-primary": "#4953bc",
+                        "on-tertiary-container": "#55ecb0",
+                        "on-primary-container": "#cccfff",
+                        "background": "#0c1324",
+                        "outline-variant": "#454652",
+                        "surface-container": "#191f31",
+                        "secondary-fixed-dim": "#2fd9f4",
+                        "on-secondary-fixed": "#001f25",
+                        "primary": "#bdc2ff",
+                        "primary-fixed": "#e0e0ff",
+                        "on-tertiary-fixed": "#002114",
+                        "on-secondary-fixed-variant": "#004e5a",
+                        "tertiary-fixed-dim": "#45dfa4"
+                    },
+                    borderRadius: {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    fontFamily: {
+                        "headline": ["Noto Serif SC", "serif"],
+                        "body": ["Noto Serif SC", "serif"],
+                        "label": ["Inter", "sans-serif"],
+                        "mono": ["JetBrains Mono", "monospace"]
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .prose h1 { font-size: 3.5rem; line-height: 1.1; margin-bottom: 2rem; font-weight: 300; }
+        .prose h2 { font-size: 1.75rem; margin-top: 3rem; margin-bottom: 1rem; color: #bdc2ff; }
+        .prose h3 { font-size: 1.25rem; margin-top: 2rem; margin-bottom: 0.75rem; }
+        .prose p { margin-bottom: 1.5rem; line-height: 1.8; color: #dce1fb; }
+        .wiki-link { color: #5de6ff; text-decoration: none; border-bottom: 1px solid rgba(93, 230, 255, 0.2); transition: all 0.2s; }
+        .wiki-link:hover { border-bottom-color: #5de6ff; background: rgba(93, 230, 255, 0.05); }
+        .code-block { background: #070d1f; border-radius: 8px; padding: 1.5rem; font-family: 'JetBrains Mono', monospace; font-size: 0.875rem; overflow-x: auto; margin: 2rem 0; }
+        .glass-panel { background: rgba(25, 31, 49, 0.7); backdrop-filter: blur(20px); }
+    </style>
+</head>
+<body class="bg-surface-dim text-on-surface font-body selection:bg-primary/30">
+<div class="flex min-h-screen">
+<!-- Sidebar Navigation -->
+<aside class="w-[260px] h-screen sticky left-0 top-0 bg-[#0c1324] flex flex-col py-8 px-6 space-y-6 shadow-[20px_0_40px_rgba(0,0,0,0.4)] z-50">
+<div class="flex items-center space-x-3 mb-4">
+<span class="material-symbols-outlined text-primary" style="font-variation-settings: 'FILL' 1;">hub</span>
+<span class="font-['Noto_Serif_SC'] italic text-xl tracking-tighter text-[#bdc2ff]">LLMBase</span>
+</div>
+<nav class="flex-1 space-y-1">
+<a class="flex items-center space-x-3 py-2 transition-all duration-300 hover:bg-[#191f31] group text-slate-400 hover:text-slate-200 pl-4" href="#">
+<span class="material-symbols-outlined group-hover:text-primary">dashboard</span>
+<span class="font-['Noto_Serif_SC'] text-sm tracking-wide">Dashboard</span>
+</a>
+<a class="flex items-center space-x-3 py-2 transition-all duration-300 hover:bg-[#191f31] group text-[#bdc2ff] font-semibold border-l-2 border-[#5de6ff] pl-4" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">auto_stories</span>
+<span class="font-['Noto_Serif_SC'] text-sm tracking-wide">Wiki</span>
+</a>
+<a class="flex items-center space-x-3 py-2 transition-all duration-300 hover:bg-[#191f31] group text-slate-400 hover:text-slate-200 pl-4" href="#">
+<span class="material-symbols-outlined">search</span>
+<span class="font-['Noto_Serif_SC'] text-sm tracking-wide">Search</span>
+</a>
+<a class="flex items-center space-x-3 py-2 transition-all duration-300 hover:bg-[#191f31] group text-slate-400 hover:text-slate-200 pl-4" href="#">
+<span class="material-symbols-outlined">forum</span>
+<span class="font-['Noto_Serif_SC'] text-sm tracking-wide">Q&amp;A</span>
+</a>
+<a class="flex items-center space-x-3 py-2 transition-all duration-300 hover:bg-[#191f31] group text-slate-400 hover:text-slate-200 pl-4" href="#">
+<span class="material-symbols-outlined">hub</span>
+<span class="font-['Noto_Serif_SC'] text-sm tracking-wide">Graph</span>
+</a>
+</nav>
+<div class="pt-6 border-t border-outline-variant/10">
+<button class="w-full bg-gradient-to-br from-primary to-primary-container text-on-primary py-3 rounded-lg font-label text-xs uppercase tracking-widest hover:shadow-[0_0_20px_rgba(189,194,255,0.3)] transition-all">
+                    Compile Knowledge
+                </button>
+</div>
+<div class="mt-auto space-y-1">
+<a class="flex items-center space-x-3 py-2 text-slate-400 hover:text-slate-200 pl-4" href="#">
+<span class="material-symbols-outlined">settings</span>
+<span class="font-['Noto_Serif_SC'] text-sm">Settings</span>
+</a>
+<div class="flex items-center space-x-3 p-4 mt-4 bg-surface-container-low rounded-xl">
+<div class="w-8 h-8 rounded-full overflow-hidden bg-primary-container">
+<img alt="Curator Profile" data-alt="close-up portrait of a digital curator avatar with soft cyan highlights on skin and sleek minimalist tech attire" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCnnpKw0mO9qylyE2-COCy1aidLWfwUyUXYa8kJz_6a1SbZ47MovgDOG2aZTlpOIj0PojP7UIHLnMe6I_qCZTjAbzR5CQAMtchf1mJTsgVzvXtvYexVzEpSMTE7gPgpp2wgxx2LmzyfxeanI-jWqBTm8ls3rtVBUhd8ViWW48zEYJ0sy3r7J2CXy0D04fTac1BgH7Sv0atKF1KnlRBoSAa3bpoBS99QW-mVwHHdnw212AwLwdUZDrqNqdZ50MT7csGXvxmP0NSo4Q"/>
+</div>
+<div class="flex flex-col">
+<span class="text-xs font-label font-bold text-on-surface">Curator Alpha</span>
+<span class="text-[10px] font-label text-outline uppercase tracking-tighter">Editorial Intelligence</span>
+</div>
+</div>
+</div>
+</aside>
+<!-- Main Content Area -->
+<main class="flex-1 flex flex-col">
+<!-- Top App Bar -->
+<header class="h-16 w-full sticky top-0 z-40 bg-[#0c1324]/70 backdrop-blur-xl flex justify-between items-center px-12">
+<div class="flex items-center flex-1 max-w-xl">
+<div class="relative w-full group">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-outline text-sm">search</span>
+<input class="w-full bg-surface-container-lowest border-none rounded-full py-2 pl-10 pr-4 text-xs font-label focus:ring-1 focus:ring-secondary/30 transition-all placeholder:text-outline/50" placeholder="Search archive (Cmd + K)" type="text"/>
+</div>
+</div>
+<div class="flex items-center space-x-6">
+<div class="flex items-center space-x-4">
+<button class="text-slate-400 hover:text-secondary transition-colors"><span class="material-symbols-outlined">dark_mode</span></button>
+<button class="text-slate-400 hover:text-secondary transition-colors"><span class="material-symbols-outlined">settings</span></button>
+</div>
+<button class="bg-primary-container/20 text-primary px-4 py-1.5 rounded-full text-[10px] font-label uppercase tracking-widest border border-primary/20 hover:bg-primary/20 transition-all">
+                        Compile
+                    </button>
+</div>
+</header>
+<!-- Knowledge Layout -->
+<div class="flex-1 flex justify-center py-20 px-8">
+<!-- Article Container -->
+<article class="max-w-[720px] w-full prose prose-invert">
+<!-- Editorial Header -->
+<header class="mb-16">
+<div class="flex items-center space-x-2 mb-6">
+<span class="bg-secondary/10 text-secondary px-3 py-1 rounded text-[10px] font-label uppercase tracking-widest">Theoretical Framework</span>
+<span class="text-outline text-[10px] tracking-widest">•</span>
+<span class="text-outline text-[10px] font-label uppercase tracking-widest">Article #829</span>
+</div>
+<h1 class="font-headline italic">The Architecture of Synthetic Cognition: 人工智能与语言哲学</h1>
+<div class="flex items-center space-x-8 mt-10 py-6 border-y border-outline-variant/10">
+<div class="flex flex-col">
+<span class="text-[10px] font-label uppercase tracking-widest text-outline mb-1">Curated On</span>
+<span class="text-sm font-label text-on-surface">October 24, 2024</span>
+</div>
+<div class="flex flex-col">
+<span class="text-[10px] font-label uppercase tracking-widest text-outline mb-1">Volume</span>
+<span class="text-sm font-label text-on-surface">2,482 Words</span>
+</div>
+<div class="flex flex-col">
+<span class="text-[10px] font-label uppercase tracking-widest text-outline mb-1">Sources</span>
+<span class="text-sm font-label text-on-surface">12 Citations</span>
+</div>
+<div class="flex flex-col">
+<span class="text-[10px] font-label uppercase tracking-widest text-outline mb-1">Status</span>
+<div class="flex items-center space-x-1">
+<span class="w-1.5 h-1.5 rounded-full bg-tertiary"></span>
+<span class="text-sm font-label text-tertiary">Validated</span>
+</div>
+</div>
+</div>
+</header>
+<!-- Markdown Content Simulation -->
+<section class="leading-relaxed">
+<p class="text-lg opacity-90 first-letter:text-5xl first-letter:font-headline first-letter:mr-3 first-letter:float-left first-letter:text-primary">
+                            Synthetic cognition represents the frontier of editorial intelligence. When we analyze the convergence of <a class="wiki-link" href="#">[[Transformer Models]]</a> and the semiotics of human communication, we find that meaning is not merely extracted, but curated through layers of statistical inference.
+                        </p>
+<div class="bg-surface-container-lowest border-l-2 border-secondary p-8 my-10 italic">
+                            "语言的边界即是世界的边界。" — 这里的核心挑战在于，人工智能如何跨越统计相关性，走向语义真实？
+                        </div>
+<h2>The Vector Space Paradigm</h2>
+<p>
+                            In the high-dimensional geometry of an LLM, words are mapped as points in a latent manifold. This <a class="wiki-link" href="#">[[Vector Embedding]]</a> strategy allows for a nuanced understanding of context that transcends simple keyword matching.
+                        </p>
+<h3>Implementation Architecture</h3>
+<div class="code-block">
+<div class="flex justify-between items-center mb-4 pb-4 border-b border-white/5">
+<span class="text-xs text-outline font-mono">embedding_engine.py</span>
+<span class="text-[10px] font-label text-outline uppercase tracking-tighter">Python 3.11</span>
+</div>
+<code class="text-on-surface leading-loose">
+<span class="text-secondary">def</span> <span class="text-tertiary">project_knowledge</span>(context_stream):<br/>
+    tensor = tokenizer.encode(context_stream)<br/>
+    <span class="text-outline"># Apply latent attention mask</span><br/>
+    projection = model.latent_space(tensor)<br/>
+    <span class="text-secondary">return</span> projection.mean(dim=<span class="text-primary">1</span>)
+                            </code>
+</div>
+<p>
+                            As we see in the <a class="wiki-link" href="#">[[Attention Mechanism]]</a>, the model selectively weighs input parameters. This is the technical equivalent of an editorial "eye" focusing on the most pertinent citations in a sea of data.
+                        </p>
+<h2>Cross-Lingual Inference (中英双语推理)</h2>
+<p>
+                            LLMBase 处理 CJK（中日韩）文本时，不仅是翻译，更是一种**知识对齐**。跨语言推理允许系统在不同的语言范式之间提取共性逻辑。
+                        </p>
+<div class="grid grid-cols-2 gap-8 my-12">
+<div class="rounded-xl overflow-hidden aspect-[4/3] bg-surface-container relative group">
+<img alt="Knowledge Graph Visualization" class="w-full h-full object-cover" data-alt="a complex three-dimensional neural network graph with glowing indigo nodes and cyan fiber-optic connections on a dark background" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBMijJjnsOnK-pjlAr7_OZPbr4D039ySywGVntlZRKWkm4OBlDdWuKYX_c7u97gmNayVx5zkhA65VhqceWntLt0EMXsTjsN9Md25WPe8K-yOW7zQOlcPsxL2gpFJETumJdM7l3bkajfwJFj_j-mTraQy_BLTjrsIvO8gCYXIhEiVdoWClwLEMDSEY2wIkV0pxQTrYyRLGHcF5e7bW1tmzrnUmUTiCGPvtfA1yYGGzAWgK0l_9TnNJQ52tZYhEGv0iqPKZyiZOeU-g"/>
+<div class="absolute inset-0 bg-gradient-to-t from-surface-dim to-transparent opacity-60"></div>
+<div class="absolute bottom-4 left-4">
+<span class="text-[10px] font-label uppercase tracking-widest text-primary">Fig 1. Latent Manifold</span>
+</div>
+</div>
+<div class="rounded-xl overflow-hidden aspect-[4/3] bg-surface-container relative group">
+<img alt="Information Flow" class="w-full h-full object-cover" data-alt="abstract flowing waves of digital light in shades of emerald and teal moving horizontally across a dark midnight blue canvas" src="https://lh3.googleusercontent.com/aida-public/AB6AXuD0EQxEDlu2IuThYOemCtJXUSK94VvDyLZgHT9wo37MXkaFaBfxo3YhVb98tPnog0BPFSQCxF5EwGL02mkIx1vAOIBMaoSFoytRJuWUzAAHwueSs3we51hsixHRgsY9XvE_K8ZgjLsCspTWZYliV1mVHMhMe1hfYDzHPzoluAwgrLAmCvUV_pSS0_ZfmE9bVdDjSxcvL_QYg9Di2xuAjHX6v6oo8trRzJI51VTQr6K_sFq8JINwZsf3JxfAn_1d_izk9APwiMBgQQ"/>
+<div class="absolute inset-0 bg-gradient-to-t from-surface-dim to-transparent opacity-60"></div>
+<div class="absolute bottom-4 left-4">
+<span class="text-[10px] font-label uppercase tracking-widest text-tertiary">Fig 2. Attention Flux</span>
+</div>
+</div>
+</div>
+<p>
+                            Final considerations on <a class="wiki-link" href="#">[[Heuristic Search]]</a> suggest that we are nearing a point where the distinction between "found" information and "synthesized" knowledge becomes purely academic.
+                        </p>
+</section>
+<!-- Article Footer -->
+<footer class="mt-20 pt-10 border-t border-outline-variant/20 flex justify-between items-center">
+<div class="flex items-center space-x-4">
+<button class="flex items-center space-x-2 text-outline hover:text-primary transition-colors text-xs font-label uppercase tracking-widest">
+<span class="material-symbols-outlined text-sm">thumb_up</span>
+<span>Insightful</span>
+</button>
+<button class="flex items-center space-x-2 text-outline hover:text-primary transition-colors text-xs font-label uppercase tracking-widest">
+<span class="material-symbols-outlined text-sm">share</span>
+<span>Export Citation</span>
+</button>
+</div>
+<div class="flex -space-x-2">
+<div class="w-8 h-8 rounded-full border-2 border-surface-dim bg-slate-700 flex items-center justify-center text-[10px] font-bold">JD</div>
+<div class="w-8 h-8 rounded-full border-2 border-surface-dim bg-slate-600 flex items-center justify-center text-[10px] font-bold">AL</div>
+<div class="w-8 h-8 rounded-full border-2 border-surface-dim bg-primary-container flex items-center justify-center text-[10px] font-bold">+4</div>
+</div>
+</footer>
+</article>
+<!-- Sidebar Metadata & TOC -->
+<aside class="hidden xl:block w-[280px] ml-16">
+<div class="sticky top-32 space-y-12">
+<!-- Table of Contents -->
+<section>
+<h4 class="text-[10px] font-label uppercase tracking-[0.2em] text-outline mb-6">Article Structure</h4>
+<nav class="space-y-4">
+<a class="block text-xs font-label text-primary border-l-2 border-primary pl-4" href="#">The Vector Space Paradigm</a>
+<a class="block text-xs font-label text-outline hover:text-on-surface transition-colors pl-4" href="#">Implementation Architecture</a>
+<a class="block text-xs font-label text-outline hover:text-on-surface transition-colors pl-4" href="#">Cross-Lingual Inference</a>
+<a class="block text-xs font-label text-outline hover:text-on-surface transition-colors pl-4" href="#">Final Synthesis</a>
+</nav>
+</section>
+<!-- Backlinks -->
+<section>
+<h4 class="text-[10px] font-label uppercase tracking-[0.2em] text-outline mb-6">Referenced By</h4>
+<div class="space-y-4">
+<div class="bg-surface-container-low p-4 rounded-xl hover:bg-surface-container transition-all cursor-pointer group">
+<span class="text-[9px] font-label uppercase tracking-widest text-secondary block mb-1">Knowledge Node</span>
+<p class="text-xs font-headline group-hover:text-primary transition-colors">Epistemology of AI Systems</p>
+</div>
+<div class="bg-surface-container-low p-4 rounded-xl hover:bg-surface-container transition-all cursor-pointer group">
+<span class="text-[9px] font-label uppercase tracking-widest text-tertiary block mb-1">Research Paper</span>
+<p class="text-xs font-headline group-hover:text-tertiary transition-colors">Cross-Lingual Transformer Models 2024</p>
+</div>
+</div>
+</section>
+<!-- Related Articles -->
+<section>
+<h4 class="text-[10px] font-label uppercase tracking-[0.2em] text-outline mb-6">Semantic Neighbors</h4>
+<ul class="space-y-3">
+<li>
+<a class="flex items-center space-x-3 text-xs text-on-surface/70 hover:text-primary transition-colors" href="#">
+<span class="material-symbols-outlined text-sm">link</span>
+<span>Post-Structuralist Linguistics</span>
+</a>
+</li>
+<li>
+<a class="flex items-center space-x-3 text-xs text-on-surface/70 hover:text-primary transition-colors" href="#">
+<span class="material-symbols-outlined text-sm">link</span>
+<span>Neural Network Visualizations</span>
+</a>
+</li>
+<li>
+<a class="flex items-center space-x-3 text-xs text-on-surface/70 hover:text-primary transition-colors" href="#">
+<span class="material-symbols-outlined text-sm">link</span>
+<span>The Turing Archive (Vol. 4)</span>
+</a>
+</li>
+</ul>
+</section>
+</div>
+</aside>
+</div>
+</main>
+</div>
+</body></html>

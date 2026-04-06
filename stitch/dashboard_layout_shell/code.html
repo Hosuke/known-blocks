@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>LLMBase | The Scholarly Synthesis</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&amp;family=Noto+Serif+SC:wght@400;700&amp;family=JetBrains+Mono&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "tertiary-fixed": "#abf4ac",
+                        "surface-container-lowest": "#ffffff",
+                        "on-tertiary": "#ffffff",
+                        "on-primary-fixed-variant": "#293ca0",
+                        "primary-fixed": "#dee0ff",
+                        "on-surface": "#1a1c1c",
+                        "inverse-primary": "#bac3ff",
+                        "on-secondary-fixed": "#001f25",
+                        "on-secondary": "#ffffff",
+                        "surface-container": "#eeeeee",
+                        "error": "#ba1a1a",
+                        "on-tertiary-fixed": "#002107",
+                        "background": "#f9f9f9",
+                        "surface-container-highest": "#e2e2e2",
+                        "surface": "#f9f9f9",
+                        "surface-container-low": "#f3f3f3",
+                        "inverse-surface": "#2f3131",
+                        "on-secondary-container": "#006573",
+                        "tertiary-container": "#23672f",
+                        "surface-tint": "#4355b9",
+                        "error-container": "#ffdad6",
+                        "on-background": "#1a1c1c",
+                        "secondary-container": "#58e6ff",
+                        "secondary-fixed-dim": "#44d8f1",
+                        "outline-variant": "#c5c5d4",
+                        "on-surface-variant": "#454652",
+                        "on-tertiary-container": "#9ce39d",
+                        "surface-bright": "#f9f9f9",
+                        "on-error-container": "#93000a",
+                        "tertiary": "#004e1a",
+                        "on-primary-container": "#cacfff",
+                        "inverse-on-surface": "#f1f1f1",
+                        "secondary-fixed": "#a1efff",
+                        "on-error": "#ffffff",
+                        "surface-container-high": "#e8e8e8",
+                        "on-primary": "#ffffff",
+                        "primary": "#24389c",
+                        "primary-container": "#3f51b5",
+                        "outline": "#757684",
+                        "primary-fixed-dim": "#bac3ff",
+                        "on-primary-fixed": "#00105c",
+                        "secondary": "#006876",
+                        "tertiary-fixed-dim": "#90d792",
+                        "surface-dim": "#dadada",
+                        "on-tertiary-fixed-variant": "#07521d",
+                        "surface-variant": "#e2e2e2",
+                        "on-secondary-fixed-variant": "#004e59"
+                    },
+                    borderRadius: {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    fontFamily: {
+                        "headline": ["Inter", "sans-serif"],
+                        "body": ["Noto Serif SC", "serif"],
+                        "label": ["Inter", "sans-serif"],
+                        "mono": ["JetBrains Mono", "monospace"]
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+        body { font-family: 'Inter', sans-serif; }
+        .serif-body { font-family: 'Noto Serif SC', serif; }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .active-pill { font-variation-settings: 'FILL' 1; }
+    </style>
+</head>
+<body class="bg-background text-on-surface flex min-h-screen">
+<!-- SIDEBAR (Persistent 260px) -->
+<aside class="w-[260px] h-screen sticky top-0 left-0 bg-slate-100 dark:bg-slate-900 flex flex-col py-6 px-4 shrink-0 transition-all duration-150">
+<!-- Brand Header -->
+<div class="flex items-center gap-3 mb-8 px-2">
+<div class="w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-primary-container flex items-center justify-center text-white">
+<span class="material-symbols-outlined text-2xl" data-icon="auto_awesome" style="font-variation-settings: 'FILL' 1;">auto_awesome</span>
+</div>
+<div>
+<h1 class="text-xl font-black tracking-tighter text-indigo-900 dark:text-white leading-tight">LLMBase</h1>
+<p class="text-[10px] font-bold uppercase tracking-widest text-indigo-700/60 dark:text-indigo-400/60">The Scholarly Synthesis</p>
+</div>
+</div>
+<button class="mb-6 w-full py-3 px-4 rounded-xl bg-primary text-white font-semibold text-sm flex items-center justify-center gap-2 hover:opacity-90 transition-opacity">
+<span class="material-symbols-outlined text-lg" data-icon="add">add</span>
+            New Entry
+        </button>
+<!-- Navigation -->
+<nav class="flex-1 space-y-1">
+<!-- Active Tab: Dashboard -->
+<a class="flex items-center gap-3 px-3 py-2 text-indigo-700 dark:text-indigo-300 font-bold border-r-2 border-indigo-700 bg-slate-200/50 dark:bg-slate-800/50 rounded-l-lg transition-colors duration-150" href="#">
+<span class="material-symbols-outlined" data-icon="dashboard" style="font-variation-settings: 'FILL' 1;">dashboard</span>
+<span class="font-sans text-sm tracking-tight">Dashboard</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 text-slate-500 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-800 rounded-lg transition-colors duration-150" href="#">
+<span class="material-symbols-outlined" data-icon="menu_book">menu_book</span>
+<span class="font-sans text-sm tracking-tight">Wiki</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 text-slate-500 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-800 rounded-lg transition-colors duration-150" href="#">
+<span class="material-symbols-outlined" data-icon="search">search</span>
+<span class="font-sans text-sm tracking-tight">Search</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 text-slate-500 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-800 rounded-lg transition-colors duration-150" href="#">
+<span class="material-symbols-outlined" data-icon="forum">forum</span>
+<span class="font-sans text-sm tracking-tight">Q&amp;A</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 text-slate-500 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-800 rounded-lg transition-colors duration-150" href="#">
+<span class="material-symbols-outlined" data-icon="hub">hub</span>
+<span class="font-sans text-sm tracking-tight">Graph</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 text-slate-500 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-800 rounded-lg transition-colors duration-150" href="#">
+<span class="material-symbols-outlined" data-icon="input">input</span>
+<span class="font-sans text-sm tracking-tight">Ingest</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 text-slate-500 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-800 rounded-lg transition-colors duration-150" href="#">
+<span class="material-symbols-outlined" data-icon="monitor_heart">monitor_heart</span>
+<span class="font-sans text-sm tracking-tight">Health</span>
+</a>
+</nav>
+<!-- Sidebar Footer -->
+<div class="mt-auto space-y-1">
+<a class="flex items-center gap-3 px-3 py-2 text-slate-500 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-800 rounded-lg transition-colors duration-150" href="#">
+<span class="material-symbols-outlined" data-icon="settings">settings</span>
+<span class="font-sans text-sm tracking-tight">Settings</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 text-slate-500 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-800 rounded-lg transition-colors duration-150" href="#">
+<span class="material-symbols-outlined" data-icon="help">help</span>
+<span class="font-sans text-sm tracking-tight">Support</span>
+</a>
+<div class="pt-4 mt-4 border-t border-slate-200 dark:border-slate-800 flex items-center gap-3 px-2">
+<div class="w-8 h-8 rounded-full bg-indigo-200 dark:bg-indigo-900 flex items-center justify-center overflow-hidden">
+<img alt="LLMBase Curator" class="w-full h-full object-cover" data-alt="minimalist illustrated avatar of a scholar with glasses and a professional look on a soft blue background" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDkNdxZj_0PVI6vHnNKcrDhJLeRrjJkOtRjRIbn3uhLfgF7ZhRnRUZ3ZtnErZsLqOeRZz0Tneb_glFWHTt8PPQmOheEADb-XSbYxTcfO-yeZMYjXS552HBSYVXDjgb0x-yLBfhy_okSEY4EqBfqBTCErdqwrt6N1Adx_IkrwJnJNU-7O2tEEK5jh-pvHnO6VAMBJFOcR4zM7umzLwDwlzxczMl8TBnPnsG3w24oALq6NgEpoTciDZXQIxtkJWs8WBKFcHvD8-GDSw"/>
+</div>
+<div class="flex-1 min-w-0">
+<p class="text-xs font-bold truncate">Curator_Alpha</p>
+<p class="text-[10px] text-slate-500">Academic Tier</p>
+</div>
+</div>
+</div>
+</aside>
+<!-- MAIN CONTENT AREA -->
+<main class="flex-1 flex flex-col min-h-screen relative">
+<!-- TOP NAVIGATION BAR -->
+<header class="w-full sticky top-0 z-40 bg-white/80 dark:bg-slate-950/80 backdrop-blur-xl border-b border-slate-200/15 dark:border-slate-800/15 flex items-center justify-between px-8 py-3">
+<div class="flex-1 max-w-2xl">
+<div class="relative group">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-indigo-500 transition-colors" data-icon="search">search</span>
+<input class="w-full bg-surface-container-low border-none rounded-xl pl-10 pr-4 py-2 text-sm focus:ring-2 focus:ring-indigo-500/10 placeholder:text-slate-400 transition-all font-sans" placeholder="Search across documents... (Cmd+K)" type="text"/>
+</div>
+</div>
+<div class="flex items-center gap-4 ml-8">
+<button class="p-2 text-slate-600 dark:text-slate-400 hover:text-indigo-500 transition-colors">
+<span class="material-symbols-outlined" data-icon="dark_mode">dark_mode</span>
+</button>
+<button class="px-6 py-2 bg-gradient-to-r from-primary to-primary-container text-white text-sm font-semibold rounded-xl hover:opacity-90 transition-opacity">
+                    Compile
+                </button>
+</div>
+</header>
+<!-- DASHBOARD BODY -->
+<div class="flex-1 p-8 overflow-y-auto">
+<!-- Header Section -->
+<div class="mb-10">
+<h2 class="text-3xl font-extrabold tracking-tight text-indigo-900 mb-2">Curatorial Dashboard</h2>
+<p class="text-on-surface-variant font-body leading-relaxed max-w-2xl">Welcome back to your scholarly workspace. Your synthesis engine has processed 14 new sources since your last session.</p>
+</div>
+<!-- Stats Row -->
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
+<!-- Stat Card 1 -->
+<div class="bg-surface-container-lowest p-6 rounded-xl border border-outline-variant/15 flex items-start justify-between">
+<div>
+<p class="text-xs font-bold text-slate-500 uppercase tracking-widest mb-1">Raw Documents</p>
+<h3 class="text-2xl font-black text-indigo-900">12</h3>
+</div>
+<div class="p-3 bg-secondary-container/20 rounded-full">
+<span class="material-symbols-outlined text-secondary" data-icon="description">description</span>
+</div>
+</div>
+<!-- Stat Card 2 -->
+<div class="bg-surface-container-lowest p-6 rounded-xl border border-outline-variant/15 flex items-start justify-between">
+<div>
+<p class="text-xs font-bold text-slate-500 uppercase tracking-widest mb-1">Wiki Articles</p>
+<h3 class="text-2xl font-black text-indigo-900">48</h3>
+</div>
+<div class="p-3 bg-tertiary-fixed/20 rounded-full">
+<span class="material-symbols-outlined text-tertiary" data-icon="edit_note">edit_note</span>
+</div>
+</div>
+<!-- Stat Card 3 -->
+<div class="bg-surface-container-lowest p-6 rounded-xl border border-outline-variant/15 flex items-start justify-between">
+<div>
+<p class="text-xs font-bold text-slate-500 uppercase tracking-widest mb-1">Filed Outputs</p>
+<h3 class="text-2xl font-black text-indigo-900">24</h3>
+</div>
+<div class="p-3 bg-primary-fixed/20 rounded-full">
+<span class="material-symbols-outlined text-primary" data-icon="save">save</span>
+</div>
+</div>
+<!-- Stat Card 4 -->
+<div class="bg-surface-container-lowest p-6 rounded-xl border border-outline-variant/15 flex items-start justify-between">
+<div>
+<p class="text-xs font-bold text-slate-500 uppercase tracking-widest mb-1">Total Words</p>
+<h3 class="text-2xl font-black text-indigo-900">1.2M</h3>
+</div>
+<div class="p-3 bg-on-secondary-container/10 rounded-full">
+<span class="material-symbols-outlined text-on-secondary-container" data-icon="query_stats">query_stats</span>
+</div>
+</div>
+</div>
+<!-- Quick Actions -->
+<div class="mb-12">
+<h3 class="text-lg font-bold text-on-surface mb-4">Immediate Synthesis</h3>
+<div class="flex flex-wrap gap-4">
+<button class="flex items-center gap-3 px-6 py-4 bg-surface-container-low rounded-xl hover:bg-surface-container-high transition-colors group">
+<span class="material-symbols-outlined text-primary group-hover:scale-110 transition-transform" data-icon="question_answer">question_answer</span>
+<span class="text-sm font-semibold">Ask a Question</span>
+</button>
+<button class="flex items-center gap-3 px-6 py-4 bg-surface-container-low rounded-xl hover:bg-surface-container-high transition-colors group">
+<span class="material-symbols-outlined text-secondary group-hover:scale-110 transition-transform" data-icon="link">link</span>
+<span class="text-sm font-semibold">Ingest URL</span>
+</button>
+<button class="flex items-center gap-3 px-6 py-4 bg-surface-container-low rounded-xl hover:bg-surface-container-high transition-colors group">
+<span class="material-symbols-outlined text-error group-hover:scale-110 transition-transform" data-icon="health_and_safety">health_and_safety</span>
+<span class="text-sm font-semibold">Run Health Check</span>
+</button>
+</div>
+</div>
+<!-- Recent Articles Grid -->
+<section>
+<div class="flex items-center justify-between mb-6">
+<h3 class="text-xl font-bold text-on-surface">Recent Articles</h3>
+<button class="text-sm text-primary font-bold hover:underline">View Library</button>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+<!-- Article Card 1 -->
+<article class="bg-surface-container-lowest p-6 rounded-xl border border-outline-variant/10 hover:border-indigo-500/20 transition-all group flex flex-col h-full">
+<div class="flex items-center justify-between mb-4">
+<span class="text-[10px] font-mono uppercase tracking-tighter bg-slate-100 px-2 py-1 rounded text-slate-500">ID: LLM-902</span>
+<span class="text-[10px] text-on-surface-variant italic">2 hours ago</span>
+</div>
+<h4 class="text-lg font-bold text-indigo-950 mb-3 group-hover:text-primary transition-colors leading-tight">Neural Architecture for Long-term Recursive Memory</h4>
+<p class="serif-body text-sm text-on-surface-variant mb-6 line-clamp-2 leading-relaxed">An exploration into transformer architectures that utilize hierarchical caching to simulate indefinite context windows through recursion.</p>
+<div class="mt-auto flex flex-wrap gap-2">
+<span class="px-3 py-1 rounded-full bg-secondary-container/30 text-on-secondary-container text-[10px] font-bold">Research</span>
+<span class="px-3 py-1 rounded-full bg-tertiary-fixed/30 text-on-tertiary-fixed-variant text-[10px] font-bold">AI Ethics</span>
+</div>
+</article>
+<!-- Article Card 2 -->
+<article class="bg-surface-container-lowest p-6 rounded-xl border border-outline-variant/10 hover:border-indigo-500/20 transition-all group flex flex-col h-full">
+<div class="flex items-center justify-between mb-4">
+<span class="text-[10px] font-mono uppercase tracking-tighter bg-slate-100 px-2 py-1 rounded text-slate-500">ID: LLM-844</span>
+<span class="text-[10px] text-on-surface-variant italic">Yesterday</span>
+</div>
+<h4 class="text-lg font-bold text-indigo-950 mb-3 group-hover:text-primary transition-colors leading-tight">The Ontology of Digital Consciousness</h4>
+<p class="serif-body text-sm text-on-surface-variant mb-6 line-clamp-2 leading-relaxed">Synthesizing philosophical perspectives on sentience with modern emergent behaviors observed in large-scale parametric models.</p>
+<div class="mt-auto flex flex-wrap gap-2">
+<span class="px-3 py-1 rounded-full bg-secondary-container/30 text-on-secondary-container text-[10px] font-bold">Philosophy</span>
+<span class="px-3 py-1 rounded-full bg-tertiary-fixed/30 text-on-tertiary-fixed-variant text-[10px] font-bold">Systems</span>
+</div>
+</article>
+<!-- Article Card 3 -->
+<article class="bg-surface-container-lowest p-6 rounded-xl border border-outline-variant/10 hover:border-indigo-500/20 transition-all group flex flex-col h-full">
+<div class="flex items-center justify-between mb-4">
+<span class="text-[10px] font-mono uppercase tracking-tighter bg-slate-100 px-2 py-1 rounded text-slate-500">ID: LLM-712</span>
+<span class="text-[10px] text-on-surface-variant italic">Oct 24, 2023</span>
+</div>
+<h4 class="text-lg font-bold text-indigo-950 mb-3 group-hover:text-primary transition-colors leading-tight">Quantization Techniques for Local Deployment</h4>
+<p class="serif-body text-sm text-on-surface-variant mb-6 line-clamp-2 leading-relaxed">Practical analysis of 4-bit vs 8-bit quantization efficiency on commodity hardware for private scholarly research labs.</p>
+<div class="mt-auto flex flex-wrap gap-2">
+<span class="px-3 py-1 rounded-full bg-secondary-container/30 text-on-secondary-container text-[10px] font-bold">Engineering</span>
+<span class="px-3 py-1 rounded-full bg-tertiary-fixed/30 text-on-tertiary-fixed-variant text-[10px] font-bold">Efficiency</span>
+</div>
+</article>
+</div>
+</section>
+<!-- Knowledge Visualization Preview (Asymmetric Card) -->
+<section class="mt-12">
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+<div class="lg:col-span-2 bg-gradient-to-br from-slate-900 to-indigo-950 rounded-2xl p-8 relative overflow-hidden group">
+<div class="relative z-10 flex flex-col h-full justify-between">
+<div>
+<h3 class="text-white text-2xl font-black mb-2">Knowledge Graph Insight</h3>
+<p class="text-indigo-200/70 text-sm max-w-md font-body">Your recent ingestions have created a dense cluster between "Neural Semantics" and "Epistemology". 14 new edges were automatically proposed.</p>
+</div>
+<button class="mt-12 self-start px-6 py-2 bg-white/10 backdrop-blur-md border border-white/20 rounded-full text-white text-xs font-bold hover:bg-white/20 transition-all">
+                                Open Graph Explorer
+                            </button>
+</div>
+<!-- Abstract Deco Background -->
+<div class="absolute right-[-10%] top-[-10%] w-[300px] h-[300px] opacity-20 pointer-events-none group-hover:scale-110 transition-transform duration-1000">
+<svg viewbox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+<circle cx="100" cy="100" fill="#58e6ff" r="40"></circle>
+<circle cx="140" cy="80" fill="#3f51b5" r="30"></circle>
+<circle cx="110" cy="140" fill="#dee0ff" r="20"></circle>
+<line stroke="white" stroke-width="0.5" x1="100" x2="140" y1="100" y2="80"></line>
+<line stroke="white" stroke-width="0.5" x1="100" x2="110" y1="100" y2="140"></line>
+<line stroke="white" stroke-width="0.5" x1="140" x2="110" y1="80" y2="140"></line>
+</svg>
+</div>
+</div>
+<div class="bg-surface-container p-6 rounded-2xl flex flex-col">
+<h4 class="text-sm font-bold text-on-surface mb-4 flex items-center justify-between">
+                            Inference Queue
+                            <span class="material-symbols-outlined text-xs text-slate-400" data-icon="pending">pending</span>
+</h4>
+<div class="space-y-3">
+<div class="flex items-center gap-3 p-3 bg-surface-container-lowest rounded-xl">
+<div class="w-1.5 h-8 bg-secondary rounded-full"></div>
+<div class="flex-1 overflow-hidden">
+<p class="text-xs font-bold truncate">Indexing: PDF_Source_X9</p>
+<div class="w-full bg-slate-100 h-1 mt-1 rounded-full">
+<div class="bg-secondary h-full rounded-full w-3/4"></div>
+</div>
+</div>
+</div>
+<div class="flex items-center gap-3 p-3 bg-surface-container-lowest rounded-xl">
+<div class="w-1.5 h-8 bg-tertiary rounded-full"></div>
+<div class="flex-1 overflow-hidden">
+<p class="text-xs font-bold truncate">Summarizing: Ethics_Draft</p>
+<p class="text-[10px] text-slate-400">Scheduled in 5m</p>
+</div>
+</div>
+<div class="flex items-center gap-3 p-3 bg-surface-container-lowest rounded-xl opacity-60">
+<div class="w-1.5 h-8 bg-slate-300 rounded-full"></div>
+<div class="flex-1 overflow-hidden">
+<p class="text-xs font-bold truncate">Health Audit: Full Re-index</p>
+<p class="text-[10px] text-slate-400">Queued</p>
+</div>
+</div>
+</div>
+<button class="mt-auto pt-4 text-[10px] font-bold text-center text-slate-400 hover:text-indigo-600 transition-colors uppercase tracking-widest">
+                            Manage All Tasks
+                        </button>
+</div>
+</div>
+</section>
+</div>
+</main>
+</body></html>

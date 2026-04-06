@@ -1,0 +1,11 @@
+services:
+  known-blocks:
+    build: .
+    ports:
+      - "5555:5555"
+    env_file:
+      - .env
+    volumes:
+      - ./raw:/app/data/raw
+      - ./wiki:/app/data/wiki
+    restart: unless-stopped

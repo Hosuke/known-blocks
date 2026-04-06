@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>LLMBase | Knowledge Graph</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&amp;family=Noto+Serif+SC:ital,wght@0,300;0,400;0,700;1,300;1,400&amp;family=Noto+Serif:ital,wght@0,300;0,400;0,700;1,400&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                "on-surface": "#dce1fb",
+                "surface-container-high": "#23293c",
+                "on-tertiary-fixed-variant": "#005137",
+                "on-primary-fixed-variant": "#2f3aa3",
+                "tertiary-container": "#006848",
+                "secondary-fixed": "#a2eeff",
+                "surface-container-highest": "#2e3447",
+                "primary-container": "#444fb7",
+                "surface-dim": "#0c1324",
+                "on-primary-fixed": "#000767",
+                "secondary": "#5de6ff",
+                "surface-variant": "#2e3447",
+                "on-tertiary": "#003825",
+                "secondary-container": "#00cbe6",
+                "error-container": "#93000a",
+                "error": "#ffb4ab",
+                "on-primary": "#131e8c",
+                "on-error-container": "#ffdad6",
+                "tertiary-fixed": "#68fcbf",
+                "surface-container-low": "#151b2d",
+                "inverse-surface": "#dce1fb",
+                "surface-tint": "#bdc2ff",
+                "inverse-on-surface": "#2a3043",
+                "outline": "#8f909e",
+                "surface-bright": "#33394c",
+                "primary-fixed-dim": "#bdc2ff",
+                "on-background": "#dce1fb",
+                "on-secondary-container": "#00515d",
+                "tertiary": "#45dfa4",
+                "on-secondary": "#00363e",
+                "on-surface-variant": "#c5c5d4",
+                "surface": "#0c1324",
+                "surface-container-lowest": "#070d1f",
+                "on-error": "#690005",
+                "inverse-primary": "#4953bc",
+                "on-tertiary-container": "#55ecb0",
+                "on-primary-container": "#cccfff",
+                "background": "#0c1324",
+                "outline-variant": "#454652",
+                "surface-container": "#191f31",
+                "secondary-fixed-dim": "#2fd9f4",
+                "on-secondary-fixed": "#001f25",
+                "primary": "#bdc2ff",
+                "primary-fixed": "#e0e0ff",
+                "on-tertiary-fixed": "#002114",
+                "on-secondary-fixed-variant": "#004e5a",
+                "tertiary-fixed-dim": "#45dfa4"
+            },
+            "borderRadius": {
+                "DEFAULT": "0.25rem",
+                "lg": "0.5rem",
+                "xl": "0.75rem",
+                "full": "9999px"
+            },
+            "fontFamily": {
+                "headline": ["Noto Serif SC", "Noto Serif", "serif"],
+                "body": ["Noto Serif SC", "Noto Serif", "serif"],
+                "label": ["Inter", "sans-serif"]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 300, 'GRAD' 0, 'opsz' 24;
+        }
+        .graph-background {
+            background-image: radial-gradient(circle at 50% 50%, #191f31 0%, #0c1324 100%);
+        }
+        .editorial-shadow {
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+        }
+    </style>
+</head>
+<body class="bg-background text-on-surface flex min-h-screen font-body overflow-hidden">
+<!-- SideNavBar (from JSON) -->
+<aside class="w-[260px] h-screen sticky left-0 top-0 bg-[#0c1324] flex flex-col py-8 px-6 space-y-6 shadow-[20px_0_40px_rgba(0,0,0,0.4)] z-[60]">
+<div class="flex flex-col gap-1">
+<h1 class="font-['Noto_Serif_SC'] italic text-xl tracking-tighter text-[#bdc2ff]">LLMBase</h1>
+<span class="font-['Noto_Serif_SC'] text-[10px] uppercase tracking-[0.2em] text-slate-500">Editorial Intelligence</span>
+</div>
+<nav class="flex-1 flex flex-col space-y-2 mt-8">
+<a class="flex items-center gap-4 py-2 transition-colors pl-4 text-slate-400 hover:text-slate-200 group" href="#">
+<span class="material-symbols-outlined text-lg" data-icon="dashboard">dashboard</span>
+<span class="font-['Noto_Serif_SC'] text-sm tracking-wide">Dashboard</span>
+</a>
+<a class="flex items-center gap-4 py-2 transition-colors pl-4 text-slate-400 hover:text-slate-200 group" href="#">
+<span class="material-symbols-outlined text-lg" data-icon="auto_stories">auto_stories</span>
+<span class="font-['Noto_Serif_SC'] text-sm tracking-wide">Wiki</span>
+</a>
+<a class="flex items-center gap-4 py-2 transition-colors pl-4 text-slate-400 hover:text-slate-200 group" href="#">
+<span class="material-symbols-outlined text-lg" data-icon="search">search</span>
+<span class="font-['Noto_Serif_SC'] text-sm tracking-wide">Search</span>
+</a>
+<a class="flex items-center gap-4 py-2 transition-colors pl-4 text-slate-400 hover:text-slate-200 group" href="#">
+<span class="material-symbols-outlined text-lg" data-icon="forum">forum</span>
+<span class="font-['Noto_Serif_SC'] text-sm tracking-wide">Q&amp;A</span>
+</a>
+<!-- Active Navigation State for Graph -->
+<a class="flex items-center gap-4 py-2 text-[#bdc2ff] font-semibold border-l-2 border-[#5de6ff] pl-4" href="#">
+<span class="material-symbols-outlined text-lg" data-icon="hub">hub</span>
+<span class="font-['Noto_Serif_SC'] text-sm tracking-wide">Graph</span>
+</a>
+<a class="flex items-center gap-4 py-2 transition-colors pl-4 text-slate-400 hover:text-slate-200 group" href="#">
+<span class="material-symbols-outlined text-lg" data-icon="upload_file">upload_file</span>
+<span class="font-['Noto_Serif_SC'] text-sm tracking-wide">Ingest</span>
+</a>
+<a class="flex items-center gap-4 py-2 transition-colors pl-4 text-slate-400 hover:text-slate-200 group" href="#">
+<span class="material-symbols-outlined text-lg" data-icon="monitor_heart">monitor_heart</span>
+<span class="font-['Noto_Serif_SC'] text-sm tracking-wide">Health</span>
+</a>
+</nav>
+<div class="pt-6 mt-auto border-t border-slate-800/30 flex flex-col space-y-4">
+<button class="w-full bg-[#bdc2ff] text-[#0c1324] py-3 rounded-lg font-label text-xs uppercase tracking-widest font-bold hover:brightness-110 transition-all active:scale-[0.98]">
+                Compile Knowledge
+            </button>
+<div class="flex flex-col space-y-2">
+<a class="flex items-center gap-4 py-2 transition-colors pl-4 text-slate-400 hover:text-slate-200" href="#">
+<span class="material-symbols-outlined text-lg" data-icon="settings">settings</span>
+<span class="font-['Noto_Serif_SC'] text-sm tracking-wide">Settings</span>
+</a>
+<a class="flex items-center gap-4 py-2 transition-colors pl-4 text-slate-400 hover:text-slate-200" href="#">
+<span class="material-symbols-outlined text-lg" data-icon="help_outline">help_outline</span>
+<span class="font-['Noto_Serif_SC'] text-sm tracking-wide">Support</span>
+</a>
+</div>
+</div>
+</aside>
+<main class="flex-1 relative flex flex-col overflow-hidden">
+<!-- TopNavBar (from JSON) -->
+<header class="h-16 w-full sticky top-0 z-50 flex justify-between items-center px-12 bg-[#0c1324]/70 backdrop-blur-xl">
+<div class="flex items-center gap-4 flex-1">
+<div class="relative w-full max-w-md focus-within:ring-1 focus-within:ring-[#5de6ff]/30 rounded-full transition-all">
+<span class="absolute left-4 top-1/2 -translate-y-1/2 material-symbols-outlined text-slate-500" data-icon="search">search</span>
+<input class="w-full bg-surface-container-lowest border-none rounded-full pl-12 pr-4 py-2 text-xs font-label focus:ring-0 placeholder:text-slate-600" placeholder="Search knowledge..." type="text"/>
+</div>
+</div>
+<div class="flex items-center gap-8">
+<div class="flex items-center gap-4">
+<span class="material-symbols-outlined text-slate-400 cursor-pointer hover:text-[#5de6ff] transition-colors" data-icon="dark_mode">dark_mode</span>
+<span class="material-symbols-outlined text-slate-400 cursor-pointer hover:text-[#5de6ff] transition-colors" data-icon="settings">settings</span>
+</div>
+<div class="flex items-center gap-4">
+<button class="font-['Inter'] text-xs uppercase tracking-widest text-[#bdc2ff] hover:text-[#5de6ff] transition-colors">Compile</button>
+<span class="text-[10px] text-slate-500 font-label">Cmd+K</span>
+<div class="w-8 h-8 rounded-full overflow-hidden bg-surface-container-high border border-outline-variant/20">
+<img alt="Curator Profile" class="w-full h-full object-cover" data-alt="close-up portrait of a professional man with glasses and a thoughtful expression, high-end editorial photography style" src="https://lh3.googleusercontent.com/aida-public/AB6AXuD1LYYjaee3IJeMxIqG3sYl5qe3IfJ_-P4v_u0sVZHfGHRv1zsIf2kn52gD_NwxeKJVNQyvLdbOAGpt9jNt7akRR_D5Ul_ZlQtrtDmFmSeWpZAxlOMjuvpQgMM4KKi3NN7rqcI_HSRVSVCf0PE48MOiTy-grEF8MaXdW2BZ2tWAOIS7hzytNuVu2v0YXZ6ioDvPAaLuR4zKTHVYP7AYXK9FG32q3daQ81pBGrfyaQHfEB74WdUg2ydUlwZbOAVsIZyzo8ywJyoG_w"/>
+</div>
+</div>
+</div>
+</header>
+<!-- Full-screen Graph Canvas -->
+<div class="absolute inset-0 z-0 graph-background overflow-hidden">
+<!-- Simulated Knowledge Graph Visualization -->
+<svg class="w-full h-full opacity-60">
+<defs>
+<radialgradient cx="50%" cy="50%" id="nodeGradient" r="50%">
+<stop offset="0%" style="stop-color:#bdc2ff;stop-opacity:0.8"></stop>
+<stop offset="100%" style="stop-color:#444fb7;stop-opacity:0.2"></stop>
+</radialgradient>
+<radialgradient cx="50%" cy="50%" id="nodeGradientCyan" r="50%">
+<stop offset="0%" style="stop-color:#5de6ff;stop-opacity:0.8"></stop>
+<stop offset="100%" style="stop-color:#00cbe6;stop-opacity:0.2"></stop>
+</radialgradient>
+</defs>
+<!-- Edges -->
+<line stroke="#454652" stroke-dasharray="4,4" stroke-width="1" x1="30%" x2="45%" y1="20%" y2="40%"></line>
+<line stroke="#454652" stroke-width="1.5" x1="45%" x2="60%" y1="40%" y2="30%"></line>
+<line stroke="#454652" stroke-width="2" x1="45%" x2="50%" y1="40%" y2="65%"></line>
+<line stroke="#454652" stroke-dasharray="2,2" stroke-width="1" x1="50%" x2="25%" y1="65%" y2="75%"></line>
+<line stroke="#454652" stroke-width="1.5" x1="50%" x2="70%" y1="65%" y2="70%"></line>
+<line stroke="#454652" stroke-width="1" x1="60%" x2="80%" y1="30%" y2="25%"></line>
+<!-- Nodes (Articulated Circles) -->
+<!-- Core Node -->
+<circle class="filter blur-[1px]" cx="45%" cy="40%" fill="url(#nodeGradient)" r="48"></circle>
+<text dy=".3em" fill="#bdc2ff" font-family="Noto Serif SC" font-size="12" text-anchor="middle" x="45%" y="40%">Neural Architectures</text>
+<!-- Secondary Nodes -->
+<circle class="filter blur-[1px]" cx="60%" cy="30%" fill="url(#nodeGradientCyan)" r="32"></circle>
+<text dy=".3em" fill="#5de6ff" font-family="Noto Serif SC" font-size="10" text-anchor="middle" x="60%" y="30%">Transformers</text>
+<circle class="filter blur-[1px]" cx="50%" cy="65%" fill="url(#nodeGradient)" r="40"></circle>
+<text dy=".3em" fill="#bdc2ff" font-family="Noto Serif SC" font-size="11" text-anchor="middle" x="50%" y="65%">Semantic Web</text>
+<circle cx="30%" cy="20%" fill="#23293c" r="20" stroke="#454652" stroke-width="1"></circle>
+<text dy=".3em" fill="#dce1fb" font-family="Noto Serif SC" font-size="9" text-anchor="middle" x="30%" y="20%">Ethics</text>
+<circle cx="80%" cy="25%" fill="#23293c" r="24" stroke="#454652" stroke-width="1"></circle>
+<text dy=".3em" fill="#dce1fb" font-family="Noto Serif SC" font-size="9" text-anchor="middle" x="80%" y="25%">Attention</text>
+<circle cx="25%" cy="75%" fill="#23293c" r="28" stroke="#454652" stroke-width="1"></circle>
+<text dy=".3em" fill="#dce1fb" font-family="Noto Serif SC" font-size="9" text-anchor="middle" x="25%" y="75%">Bio-Intelligence</text>
+<circle cx="70%" cy="70%" fill="#23293c" r="22" stroke="#454652" stroke-width="1"></circle>
+<text dy=".3em" fill="#dce1fb" font-family="Noto Serif SC" font-size="9" text-anchor="middle" x="70%" y="70%">Ingestion</text>
+</svg>
+</div>
+<!-- Floating UI Panels -->
+<div class="absolute inset-0 pointer-events-none p-12 flex flex-col justify-between">
+<!-- Top Controls: Filtering & Status -->
+<div class="flex justify-between items-start pointer-events-auto">
+<div class="bg-surface-container/70 backdrop-blur-md p-6 rounded-xl editorial-shadow w-72">
+<h3 class="font-headline text-lg text-primary mb-4">Graph Exploration</h3>
+<div class="space-y-4">
+<div class="space-y-1">
+<label class="text-[10px] font-label uppercase tracking-widest text-slate-500">Filter by Tag</label>
+<div class="flex flex-wrap gap-2 mt-2">
+<span class="px-2 py-1 bg-primary/10 text-primary text-[10px] rounded border border-primary/20 cursor-pointer">Intelligence</span>
+<span class="px-2 py-1 bg-secondary/10 text-secondary text-[10px] rounded border border-secondary/20 cursor-pointer">Machine Learning</span>
+<span class="px-2 py-1 bg-tertiary/10 text-tertiary text-[10px] rounded border border-tertiary/20 cursor-pointer">Systems</span>
+<span class="px-2 py-1 bg-surface-container-high text-slate-400 text-[10px] rounded border border-outline-variant/20 cursor-pointer">+4 More</span>
+</div>
+</div>
+<div class="flex items-center justify-between pt-2">
+<span class="text-xs text-on-surface">Toggle Labels</span>
+<div class="w-10 h-5 bg-primary/20 rounded-full relative p-1 cursor-pointer">
+<div class="w-3 h-3 bg-primary rounded-full absolute right-1"></div>
+</div>
+</div>
+</div>
+</div>
+<div class="bg-surface-container/70 backdrop-blur-md px-6 py-4 rounded-xl editorial-shadow flex items-center gap-6">
+<div class="flex flex-col">
+<span class="text-[10px] font-label uppercase tracking-widest text-slate-500">Total Nodes</span>
+<span class="font-headline text-xl text-on-surface">1,248</span>
+</div>
+<div class="w-px h-8 bg-outline-variant/20"></div>
+<div class="flex flex-col">
+<span class="text-[10px] font-label uppercase tracking-widest text-slate-500">Active Links</span>
+<span class="font-headline text-xl text-on-surface">4,912</span>
+</div>
+</div>
+</div>
+<!-- Bottom Controls: Visualization Options -->
+<div class="flex items-end justify-between pointer-events-auto">
+<div class="flex flex-col gap-4">
+<!-- Citation Block - Scholarly Reference -->
+<div class="bg-surface-container-lowest/80 backdrop-blur-md p-4 rounded-lg border-l-2 border-secondary max-w-xs editorial-shadow">
+<p class="font-body italic text-sm text-on-surface-variant leading-relaxed">
+                            "The mapping of high-dimensional semantic spaces reveals the underlying topology of curated knowledge."
+                        </p>
+<p class="mt-2 text-[10px] font-label uppercase tracking-widest text-slate-500">— Editorial Archive Vol. IV</p>
+</div>
+<div class="flex gap-2">
+<button class="bg-surface-container hover:bg-surface-bright text-on-surface p-3 rounded-lg editorial-shadow transition-colors">
+<span class="material-symbols-outlined" data-icon="zoom_in">zoom_in</span>
+</button>
+<button class="bg-surface-container hover:bg-surface-bright text-on-surface p-3 rounded-lg editorial-shadow transition-colors">
+<span class="material-symbols-outlined" data-icon="zoom_out">zoom_out</span>
+</button>
+<button class="bg-surface-container hover:bg-surface-bright text-on-surface p-3 rounded-lg editorial-shadow transition-colors">
+<span class="material-symbols-outlined" data-icon="filter_center_focus">filter_center_focus</span>
+</button>
+</div>
+</div>
+<div class="bg-surface-container/70 backdrop-blur-md p-6 rounded-xl editorial-shadow w-80">
+<div class="flex items-center justify-between mb-6">
+<h4 class="font-headline text-md text-on-surface">Layout Engine</h4>
+<span class="text-[10px] font-label text-tertiary bg-tertiary/10 px-2 py-0.5 rounded">Optimized</span>
+</div>
+<div class="space-y-6">
+<div class="space-y-3">
+<div class="flex justify-between text-[10px] font-label uppercase tracking-widest text-slate-500">
+<span>Link Strength</span>
+<span class="text-on-surface">75%</span>
+</div>
+<div class="w-full h-1 bg-surface-container-highest rounded-full overflow-hidden">
+<div class="w-3/4 h-full bg-primary"></div>
+</div>
+</div>
+<div class="space-y-3">
+<div class="flex justify-between text-[10px] font-label uppercase tracking-widest text-slate-500">
+<span>Gravity</span>
+<span class="text-on-surface">42%</span>
+</div>
+<div class="w-full h-1 bg-surface-container-highest rounded-full overflow-hidden">
+<div class="w-[42%] h-full bg-secondary"></div>
+</div>
+</div>
+<div class="grid grid-cols-2 gap-3 mt-4">
+<button class="bg-primary/10 border border-primary/20 text-primary text-[10px] font-label uppercase py-2 rounded tracking-widest hover:bg-primary/20 transition-all">Force Map</button>
+<button class="bg-surface-container-highest text-slate-400 text-[10px] font-label uppercase py-2 rounded tracking-widest hover:text-on-surface transition-all">Radial</button>
+</div>
+</div>
+</div>
+</div>
+</div>
+</main>
+</body></html>

@@ -1,0 +1,34 @@
+# Fly.io configuration for Known-Blocks
+# Deploy: fly launch --no-deploy && fly volumes create kb_data --size 1 && fly deploy
+
+app = "known-blocks"
+primary_region = "nrt"  # Tokyo — change to your preferred region
+
+[build]
+  dockerfile = "Dockerfile"
+
+[env]
+  PYTHONUNBUFFERED = "1"
+  PORT = "5555"
+
+[http_service]
+  internal_port = 5555
+  force_https = true
+  auto_stop_machines = "suspend"   # Suspend when idle (saves cost, keeps volume)
+  auto_start_machines = true       # Wake on request
+  min_machines_running = 0
+
+  [http_service.concurrency]
+    type = "requests"
+    soft_limit = 200
+    hard_limit = 250
+
+# Persistent storage — raw/ and wiki/ survive restarts and redeploys
+[[mounts]]
+  source = "kb_data"
+  destination = "/app/data"
+  initial_size = 1           # 1 GB, expandable later
+
+[[vm]]
+  size = "shared-cpu-1x"
+  memory = 512               # MB — enough for LLM API calls + compile

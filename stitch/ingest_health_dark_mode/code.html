@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>LLMBase | Editorial Intelligence</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&amp;family=Noto+Serif+SC:ital,wght@0,300;0,400;0,700;1,300&amp;family=Noto+Serif:ital,wght@0,300;0,400;0,700;1,400&amp;family=JetBrains+Mono&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "on-surface": "#dce1fb",
+                        "surface-container-high": "#23293c",
+                        "on-tertiary-fixed-variant": "#005137",
+                        "on-primary-fixed-variant": "#2f3aa3",
+                        "tertiary-container": "#006848",
+                        "secondary-fixed": "#a2eeff",
+                        "surface-container-highest": "#2e3447",
+                        "primary-container": "#444fb7",
+                        "surface-dim": "#0c1324",
+                        "on-primary-fixed": "#000767",
+                        "secondary": "#5de6ff",
+                        "surface-variant": "#2e3447",
+                        "on-tertiary": "#003825",
+                        "secondary-container": "#00cbe6",
+                        "error-container": "#93000a",
+                        "error": "#ffb4ab",
+                        "on-primary": "#131e8c",
+                        "on-error-container": "#ffdad6",
+                        "tertiary-fixed": "#68fcbf",
+                        "surface-container-low": "#151b2d",
+                        "inverse-surface": "#dce1fb",
+                        "surface-tint": "#bdc2ff",
+                        "inverse-on-surface": "#2a3043",
+                        "outline": "#8f909e",
+                        "surface-bright": "#33394c",
+                        "primary-fixed-dim": "#bdc2ff",
+                        "on-background": "#dce1fb",
+                        "on-secondary-container": "#00515d",
+                        "tertiary": "#45dfa4",
+                        "on-secondary": "#00363e",
+                        "on-surface-variant": "#c5c5d4",
+                        "surface": "#0c1324",
+                        "surface-container-lowest": "#070d1f",
+                        "on-error": "#690005",
+                        "inverse-primary": "#4953bc",
+                        "on-tertiary-container": "#55ecb0",
+                        "on-primary-container": "#cccfff",
+                        "background": "#0c1324",
+                        "outline-variant": "#454652",
+                        "surface-container": "#191f31",
+                        "secondary-fixed-dim": "#2fd9f4",
+                        "on-secondary-fixed": "#001f25",
+                        "primary": "#bdc2ff",
+                        "primary-fixed": "#e0e0ff",
+                        "on-tertiary-fixed": "#002114",
+                        "on-secondary-fixed-variant": "#004e5a",
+                        "tertiary-fixed-dim": "#45dfa4"
+                    },
+                    borderRadius: {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    fontFamily: {
+                        "headline": ["Noto Serif SC"],
+                        "body": ["Noto Serif SC"],
+                        "label": ["Inter"]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        body {
+            background-color: #0c1324;
+            color: #dce1fb;
+            font-family: 'Noto Serif SC', serif;
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 300, 'GRAD' 0, 'opsz' 24;
+        }
+        .glass-panel {
+            background: rgba(25, 31, 49, 0.7);
+            backdrop-filter: blur(20px);
+        }
+    </style>
+</head>
+<body class="flex min-h-screen">
+<!-- SideNavBar -->
+<aside class="w-[260px] h-screen sticky left-0 top-0 bg-[#0c1324] text-[#bdc2ff] font-['Noto_Serif_SC'] text-sm tracking-wide shadow-[20px_0_40px_rgba(0,0,0,0.4)] flex flex-col py-8 px-6 space-y-6 z-40">
+<div class="flex items-center gap-3 mb-8">
+<div class="w-8 h-8 rounded bg-gradient-to-br from-primary to-primary-container flex items-center justify-center">
+<span class="material-symbols-outlined text-on-primary text-lg" data-icon="hub">hub</span>
+</div>
+<span class="font-['Noto_Serif_SC'] italic text-xl tracking-tighter text-[#bdc2ff]">LLMBase</span>
+</div>
+<nav class="flex-1 space-y-2">
+<a class="flex items-center gap-4 py-2 transition-all duration-300 hover:bg-[#191f31] text-slate-400 hover:text-slate-200 pl-4" href="#">
+<span class="material-symbols-outlined text-lg" data-icon="dashboard">dashboard</span>
+<span>Dashboard</span>
+</a>
+<a class="flex items-center gap-4 py-2 transition-all duration-300 hover:bg-[#191f31] text-slate-400 hover:text-slate-200 pl-4" href="#">
+<span class="material-symbols-outlined text-lg" data-icon="auto_stories">auto_stories</span>
+<span>Wiki</span>
+</a>
+<a class="flex items-center gap-4 py-2 transition-all duration-300 hover:bg-[#191f31] text-slate-400 hover:text-slate-200 pl-4" href="#">
+<span class="material-symbols-outlined text-lg" data-icon="search">search</span>
+<span>Search</span>
+</a>
+<a class="flex items-center gap-4 py-2 transition-all duration-300 hover:bg-[#191f31] text-slate-400 hover:text-slate-200 pl-4" href="#">
+<span class="material-symbols-outlined text-lg" data-icon="forum">forum</span>
+<span>Q&amp;A</span>
+</a>
+<a class="flex items-center gap-4 py-2 transition-all duration-300 hover:bg-[#191f31] text-slate-400 hover:text-slate-200 pl-4" href="#">
+<span class="material-symbols-outlined text-lg" data-icon="hub">hub</span>
+<span>Graph</span>
+</a>
+<a class="flex items-center gap-4 py-2 transition-all duration-300 hover:bg-[#191f31] text-[#bdc2ff] font-semibold border-l-2 border-[#5de6ff] pl-4" href="#">
+<span class="material-symbols-outlined text-lg" data-icon="upload_file">upload_file</span>
+<span>Ingest</span>
+</a>
+<a class="flex items-center gap-4 py-2 transition-all duration-300 hover:bg-[#191f31] text-[#bdc2ff] font-semibold border-l-2 border-[#5de6ff] pl-4" href="#">
+<span class="material-symbols-outlined text-lg" data-icon="monitor_heart">monitor_heart</span>
+<span>Health</span>
+</a>
+</nav>
+<div class="pt-6 border-t border-outline-variant/10 space-y-2">
+<button class="w-full py-3 mb-4 rounded-lg bg-gradient-to-br from-primary to-primary-container text-on-primary font-bold tracking-tight shadow-lg shadow-primary/20 scale-[0.98] active:duration-75">
+                Compile Knowledge
+            </button>
+<a class="flex items-center gap-4 py-2 text-slate-400 hover:text-slate-200 transition-colors pl-4" href="#">
+<span class="material-symbols-outlined text-lg" data-icon="settings">settings</span>
+<span>Settings</span>
+</a>
+<a class="flex items-center gap-4 py-2 text-slate-400 hover:text-slate-200 transition-colors pl-4" href="#">
+<span class="material-symbols-outlined text-lg" data-icon="help_outline">help_outline</span>
+<span>Support</span>
+</a>
+</div>
+</aside>
+<!-- Main Canvas -->
+<main class="flex-1 flex flex-col min-w-0 bg-surface">
+<!-- TopNavBar -->
+<header class="h-16 w-full sticky top-0 z-50 bg-[#0c1324]/70 backdrop-blur-xl flex justify-between items-center px-12">
+<div class="flex items-center bg-surface-container-lowest px-4 py-2 rounded-full w-96 group focus-within:ring-1 focus-within:ring-[#5de6ff]/30 transition-all">
+<span class="material-symbols-outlined text-slate-500 mr-2 text-sm" data-icon="search">search</span>
+<input class="bg-transparent border-none focus:ring-0 text-xs font-['Inter'] uppercase tracking-widest text-on-surface w-full" placeholder="Search Knowledge Base..." type="text"/>
+</div>
+<div class="flex items-center gap-6">
+<div class="flex items-center gap-4 text-slate-400">
+<button class="material-symbols-outlined hover:text-[#5de6ff] transition-colors" data-icon="dark_mode">dark_mode</button>
+<button class="material-symbols-outlined hover:text-[#5de6ff] transition-colors" data-icon="settings">settings</button>
+</div>
+<div class="h-4 w-px bg-outline-variant/20"></div>
+<div class="flex items-center gap-3">
+<span class="text-xs font-['Inter'] uppercase tracking-widest text-slate-400">Cmd+K</span>
+<button class="px-6 py-1.5 rounded-full bg-primary/10 border border-primary/20 text-primary text-xs font-['Inter'] uppercase tracking-widest hover:bg-primary/20 transition-all">Compile</button>
+<img alt="Curator Profile" class="w-8 h-8 rounded-full border border-primary/30" data-alt="Close-up portrait of a sophisticated man with glasses in a dark academic library setting, soft dramatic lighting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuA5XQrYWE5QnLOMMDK4fcQ_YlRiKLe-JzfDeneiuiHecSK6ucvzM60QTnjjfQgV88Py2vKqVcr9-oRCNjELYGkhI0EbT4OiunkI3iWaA7kOKdb6GEjjSoBnJ_W9VIY57Lg7187hTJFmBR6DTLOdlHNqCZkL__sFeX4PsnmQqz4k71CHmRrczGUsMqbE6Mb3Hk3NcveeYfooGBKJ9qGqSfKuxTpxmV03qBE89Ld5I2TynN-v8G1eGerx8GPmYSp9AO1mJ2NjNhPQ5Q"/>
+</div>
+</div>
+</header>
+<!-- Page Content -->
+<div class="p-12 space-y-12">
+<!-- Header Section -->
+<section class="max-w-7xl mx-auto space-y-2">
+<h1 class="text-5xl font-['Noto_Serif'] font-light text-on-surface tracking-tight">Ingest &amp; Health</h1>
+<p class="text-slate-400 max-w-2xl font-['Noto_Serif'] italic">Ensuring the structural integrity and semantic precision of your digital archive.</p>
+</section>
+<div class="max-w-7xl mx-auto grid grid-cols-12 gap-12">
+<!-- Left Column: Ingest & List -->
+<div class="col-span-12 lg:col-span-8 space-y-12">
+<!-- Ingest Tabs -->
+<div class="bg-surface-container rounded-xl p-8 shadow-sm">
+<div class="flex gap-8 mb-8 border-b border-outline-variant/10">
+<button class="pb-4 text-sm font-['Inter'] uppercase tracking-widest text-primary border-b-2 border-primary">URL Ingestion</button>
+<button class="pb-4 text-sm font-['Inter'] uppercase tracking-widest text-slate-500 hover:text-slate-300 transition-colors">File Upload</button>
+<button class="pb-4 text-sm font-['Inter'] uppercase tracking-widest text-slate-500 hover:text-slate-300 transition-colors">Directory Sync</button>
+</div>
+<div class="space-y-6">
+<div class="space-y-2">
+<label class="text-[10px] font-['Inter'] uppercase tracking-[0.2em] text-slate-500 ml-1">Source URL</label>
+<div class="flex gap-4">
+<input class="flex-1 bg-surface-container-lowest border-none rounded-lg p-4 text-on-surface focus:ring-1 focus:ring-primary/40 transition-all font-['Noto_Serif'] italic placeholder:text-slate-600" placeholder="https://knowledge-base.archive.org/..." type="text"/>
+<button class="bg-gradient-to-br from-primary to-primary-container px-8 rounded-lg text-on-primary font-bold shadow-lg shadow-primary/10">Extract</button>
+</div>
+</div>
+<div class="flex gap-4 items-center">
+<span class="material-symbols-outlined text-secondary text-sm" data-icon="info">info</span>
+<p class="text-xs text-slate-400 font-['Inter'] tracking-wide">Automatic deduplication and metadata extraction enabled.</p>
+</div>
+</div>
+</div>
+<!-- Health Cards (Bento Style) -->
+<div class="grid grid-cols-2 gap-6">
+<div class="bg-surface-container p-6 rounded-xl space-y-4 hover:bg-surface-container-high transition-colors">
+<div class="flex justify-between items-start">
+<span class="material-symbols-outlined text-secondary" data-icon="broken_image">broken_image</span>
+<span class="text-xs font-['Inter'] bg-secondary/10 text-secondary px-2 py-1 rounded">12 Issues</span>
+</div>
+<h3 class="text-lg font-['Noto_Serif']">Structural Issues</h3>
+<p class="text-sm text-slate-500 leading-relaxed">Fragmented document nodes detected in the semantic graph hierarchy.</p>
+</div>
+<div class="bg-surface-container p-6 rounded-xl space-y-4 hover:bg-surface-container-high transition-colors">
+<div class="flex justify-between items-start">
+<span class="material-symbols-outlined text-error" data-icon="link_off">link_off</span>
+<span class="text-xs font-['Inter'] bg-error/10 text-error px-2 py-1 rounded">4 Broken</span>
+</div>
+<h3 class="text-lg font-['Noto_Serif']">Broken Links</h3>
+<p class="text-sm text-slate-500 leading-relaxed">Citations pointing to non-existent or deprecated digital resources.</p>
+</div>
+<div class="bg-surface-container p-6 rounded-xl space-y-4 hover:bg-surface-container-high transition-colors">
+<div class="flex justify-between items-start">
+<span class="material-symbols-outlined text-tertiary" data-icon="person_off">person_off</span>
+<span class="text-xs font-['Inter'] bg-tertiary/10 text-tertiary px-2 py-1 rounded">32 Orphaned</span>
+</div>
+<h3 class="text-lg font-['Noto_Serif']">Orphan Articles</h3>
+<p class="text-sm text-slate-500 leading-relaxed">Valuable content lacking parent clusters or semantic relationships.</p>
+</div>
+<div class="bg-surface-container p-6 rounded-xl space-y-4 hover:bg-surface-container-high transition-colors">
+<div class="flex justify-between items-start">
+<span class="material-symbols-outlined text-primary" data-icon="label_off">label_off</span>
+<span class="text-xs font-['Inter'] bg-primary/10 text-primary px-2 py-1 rounded">8 Missing</span>
+</div>
+<h3 class="text-lg font-['Noto_Serif']">Missing Metadata</h3>
+<p class="text-sm text-slate-500 leading-relaxed">Entries without publication dates, authors, or verified tags.</p>
+</div>
+</div>
+<!-- Raw Documents Table -->
+<div class="bg-surface-container rounded-xl overflow-hidden shadow-sm">
+<div class="p-8 pb-4">
+<h3 class="text-xl font-['Noto_Serif']">Ingested Documents</h3>
+</div>
+<table class="w-full text-left border-collapse">
+<thead>
+<tr class="bg-surface-container-low border-b border-outline-variant/10">
+<th class="px-8 py-4 text-[10px] font-['Inter'] uppercase tracking-[0.2em] text-slate-500">Resource</th>
+<th class="px-8 py-4 text-[10px] font-['Inter'] uppercase tracking-[0.2em] text-slate-500">Integrity</th>
+<th class="px-8 py-4 text-[10px] font-['Inter'] uppercase tracking-[0.2em] text-slate-500">Date</th>
+<th class="px-8 py-4 text-right"></th>
+</tr>
+</thead>
+<tbody class="text-sm font-['Inter']">
+<tr class="border-b border-outline-variant/5 hover:bg-surface-container-lowest transition-colors">
+<td class="px-8 py-5">
+<div class="flex flex-col">
+<span class="text-on-surface font-medium">Philosophy of Logic (1922)</span>
+<span class="text-xs text-slate-500 font-['Noto_Serif'] italic">PDF / 4.2 MB</span>
+</div>
+</td>
+<td class="px-8 py-5">
+<div class="flex items-center gap-2">
+<div class="w-24 h-1.5 bg-surface-container-lowest rounded-full overflow-hidden">
+<div class="w-[92%] h-full bg-tertiary"></div>
+</div>
+<span class="text-[10px] text-tertiary">92%</span>
+</div>
+</td>
+<td class="px-8 py-5 text-slate-500 text-xs">Oct 24, 2023</td>
+<td class="px-8 py-5 text-right">
+<button class="material-symbols-outlined text-slate-500 hover:text-on-surface" data-icon="more_vert">more_vert</button>
+</td>
+</tr>
+<tr class="border-b border-outline-variant/5 hover:bg-surface-container-lowest transition-colors">
+<td class="px-8 py-5">
+<div class="flex flex-col">
+<span class="text-on-surface font-medium">Neural Architecture Paper v2</span>
+<span class="text-xs text-slate-500 font-['Noto_Serif'] italic">Web / HTML</span>
+</div>
+</td>
+<td class="px-8 py-5">
+<div class="flex items-center gap-2">
+<div class="w-24 h-1.5 bg-surface-container-lowest rounded-full overflow-hidden">
+<div class="w-[45%] h-full bg-error"></div>
+</div>
+<span class="text-[10px] text-error">45%</span>
+</div>
+</td>
+<td class="px-8 py-5 text-slate-500 text-xs">Oct 21, 2023</td>
+<td class="px-8 py-5 text-right">
+<button class="material-symbols-outlined text-slate-500 hover:text-on-surface" data-icon="more_vert">more_vert</button>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<!-- Right Column: Curator's Analysis -->
+<aside class="col-span-12 lg:col-span-4 space-y-8">
+<div class="bg-surface-container p-8 rounded-xl space-y-8 sticky top-24 shadow-2xl shadow-black/20">
+<div class="space-y-2">
+<span class="text-[10px] font-['Inter'] uppercase tracking-[0.25em] text-secondary font-bold">The Curator's Analysis</span>
+<h2 class="text-3xl font-['Noto_Serif'] text-on-surface leading-tight italic">Knowledge Entropy Report</h2>
+</div>
+<div class="space-y-6">
+<!-- Curator Citation -->
+<div class="pl-6 border-l-2 border-secondary bg-surface-container-lowest p-6 rounded-r-lg italic font-['Noto_Serif'] text-slate-300 text-lg leading-relaxed">
+                                "The archive is currently suffering from a 12% increase in semantic noise. Recent ingests from unverified URLs have introduced structural discrepancies that require manual curation."
+                            </div>
+<div class="space-y-4">
+<h4 class="text-xs font-['Inter'] uppercase tracking-widest text-slate-500">Key Insights</h4>
+<ul class="space-y-4">
+<li class="flex gap-4">
+<span class="material-symbols-outlined text-secondary text-sm mt-1" data-icon="check_circle">check_circle</span>
+<span class="text-sm text-slate-400 font-['Noto_Serif']">84% of ingestions successfully mapped to existing 'Epistemology' cluster.</span>
+</li>
+<li class="flex gap-4">
+<span class="material-symbols-outlined text-error text-sm mt-1" data-icon="warning">warning</span>
+<span class="text-sm text-slate-400 font-['Noto_Serif']">Metadata collision detected in 4 core documents within 'Neural Theory'.</span>
+</li>
+<li class="flex gap-4">
+<span class="material-symbols-outlined text-tertiary text-sm mt-1" data-icon="insights">insights</span>
+<span class="text-sm text-slate-400 font-['Noto_Serif']">Directory sync latency is within optimal range (12ms).</span>
+</li>
+</ul>
+</div>
+</div>
+<button class="w-full py-4 rounded-lg bg-surface-container-high border border-outline-variant/20 text-on-surface font-['Inter'] uppercase text-xs tracking-widest hover:bg-surface-bright transition-all">
+                            Export Comprehensive Report
+                        </button>
+</div>
+<!-- Decorative Visual -->
+<div class="rounded-xl overflow-hidden aspect-[4/3] relative group grayscale hover:grayscale-0 transition-all duration-700">
+<img class="w-full h-full object-cover" data-alt="Atmospheric wide shot of an old library with dust motes dancing in shafts of sunlight, tall shelves filled with leather-bound books" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBu9m_yzSSDhXHo5wx-siOMSFWXXg1dSPKcjCffQ1x-kO6vBDiUj0cP7TDz_JXbXI69YbtMCKOIn4ynS5JM_dMwvqJn4QfjuZqAni2wuHsDMOG-pOsJgT7avLY9tScUCnXqCDV8AIxivd48h_V1OiKGvGlQQ0Jvg8VMuIhOHEYwjbmjC_7_kmAFnqz--iyoDvv6fc2hUix4PR-DJCbJTKEgBWrdIosDEucUkSHo6Xucv-bewrSNqsSa_MPmwlE817Rp2BGAO4ma-Q"/>
+<div class="absolute inset-0 bg-gradient-to-t from-surface-dim via-transparent to-transparent opacity-60"></div>
+<div class="absolute bottom-4 left-6">
+<span class="text-[10px] font-['Inter'] uppercase tracking-widest text-on-surface opacity-60">Editorial Intelligence Agency</span>
+</div>
+</div>
+</aside>
+</div>
+</div>
+<!-- Space at the bottom -->
+<div class="h-24"></div>
+</main>
+</body></html>

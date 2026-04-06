@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>LLMBase | The Scholarly Synthesis</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&amp;family=Noto+Serif+SC:wght@400;700&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "tertiary-fixed": "#abf4ac",
+                        "surface-container-lowest": "#ffffff",
+                        "on-tertiary": "#ffffff",
+                        "on-primary-fixed-variant": "#293ca0",
+                        "primary-fixed": "#dee0ff",
+                        "on-surface": "#1a1c1c",
+                        "inverse-primary": "#bac3ff",
+                        "on-secondary-fixed": "#001f25",
+                        "on-secondary": "#ffffff",
+                        "surface-container": "#eeeeee",
+                        "error": "#ba1a1a",
+                        "on-tertiary-fixed": "#002107",
+                        "background": "#f9f9f9",
+                        "surface-container-highest": "#e2e2e2",
+                        "surface": "#f9f9f9",
+                        "surface-container-low": "#f3f3f3",
+                        "inverse-surface": "#2f3131",
+                        "on-secondary-container": "#006573",
+                        "tertiary-container": "#23672f",
+                        "surface-tint": "#4355b9",
+                        "error-container": "#ffdad6",
+                        "on-background": "#1a1c1c",
+                        "secondary-container": "#58e6ff",
+                        "secondary-fixed-dim": "#44d8f1",
+                        "outline-variant": "#c5c5d4",
+                        "on-surface-variant": "#454652",
+                        "on-tertiary-container": "#9ce39d",
+                        "surface-bright": "#f9f9f9",
+                        "on-error-container": "#93000a",
+                        "tertiary": "#004e1a",
+                        "on-primary-container": "#cacfff",
+                        "inverse-on-surface": "#f1f1f1",
+                        "secondary-fixed": "#a1efff",
+                        "on-error": "#ffffff",
+                        "surface-container-high": "#e8e8e8",
+                        "on-primary": "#ffffff",
+                        "primary": "#24389c",
+                        "primary-container": "#3f51b5",
+                        "outline": "#757684",
+                        "primary-fixed-dim": "#bac3ff",
+                        "on-primary-fixed": "#00105c",
+                        "secondary": "#006876",
+                        "tertiary-fixed-dim": "#90d792",
+                        "surface-dim": "#dadada",
+                        "on-tertiary-fixed-variant": "#07521d",
+                        "surface-variant": "#e2e2e2",
+                        "on-secondary-fixed-variant": "#004e59"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "fontFamily": {
+                        "headline": ["Inter"],
+                        "body": ["Noto Serif SC"],
+                        "label": ["Inter"],
+                        "mono": ["JetBrains Mono"]
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            vertical-align: middle;
+        }
+        .wiki-link {
+            color: #24389c;
+            text-decoration: none;
+            border-bottom: 1px solid transparent;
+            transition: border-color 150ms ease-out;
+        }
+        .wiki-link:hover {
+            border-bottom-color: #24389c;
+        }
+        .prose-content h1 { font-family: 'Inter', sans-serif; font-weight: 800; font-size: 2.25rem; line-height: 2.5rem; letter-spacing: -0.025em; margin-bottom: 1.5rem; color: #1a1c1c; }
+        .prose-content h2 { font-family: 'Inter', sans-serif; font-weight: 700; font-size: 1.5rem; margin-top: 2.5rem; margin-bottom: 1rem; color: #1a1c1c; }
+        .prose-content h3 { font-family: 'Inter', sans-serif; font-weight: 600; font-size: 1.25rem; margin-top: 2rem; margin-bottom: 0.75rem; color: #1a1c1c; }
+        .prose-content p { margin-bottom: 1.25rem; line-height: 1.8; color: #1a1c1c; }
+        .prose-content blockquote { border-left: 4px solid #24389c; padding-left: 1.5rem; font-style: italic; margin: 2rem 0; color: #454652; }
+    </style>
+</head>
+<body class="bg-surface font-body text-on-surface flex min-h-screen">
+<!-- SideNavBar Anchor -->
+<aside class="bg-slate-100 dark:bg-slate-900 w-[260px] h-screen sticky top-0 left-0 flex flex-col h-full py-6 px-4 no-border tonal-shift hidden md:flex">
+<div class="flex items-center gap-3 mb-8 px-2">
+<div class="w-8 h-8 rounded-lg bg-primary flex items-center justify-center text-white">
+<span class="material-symbols-outlined text-sm" style="font-variation-settings: 'FILL' 1;">hub</span>
+</div>
+<div>
+<h1 class="text-xl font-black tracking-tighter text-indigo-900 dark:text-white leading-none">LLMBase</h1>
+<p class="text-[10px] uppercase tracking-widest text-slate-500 font-bold mt-1">The Scholarly Synthesis</p>
+</div>
+</div>
+<nav class="flex-1 space-y-1">
+<!-- Navigation Mapping: Active is Wiki -->
+<a class="flex items-center gap-3 px-3 py-2 rounded-xl font-sans text-sm tracking-tight font-medium text-slate-500 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-800 transition-colors duration-150 ease-out" href="#">
+<span class="material-symbols-outlined" data-icon="dashboard">dashboard</span>
+<span>Dashboard</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 rounded-xl font-sans text-sm tracking-tight font-bold text-indigo-700 dark:text-indigo-300 border-r-2 border-indigo-700 bg-slate-200/50 dark:bg-slate-800/50" href="#">
+<span class="material-symbols-outlined" data-icon="menu_book" style="font-variation-settings: 'FILL' 1;">menu_book</span>
+<span>Wiki</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 rounded-xl font-sans text-sm tracking-tight font-medium text-slate-500 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-800 transition-colors duration-150 ease-out" href="#">
+<span class="material-symbols-outlined" data-icon="search">search</span>
+<span>Search</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 rounded-xl font-sans text-sm tracking-tight font-medium text-slate-500 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-800 transition-colors duration-150 ease-out" href="#">
+<span class="material-symbols-outlined" data-icon="forum">forum</span>
+<span>Q&amp;A</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 rounded-xl font-sans text-sm tracking-tight font-medium text-slate-500 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-800 transition-colors duration-150 ease-out" href="#">
+<span class="material-symbols-outlined" data-icon="hub">hub</span>
+<span>Graph</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 rounded-xl font-sans text-sm tracking-tight font-medium text-slate-500 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-800 transition-colors duration-150 ease-out" href="#">
+<span class="material-symbols-outlined" data-icon="input">input</span>
+<span>Ingest</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 rounded-xl font-sans text-sm tracking-tight font-medium text-slate-500 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-800 transition-colors duration-150 ease-out" href="#">
+<span class="material-symbols-outlined" data-icon="monitor_heart">monitor_heart</span>
+<span>Health</span>
+</a>
+</nav>
+<div class="mt-auto space-y-1">
+<button class="w-full mb-4 py-2.5 px-4 rounded-xl bg-gradient-to-br from-primary to-primary-container text-white font-sans text-sm font-semibold shadow-lg shadow-indigo-500/20 active:scale-95 transition-transform">
+                New Entry
+            </button>
+<a class="flex items-center gap-3 px-3 py-2 rounded-xl font-sans text-sm tracking-tight font-medium text-slate-500 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-800 transition-colors" href="#">
+<span class="material-symbols-outlined" data-icon="settings">settings</span>
+<span>Settings</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 rounded-xl font-sans text-sm tracking-tight font-medium text-slate-500 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-800 transition-colors" href="#">
+<span class="material-symbols-outlined" data-icon="help">help</span>
+<span>Support</span>
+</a>
+</div>
+</aside>
+<div class="flex-1 flex flex-col min-w-0">
+<!-- TopNavBar Anchor -->
+<header class="w-full sticky top-0 z-40 bg-white/80 dark:bg-slate-950/80 backdrop-blur-xl border-b border-slate-200/15 dark:border-slate-800/15 flex items-center justify-between px-8 py-3 w-full">
+<div class="flex items-center gap-4 flex-1">
+<div class="relative w-full max-w-md">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm">search</span>
+<input class="w-full pl-10 pr-4 py-1.5 bg-surface-container-low border-none rounded-full text-sm font-sans focus:ring-2 focus:ring-indigo-500/10 transition-all" placeholder="Search knowledge base..." type="text"/>
+</div>
+</div>
+<div class="flex items-center gap-6">
+<div class="flex items-center gap-4 font-sans text-sm font-semibold text-slate-600 dark:text-slate-400">
+<span class="material-symbols-outlined cursor-pointer hover:text-indigo-500 transition-colors" data-icon="dark_mode">dark_mode</span>
+<button class="bg-indigo-700 text-white px-4 py-1.5 rounded-full hover:bg-indigo-600 transition-colors">Compile</button>
+</div>
+<div class="w-8 h-8 rounded-full overflow-hidden bg-slate-200">
+<img alt="LLMBase Curator" class="w-full h-full object-cover" data-alt="portrait of a scholarly man with glasses and a thoughtful expression in a library setting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuC_j4jjgNMTv_Am-GgjOrAYCxjZHa4ThEDvmkN6fT3-sUK2ooAM33n_ZUvHny_YI3RIonA4nNe8eK8wA36uyHsDKP37YrIlCOgPfsHh-yTi2pnTUb9K6Iq6syC4tK5qRdj-XZgvtCqCIzFQnJ1e5qIQJv9xBe0Yg1hjCski0XXA-vgWYXVgAN8y-wltIJ_TqyMvx-kBmNwdiKPQ6-Rkw7nzKt_mH9OqHzsufscDJ_fyxBZPP-tO-K-IUiE52r3eBksCbkPAVRMB7g"/>
+</div>
+</div>
+</header>
+<!-- Main Content Area -->
+<main class="flex-1 flex justify-center p-8 md:p-12 gap-12 overflow-y-auto">
+<!-- Article Canvas -->
+<article class="w-full max-w-[720px] bg-surface-container-lowest p-8 md:p-16 rounded-xl border border-outline-variant/10">
+<!-- Header Section -->
+<header class="mb-12">
+<nav class="flex items-center gap-2 mb-6 font-sans text-xs font-bold text-primary uppercase tracking-widest">
+<span>Research</span>
+<span class="material-symbols-outlined text-[10px]">chevron_right</span>
+<span>Synthesis</span>
+<span class="material-symbols-outlined text-[10px]">chevron_right</span>
+<span class="text-on-surface-variant">Active Article</span>
+</nav>
+<h1 class="text-5xl font-black font-headline tracking-tighter text-on-surface mb-6 leading-tight">
+                        Emergent Behaviors in Large Language Models
+                    </h1>
+<p class="text-xl text-on-surface-variant font-body leading-relaxed mb-8 opacity-80">
+                        An investigation into the unpredictable capabilities of neural networks that manifest only when scaled beyond specific computational thresholds.
+                    </p>
+<div class="flex flex-wrap items-center gap-3 mb-8">
+<span class="bg-secondary-container/20 text-on-secondary-container px-3 py-1 rounded-full text-xs font-sans font-bold flex items-center gap-1">
+<span class="material-symbols-outlined text-xs">science</span>
+                            AI Safety
+                        </span>
+<span class="bg-tertiary-container text-on-tertiary-container px-3 py-1 rounded-full text-xs font-sans font-bold flex items-center gap-1">
+<span class="material-symbols-outlined text-xs">auto_awesome</span>
+                            Capabilities
+                        </span>
+<span class="bg-surface-container-high text-on-surface-variant px-3 py-1 rounded-full text-xs font-sans font-bold">
+                            #scaling-laws
+                        </span>
+</div>
+<div class="flex items-center gap-6 py-4 border-y border-outline-variant/15 font-sans text-xs font-medium text-on-surface-variant">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-sm">calendar_today</span>
+<span>October 24, 2023</span>
+</div>
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-sm">article</span>
+<span>4,250 words</span>
+</div>
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-sm">database</span>
+<span>12 sources</span>
+</div>
+</div>
+</header>
+<!-- Markdown Content Simulation -->
+<div class="prose-content font-body">
+<p>
+                        The phenomenon of <span class="font-bold">emergence</span> has long been a staple of complex systems theory. Within the context of <a class="wiki-link" href="#">[[LLM_Fundamentals|Large Language Models]]</a>, emergence refers to abilities that are not present in smaller models but are suddenly observed in larger models. This phase transition is often non-linear and difficult to predict using standard extrapolation of performance curves.
+                    </p>
+<h2 id="computational-thresholds">1. Computational Thresholds</h2>
+<p>
+                        Research indicates that certain capabilities, such as <a class="wiki-link" href="#">[[Chain_of_Thought|Zero-shot Reasoning]]</a> or complex arithmetic, remain at near-zero accuracy until the model reaches a specific scale (measured in parameters or FLOPs).
+                    </p>
+<div class="my-8 overflow-hidden rounded-xl border border-outline-variant/20">
+<table class="w-full text-left font-sans text-sm border-collapse">
+<thead>
+<tr class="bg-surface-container-low">
+<th class="p-4 font-bold border-b border-outline-variant/20">Model Class</th>
+<th class="p-4 font-bold border-b border-outline-variant/20">Parameter Count</th>
+<th class="p-4 font-bold border-b border-outline-variant/20">Emergent Feature</th>
+</tr>
+</thead>
+<tbody>
+<tr class="bg-white">
+<td class="p-4">Small-scale</td>
+<td class="p-4">&lt; 1B</td>
+<td class="p-4 text-on-surface-variant italic">None observed</td>
+</tr>
+<tr class="bg-surface-container-low/30">
+<td class="p-4">Mid-scale</td>
+<td class="p-4">1B - 10B</td>
+<td class="p-4">Basic sentiment, syntax mastery</td>
+</tr>
+<tr class="bg-white">
+<td class="p-4">Large-scale</td>
+<td class="p-4">70B+</td>
+<td class="p-4">CoT Reasoning, Python Execution</td>
+</tr>
+</tbody>
+</table>
+</div>
+<h3 id="the-role-of-data">The Role of Data Quality</h3>
+<p>
+                        Scale alone is not a guarantee of emergence. The diversity of the pre-training corpus—specifically the inclusion of code and mathematical proofs—seems to be a catalyst for logical deduction capabilities.
+                    </p>
+<blockquote>
+                        "Emergence is what happens when the quantitative increase in connectivity results in a qualitative shift in functional capability."
+                        <footer class="mt-2 text-xs font-sans not-italic text-on-surface-variant font-bold">— Dr. Aris Thorne, <cite>The Silicon Mind</cite></footer>
+</blockquote>
+<h2 id="technical-implementation">2. Technical Implementation</h2>
+<p>
+                        To observe these behaviors, researchers often utilize specific prompting strategies. For example, the following structure can trigger emergent logical pathways in a model like <a class="wiki-link" href="#">[[GPT-4_Architecture|Llama-3]]</a>.
+                    </p>
+<div class="my-8 bg-slate-900 rounded-xl p-6 relative group overflow-hidden">
+<div class="absolute top-0 right-0 p-3 flex gap-2">
+<span class="w-3 h-3 rounded-full bg-red-500/50"></span>
+<span class="w-3 h-3 rounded-full bg-yellow-500/50"></span>
+<span class="w-3 h-3 rounded-full bg-green-500/50"></span>
+</div>
+<code class="font-mono text-indigo-300 text-sm block leading-relaxed">
+<span class="text-slate-500">// Triggering CoT Reasoning</span><br/>
+<span class="text-pink-400">def</span> <span class="text-cyan-400">verify_emergence</span>(model_output):<br/>
+                              steps = model_output.split(<span class="text-amber-200">"Therefore"</span>)<br/>
+                              <span class="text-pink-400">if</span> len(steps) &gt; <span class="text-orange-400">1</span>:<br/>
+                                <span class="text-pink-400">return</span> <span class="text-cyan-400">True</span><br/>
+                              <span class="text-pink-400">return</span> <span class="text-cyan-400">False</span>
+</code>
+</div>
+<p>
+                        While these models excel at pattern recognition, we must be careful not to anthropomorphize these emergent traits. As noted in the <a class="wiki-link" href="#">[[Alignment_Problem|Stochastic Parrots]]</a> paper, high performance on benchmarks doesn't always equate to true understanding.
+                    </p>
+<h2 id="conclusions">3. Conclusions &amp; Future Outlook</h2>
+<p>
+                        The "Digital Curator" philosophy suggests that as we move toward AGI, the role of human-AI collaboration will shift from <span class="italic">instruction</span> to <span class="italic">steering</span>. We are no longer just building tools; we are nurturing ecosystems of emergent logic.
+                    </p>
+</div>
+<!-- CJK Support Demo -->
+<div class="mt-16 pt-8 border-t border-outline-variant/15">
+<h4 class="font-sans text-xs font-bold text-on-surface-variant uppercase tracking-widest mb-4">Cross-Cultural Context</h4>
+<p class="text-lg leading-relaxed text-on-surface/80">
+                        在大型语言模型的研究中，“涌现”现象（Emergence）不仅是技术上的飞跃，更是我们理解复杂智能系统的关键契机。我们需要审慎地定义这些新能力，避免盲目乐观。
+                    </p>
+</div>
+</article>
+<!-- Right Sidebar: TOC & Metadata -->
+<aside class="hidden lg:block w-[240px] flex-shrink-0">
+<div class="sticky top-24 space-y-10">
+<!-- Table of Contents -->
+<section>
+<h3 class="font-sans text-[10px] font-black uppercase tracking-widest text-on-surface-variant mb-4">Table of Contents</h3>
+<nav class="space-y-3 font-sans text-sm">
+<a class="block text-primary font-bold hover:text-indigo-500 transition-colors" href="#computational-thresholds">1. Computational Thresholds</a>
+<a class="block text-on-surface-variant pl-4 border-l border-outline-variant/30 hover:border-primary transition-colors" href="#the-role-of-data">Data Quality</a>
+<a class="block text-on-surface-variant hover:text-indigo-500 transition-colors" href="#technical-implementation">2. Technical Implementation</a>
+<a class="block text-on-surface-variant hover:text-indigo-500 transition-colors" href="#conclusions">3. Conclusions</a>
+</nav>
+</section>
+<!-- Backlinks Section -->
+<section>
+<h3 class="font-sans text-[10px] font-black uppercase tracking-widest text-on-surface-variant mb-4 flex items-center justify-between">
+                            Backlinks
+                            <span class="bg-surface-container px-1.5 py-0.5 rounded text-[8px]">4</span>
+</h3>
+<div class="space-y-3">
+<a class="group block" href="#">
+<span class="block font-sans text-xs font-bold text-on-surface group-hover:text-primary transition-colors">Scale Laws 2024</span>
+<span class="block font-sans text-[10px] text-on-surface-variant opacity-60">"...referenced in the section on emergent capabilities."</span>
+</a>
+<a class="group block" href="#">
+<span class="block font-sans text-xs font-bold text-on-surface group-hover:text-primary transition-colors">Neural Phase Transitions</span>
+<span class="block font-sans text-[10px] text-on-surface-variant opacity-60">"Detailed analysis of LLM emergence thresholds..."</span>
+</a>
+<a class="group block" href="#">
+<span class="block font-sans text-xs font-bold text-on-surface group-hover:text-primary transition-colors">AGI Roadmap v2</span>
+<span class="block font-sans text-[10px] text-on-surface-variant opacity-60">"Foundational concepts for level 3 intelligence."</span>
+</a>
+</div>
+</section>
+<!-- Related Section -->
+<section>
+<h3 class="font-sans text-[10px] font-black uppercase tracking-widest text-on-surface-variant mb-4">Related Topics</h3>
+<div class="flex flex-wrap gap-2">
+<a class="px-3 py-1 rounded-full bg-tertiary-container/10 text-on-tertiary-container text-[10px] font-bold font-sans border border-tertiary-container/20 hover:bg-tertiary-container/20 transition-colors" href="#">Complexity Theory</a>
+<a class="px-3 py-1 rounded-full bg-tertiary-container/10 text-on-tertiary-container text-[10px] font-bold font-sans border border-tertiary-container/20 hover:bg-tertiary-container/20 transition-colors" href="#">Scaling Laws</a>
+<a class="px-3 py-1 rounded-full bg-tertiary-container/10 text-on-tertiary-container text-[10px] font-bold font-sans border border-tertiary-container/20 hover:bg-tertiary-container/20 transition-colors" href="#">Few-shot Learning</a>
+</div>
+</section>
+<!-- AI Summary Card -->
+<section class="p-5 rounded-xl bg-secondary-container/10 border border-secondary-container/20 backdrop-blur-md">
+<div class="flex items-center gap-2 mb-3">
+<span class="material-symbols-outlined text-secondary text-sm">auto_awesome</span>
+<span class="font-sans text-[10px] font-black uppercase tracking-tighter text-secondary">AI Insight</span>
+</div>
+<p class="font-body text-xs leading-relaxed text-on-secondary-container italic">
+                            This article strongly correlates with your recent search on "Non-linear Scaling". Consider linking to the 
+                            <a class="underline" href="#">[[Chinchilla_Paper]]</a> for further depth.
+                        </p>
+</section>
+</div>
+</aside>
+</main>
+</div>
+<!-- Mobile Nav Anchor -->
+<nav class="md:hidden fixed bottom-0 left-0 right-0 bg-white dark:bg-slate-950 border-t border-slate-200/10 flex justify-around py-3 px-6 z-50">
+<a class="flex flex-col items-center gap-1 text-slate-400" href="#">
+<span class="material-symbols-outlined">dashboard</span>
+</a>
+<a class="flex flex-col items-center gap-1 text-indigo-600" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">menu_book</span>
+</a>
+<a class="flex flex-col items-center gap-1 text-slate-400" href="#">
+<span class="material-symbols-outlined">search</span>
+</a>
+<a class="flex flex-col items-center gap-1 text-slate-400" href="#">
+<span class="material-symbols-outlined">forum</span>
+</a>
+<a class="flex flex-col items-center gap-1 text-slate-400" href="#">
+<span class="material-symbols-outlined">person</span>
+</a>
+</nav>
+</body></html>

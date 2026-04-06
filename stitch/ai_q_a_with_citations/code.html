@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>LLMBase | Q&amp;A</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&amp;family=Noto+Serif+SC:wght@400;700&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "tertiary-fixed": "#abf4ac",
+                      "surface-container-lowest": "#ffffff",
+                      "on-tertiary": "#ffffff",
+                      "on-primary-fixed-variant": "#293ca0",
+                      "primary-fixed": "#dee0ff",
+                      "on-surface": "#1a1c1c",
+                      "inverse-primary": "#bac3ff",
+                      "on-secondary-fixed": "#001f25",
+                      "on-secondary": "#ffffff",
+                      "surface-container": "#eeeeee",
+                      "error": "#ba1a1a",
+                      "on-tertiary-fixed": "#002107",
+                      "background": "#f9f9f9",
+                      "surface-container-highest": "#e2e2e2",
+                      "surface": "#f9f9f9",
+                      "surface-container-low": "#f3f3f3",
+                      "inverse-surface": "#2f3131",
+                      "on-secondary-container": "#006573",
+                      "tertiary-container": "#23672f",
+                      "surface-tint": "#4355b9",
+                      "error-container": "#ffdad6",
+                      "on-background": "#1a1c1c",
+                      "secondary-container": "#58e6ff",
+                      "secondary-fixed-dim": "#44d8f1",
+                      "outline-variant": "#c5c5d4",
+                      "on-surface-variant": "#454652",
+                      "on-tertiary-container": "#9ce39d",
+                      "surface-bright": "#f9f9f9",
+                      "on-error-container": "#93000a",
+                      "tertiary": "#004e1a",
+                      "on-primary-container": "#cacfff",
+                      "inverse-on-surface": "#f1f1f1",
+                      "secondary-fixed": "#a1efff",
+                      "on-error": "#ffffff",
+                      "surface-container-high": "#e8e8e8",
+                      "on-primary": "#ffffff",
+                      "primary": "#24389c",
+                      "primary-container": "#3f51b5",
+                      "outline": "#757684",
+                      "primary-fixed-dim": "#bac3ff",
+                      "on-primary-fixed": "#00105c",
+                      "secondary": "#006876",
+                      "tertiary-fixed-dim": "#90d792",
+                      "surface-dim": "#dadada",
+                      "on-tertiary-fixed-variant": "#07521d",
+                      "surface-variant": "#e2e2e2",
+                      "on-secondary-fixed-variant": "#004e59"
+              },
+              "borderRadius": {
+                      "DEFAULT": "0.25rem",
+                      "lg": "0.5rem",
+                      "xl": "0.75rem",
+                      "full": "9999px"
+              },
+              "fontFamily": {
+                      "headline": ["Inter"],
+                      "body": ["Noto Serif SC"],
+                      "label": ["Inter"],
+                      "mono": ["JetBrains Mono"]
+              }
+            },
+          },
+        }
+    </script>
+<style>
+        .shimmer {
+            background: linear-gradient(90deg, #f3f3f3 25%, #e2e2e2 50%, #f3f3f3 75%);
+            background-size: 200% 100%;
+            animation: shimmer 1.5s infinite;
+        }
+        @keyframes shimmer {
+            0% { background-position: 200% 0; }
+            100% { background-position: -200% 0; }
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .glass-panel {
+            background: rgba(88, 230, 255, 0.08);
+            backdrop-filter: blur(12px);
+        }
+    </style>
+</head>
+<body class="bg-background text-on-surface font-label flex min-h-screen">
+<!-- SideNavBar -->
+<aside class="w-[260px] h-screen sticky top-0 left-0 bg-slate-100 flex flex-col py-6 px-4 shrink-0">
+<div class="mb-8 px-2 flex items-center gap-3">
+<div class="w-10 h-10 rounded-xl bg-primary flex items-center justify-center text-white font-black text-xl tracking-tighter">LL</div>
+<div>
+<h1 class="text-xl font-black tracking-tighter text-indigo-900 leading-none">LLMBase</h1>
+<p class="text-[10px] uppercase tracking-widest text-indigo-700/60 font-bold mt-1">The Scholarly Synthesis</p>
+</div>
+</div>
+<button class="mb-6 w-full py-3 px-4 bg-primary text-white rounded-xl font-bold flex items-center justify-center gap-2 hover:opacity-90 transition-all active:scale-95 shadow-lg shadow-primary/20">
+<span class="material-symbols-outlined text-[20px]">add</span>
+<span>New Entry</span>
+</button>
+<nav class="flex-1 space-y-1">
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-500 hover:bg-slate-200 transition-colors duration-150 ease-out group" href="#">
+<span class="material-symbols-outlined text-[22px]">dashboard</span>
+<span class="text-sm font-medium">Dashboard</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-500 hover:bg-slate-200 transition-colors duration-150 ease-out group" href="#">
+<span class="material-symbols-outlined text-[22px]">menu_book</span>
+<span class="text-sm font-medium">Wiki</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-500 hover:bg-slate-200 transition-colors duration-150 ease-out group" href="#">
+<span class="material-symbols-outlined text-[22px]">search</span>
+<span class="text-sm font-medium">Search</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-indigo-700 font-bold border-r-2 border-indigo-700 bg-slate-200/50 group" href="#">
+<span class="material-symbols-outlined text-[22px]">forum</span>
+<span class="text-sm">Q&amp;A</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-500 hover:bg-slate-200 transition-colors duration-150 ease-out group" href="#">
+<span class="material-symbols-outlined text-[22px]">hub</span>
+<span class="text-sm font-medium">Graph</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-500 hover:bg-slate-200 transition-colors duration-150 ease-out group" href="#">
+<span class="material-symbols-outlined text-[22px]">input</span>
+<span class="text-sm font-medium">Ingest</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-500 hover:bg-slate-200 transition-colors duration-150 ease-out group" href="#">
+<span class="material-symbols-outlined text-[22px]">monitor_heart</span>
+<span class="text-sm font-medium">Health</span>
+</a>
+</nav>
+<div class="mt-auto space-y-1 pt-6 border-t border-slate-200/50">
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-500 hover:bg-slate-200 transition-colors duration-150 ease-out" href="#">
+<span class="material-symbols-outlined text-[22px]">settings</span>
+<span class="text-sm font-medium">Settings</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-500 hover:bg-slate-200 transition-colors duration-150 ease-out" href="#">
+<span class="material-symbols-outlined text-[22px]">help</span>
+<span class="text-sm font-medium">Support</span>
+</a>
+</div>
+</aside>
+<!-- Main Canvas -->
+<main class="flex-1 flex flex-col min-w-0">
+<!-- TopNavBar -->
+<header class="w-full sticky top-0 z-40 bg-white/80 backdrop-blur-xl flex items-center justify-between px-8 py-3 border-b border-slate-200/15">
+<div class="flex items-center gap-4 flex-1 max-w-xl">
+<div class="relative w-full">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-[20px]">search</span>
+<input class="w-full pl-10 pr-4 py-2 bg-surface-container-low border-none rounded-xl text-sm focus:ring-2 focus:ring-primary/10 placeholder:text-slate-400" placeholder="Search knowledge base..." type="text"/>
+</div>
+</div>
+<div class="flex items-center gap-6">
+<div class="flex items-center gap-3">
+<button class="p-2 text-slate-600 hover:text-indigo-500 transition-colors">
+<span class="material-symbols-outlined">dark_mode</span>
+</button>
+<button class="bg-primary text-white px-5 py-1.5 rounded-full text-sm font-semibold hover:opacity-90 transition-all">
+                        Compile
+                    </button>
+</div>
+<div class="w-8 h-8 rounded-full overflow-hidden bg-slate-200">
+<img class="w-full h-full object-cover" data-alt="Portrait of a scholarly male curator with glasses in a modern library setting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCVCHVK0ALHqGXFDYjYnMNPyrgE_wc-coB05NmxPLBnnoPiJBMjA4pNy5wWcOom5AYWUPpOLe5gqYOyKcVGYGZNUO0DePbHGHCWZcEGT7_XysF0jw3-c0rkcHxnGNi6rFjOI5T-EOX2K03A7zc3SKbYRdpHeIsAJGg2eiQcXsjVpIYm4ejFW5qDpijefZcnfrqxXg2yLJVa4gfGHs8UifLi6RarxjuS-JDXa87WpZFhzUyNTkgL_uLxaV5kp61YRG_cbZQ4dClQ6Q"/>
+</div>
+</div>
+</header>
+<!-- Q&A Content -->
+<div class="flex-1 overflow-y-auto px-12 py-12">
+<div class="max-w-4xl mx-auto space-y-12">
+<!-- Center Input Section -->
+<section class="space-y-6">
+<div class="text-center space-y-2 mb-8">
+<h2 class="text-3xl font-extrabold tracking-tight text-on-surface font-headline">Synthesize Knowledge</h2>
+<p class="text-on-surface-variant max-w-lg mx-auto">Ask complex queries across your entire library and receive cited, scholarly answers.</p>
+</div>
+<div class="bg-surface-container-lowest border border-outline-variant/10 rounded-2xl p-4 shadow-sm focus-within:ring-2 focus-within:ring-secondary/10 transition-all duration-300">
+<textarea class="w-full border-none focus:ring-0 text-xl font-medium placeholder:text-slate-300 resize-none bg-transparent" placeholder="Ask anything about your knowledge base..." rows="3"></textarea>
+<div class="mt-4 flex items-center justify-between border-t border-slate-100 pt-4">
+<div class="flex items-center gap-4">
+<div class="flex items-center gap-2 px-3 py-1.5 bg-surface-container-low rounded-full cursor-pointer hover:bg-surface-container-high transition-colors">
+<span class="material-symbols-outlined text-[18px] text-slate-500">article</span>
+<span class="text-xs font-semibold text-slate-600">Markdown</span>
+<span class="material-symbols-outlined text-[16px] text-slate-400">expand_more</span>
+</div>
+<label class="flex items-center gap-2 cursor-pointer group">
+<input class="rounded text-primary focus:ring-primary/20 border-slate-300 w-4 h-4" type="checkbox"/>
+<span class="text-xs font-medium text-slate-600 group-hover:text-primary transition-colors">File answer back to wiki</span>
+</label>
+</div>
+<div class="flex items-center gap-3">
+<button class="px-5 py-2.5 rounded-xl border border-secondary text-secondary text-sm font-bold flex items-center gap-2 hover:bg-secondary/5 transition-all">
+<span class="material-symbols-outlined text-[20px]">biotech</span>
+                                    Deep Research
+                                </button>
+<button class="px-8 py-2.5 rounded-xl bg-gradient-to-br from-primary to-primary-container text-white text-sm font-bold shadow-lg shadow-primary/20 hover:scale-[1.02] active:scale-95 transition-all">
+                                    Ask
+                                </button>
+</div>
+</div>
+</div>
+</section>
+<!-- Answer Area -->
+<section class="space-y-8 pb-20">
+<!-- Generation Header -->
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-4">
+<div class="w-10 h-10 rounded-full glass-panel flex items-center justify-center text-secondary">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">auto_awesome</span>
+</div>
+<div>
+<p class="text-sm font-bold text-on-surface">LLMBase Synthesis</p>
+<p class="text-[11px] text-on-surface-variant flex items-center gap-1">
+<span class="relative flex h-2 w-2">
+<span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-secondary opacity-75"></span>
+<span class="relative inline-flex rounded-full h-2 w-2 bg-secondary"></span>
+</span>
+                                    Synthesizing from 14 source documents...
+                                </p>
+</div>
+</div>
+<div class="flex gap-2">
+<button class="p-2 text-slate-400 hover:text-slate-600 transition-colors">
+<span class="material-symbols-outlined">share</span>
+</button>
+<button class="p-2 text-slate-400 hover:text-slate-600 transition-colors">
+<span class="material-symbols-outlined">more_horiz</span>
+</button>
+</div>
+</div>
+<!-- AI Response Container -->
+<div class="bg-surface-container-lowest rounded-2xl p-8 border border-outline-variant/10 shadow-sm">
+<!-- Content: Markdown Styled Answer -->
+<div class="font-body text-lg leading-relaxed text-on-surface prose max-w-none space-y-6">
+<p>
+                                Based on the recent entries in your <strong>Digital curator</strong> collection, the concept of <span class="text-primary font-semibold">Semantic Anchoring</span> is described as the foundational mechanism for inter-agent communication. 
+                                <sup class="inline-flex items-center justify-center w-4 h-4 text-[10px] bg-secondary-fixed text-on-secondary-fixed rounded-full font-sans font-bold cursor-help hover:brightness-90 transition-all ml-0.5">1</sup>
+</p>
+<div class="py-4 border-l-4 border-secondary/20 pl-6 my-8 italic text-on-surface-variant/80 text-xl">
+                                "Knowledge is not just stored; it is synthesized through the friction of competing perspectives."
+                            </div>
+<p>
+                                Unlike standard indexing, this system prioritizes the <strong>Editorial High-End</strong> aesthetic—balancing information density with expansive white space. This approach is reflected in the way metadata is structured across your research papers.
+                                <sup class="inline-flex items-center justify-center w-4 h-4 text-[10px] bg-secondary-fixed text-on-secondary-fixed rounded-full font-sans font-bold cursor-help hover:brightness-90 transition-all ml-0.5">2</sup>
+</p>
+<h3 class="font-headline font-bold text-xl text-primary mt-10 mb-4">Key Observations</h3>
+<ul class="list-none space-y-4 font-sans text-base">
+<li class="flex gap-3">
+<span class="material-symbols-outlined text-secondary text-[20px]">check_circle</span>
+<span>Asymmetry is intentionally used to guide focus toward active reading zones.</span>
+</li>
+<li class="flex gap-3">
+<span class="material-symbols-outlined text-secondary text-[20px]">check_circle</span>
+<span>Tonal shifts replace rigid borders to minimize cognitive noise.</span>
+</li>
+</ul>
+</div>
+<!-- Loading Shimmer State (Simulation) -->
+<div class="mt-8 space-y-4">
+<div class="h-4 w-3/4 shimmer rounded-full opacity-40"></div>
+<div class="h-4 w-1/2 shimmer rounded-full opacity-40"></div>
+</div>
+<!-- Citations Footer -->
+<div class="mt-12 pt-8 border-t border-slate-100 grid grid-cols-2 gap-4">
+<div class="p-3 rounded-xl bg-surface-container-low flex items-start gap-3 hover:bg-surface-container transition-colors cursor-pointer group">
+<div class="w-6 h-6 shrink-0 bg-secondary-fixed text-on-secondary-fixed flex items-center justify-center rounded text-[10px] font-bold">1</div>
+<div>
+<p class="text-xs font-bold text-on-surface leading-tight group-hover:text-primary transition-colors">On Semantic Anchoring and Knowledge Graphs</p>
+<p class="text-[10px] text-on-surface-variant mt-1">Research Paper • Dr. Aris Thorne • 2024</p>
+</div>
+</div>
+<div class="p-3 rounded-xl bg-surface-container-low flex items-start gap-3 hover:bg-surface-container transition-colors cursor-pointer group">
+<div class="w-6 h-6 shrink-0 bg-secondary-fixed text-on-secondary-fixed flex items-center justify-center rounded text-[10px] font-bold">2</div>
+<div>
+<p class="text-xs font-bold text-on-surface leading-tight group-hover:text-primary transition-colors">Visual Systems for Modern Knowledge Management</p>
+<p class="text-[10px] text-on-surface-variant mt-1">Design Spec • Studio Curator • 2023</p>
+</div>
+</div>
+</div>
+<!-- Action Bar -->
+<div class="mt-8 flex items-center justify-between">
+<div class="flex items-center gap-2">
+<button class="flex items-center gap-2 px-4 py-2 text-xs font-bold text-on-surface-variant hover:bg-surface-container rounded-lg transition-all">
+<span class="material-symbols-outlined text-[18px]">content_copy</span>
+                                    Copy
+                                </button>
+<button class="flex items-center gap-2 px-4 py-2 text-xs font-bold text-on-surface-variant hover:bg-surface-container rounded-lg transition-all">
+<span class="material-symbols-outlined text-[18px]">drive_file_move</span>
+                                    File to Wiki
+                                </button>
+</div>
+<div class="flex items-center gap-2">
+<span class="text-[10px] text-on-surface-variant uppercase tracking-widest font-bold mr-2">Feedback</span>
+<button class="p-1.5 rounded hover:bg-surface-container transition-colors">
+<span class="material-symbols-outlined text-[20px] text-slate-400">thumb_up</span>
+</button>
+<button class="p-1.5 rounded hover:bg-surface-container transition-colors">
+<span class="material-symbols-outlined text-[20px] text-slate-400">thumb_down</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Related Topics Bento -->
+<div class="grid grid-cols-3 gap-4">
+<div class="col-span-1 bg-tertiary-container/5 p-4 rounded-2xl border border-tertiary-container/10 group cursor-pointer">
+<span class="material-symbols-outlined text-tertiary mb-2">hub</span>
+<h4 class="text-sm font-bold text-on-surface">Explore Graph</h4>
+<p class="text-xs text-on-surface-variant mt-1">Visualize how "Semantic Anchoring" connects to your other notes.</p>
+</div>
+<div class="col-span-1 glass-panel p-4 rounded-2xl group cursor-pointer border border-secondary/10">
+<span class="material-symbols-outlined text-secondary mb-2" style="font-variation-settings: 'FILL' 1;">psychology</span>
+<h4 class="text-sm font-bold text-on-surface">Mental Models</h4>
+<p class="text-xs text-on-surface-variant mt-1">Compare this response against the First Principles entry.</p>
+</div>
+<div class="col-span-1 bg-surface-container-low p-4 rounded-2xl hover:bg-surface-container transition-colors cursor-pointer border border-outline-variant/10">
+<span class="material-symbols-outlined text-primary mb-2">edit_note</span>
+<h4 class="text-sm font-bold text-on-surface">Annotate</h4>
+<p class="text-xs text-on-surface-variant mt-1">Add manual observations to the curated synthesis.</p>
+</div>
+</div>
+</section>
+</div>
+</div>
+</main>
+</body></html>

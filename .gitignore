@@ -1,0 +1,27 @@
+# Environment & secrets
+.env
+*.pyc
+__pycache__/
+*.egg-info/
+
+# Knowledge data (generated, not committed)
+raw/
+wiki/
+
+# Frontend build artifacts
+static/dist/
+frontend/node_modules/
+frontend/dist/
+
+# OS
+.DS_Store
+*.swp
+
+# IDE
+.vscode/
+.idea/
+
+# Python
+*.egg
+dist/
+build/
