@@ -601,6 +601,14 @@ def create_web_app(base_dir: Path | None = None):
 
     # ─── SPA Fallback ──────────────────────────────────────────
 
+    # Serve custom favicon from project static/ dir if it exists
+    @app.route("/favicon.svg")
+    def serve_favicon():
+        custom_favicon = base / "static" / "favicon.svg"
+        if custom_favicon.exists():
+            return send_from_directory(str(custom_favicon.parent), "favicon.svg")
+        return send_from_directory(str(static_dir), "favicon.svg")
+
     @app.route("/", defaults={"path": ""})
     @app.route("/<path:path>")
     def serve_spa(path):

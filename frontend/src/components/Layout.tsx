@@ -81,7 +81,10 @@ export function Layout() {
   const langRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    fetchBranding().then(setBranding);
+    fetchBranding().then(b => {
+      setBranding(b);
+      document.title = b.name || 'LLMBase';
+    });
     api.getArticles().then(setArticles).catch(() => {});
   }, []);
 
