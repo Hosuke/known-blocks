@@ -4,6 +4,9 @@
 
 **LLM-powered personal knowledge base**
 
+[![GitHub stars](https://img.shields.io/github/stars/Hosuke/llmbase?style=social)](https://github.com/Hosuke/llmbase)
+[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](https://opensource.org/licenses/MIT)
+
 Inspired by [Karpathy's LLM Knowledge Base pattern](https://x.com/karpathy/status/2039805659525644595) ([detailed design](https://gist.github.com/karpathy/442a6bf555914893e9891c11519de94f)) — raw data goes in, an LLM compiles it into a structured, interlinked wiki, and you query & enhance it over time.
 
 No vector database. No embeddings pipeline. Just markdown, an LLM, and a clean UI.
@@ -439,6 +442,16 @@ llmbase/
 | **VPS** | `gunicorn wsgi:app`，任何服务器 |
 
 ---
+
+## Star History
+
+<a href="https://star-history.com/#Hosuke/llmbase&Date">
+ <picture>
+   <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/svg?repos=Hosuke/llmbase&type=Date&theme=dark" />
+   <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/svg?repos=Hosuke/llmbase&type=Date" />
+   <img alt="Star History Chart" src="https://api.star-history.com/svg?repos=Hosuke/llmbase&type=Date" />
+ </picture>
+</a>
 
 ## License
 
