@@ -107,7 +107,7 @@ export const api = {
   getArticles: () => get<{ articles: Article[] }>('/api/articles').then(d => d.articles),
   getArticle: (slug: string) => get<Article>('/api/articles/' + slug),
   search: (q: string, topK = 10) => get<{ results: SearchResult[] }>(`/api/search?q=${encodeURIComponent(q)}&top_k=${topK}`).then(d => d.results),
-  ask: (question: string, deep = false, fileBack = true, tone = 'default') => post<{ answer: string }>('/api/ask', { question, deep, file_back: fileBack, tone }),
+  ask: (question: string, deep = false, fileBack = true, tone = 'default') => post<{ answer: string; consulted?: { slug: string; title: string }[] }>('/api/ask', { question, deep, file_back: fileBack, tone }),
   getTones: () => get<{ tones: { id: string; label: string; label_zh: string; icon: string }[] }>('/api/tones').then(d => d.tones),
   getAliases: () => get<{ aliases: Record<string, string> }>('/api/aliases').then(d => d.aliases),
   getTrails: () => get<{ trails: Trail[] }>('/api/trails').then(d => d.trails),

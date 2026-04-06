@@ -98,8 +98,13 @@ def query_with_search(
     base_dir: Path | None = None,
     tone: str = "default",
     file_back: bool = False,
-) -> str:
-    """Multi-step query: first search for relevant articles, then answer."""
+    return_context: bool = False,
+) -> str | dict:
+    """Multi-step query: first search for relevant articles, then answer.
+
+    If return_context=True, returns {"answer": str, "consulted": [slug, ...]}
+    instead of just the answer string.
+    """
     cfg = load_config(base_dir)
     ensure_dirs(cfg)
 
@@ -154,6 +159,14 @@ Which articles (by title) are most relevant? List up to 10, one per line, just t
 
     if file_back:
         _file_output(question, answer, "markdown", cfg)
+
+    if return_context:
+        # Extract slugs from consulted articles
+        consulted = []
+        for entry in index:
+            if any(cf["path"] == entry["title"] for cf in context_files):
+                consulted.append({"slug": entry["slug"], "title": entry["title"]})
+        return {"answer": answer, "consulted": consulted}
 
     return answer
 

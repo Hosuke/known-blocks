@@ -4,6 +4,7 @@ import { Markdown } from '../components/Markdown';
 import { Shimmer } from '../components/Loading';
 import { api } from '../lib/api';
 import { useLang } from '../lib/lang';
+import { useTrail } from '../lib/trail';
 
 interface QAPair { question: string; answer: string; }
 interface ToneOption { id: string; label: string; label_zh: string; icon: string; }
@@ -30,6 +31,8 @@ export function QA() {
     api.getTones().then(setTones).catch(() => setTones(FALLBACK_TONES));
   }, []);
 
+  const { recording, recordStep, startTrail } = useTrail();
+
   async function ask(deep: boolean) {
     if (!question.trim() || loading) return;
     setLoading(true);
@@ -38,6 +41,24 @@ export function QA() {
       const res = await api.ask(question, deep, fileBack, tone);
       setAnswer(res.answer);
       setHistory(prev => [{ question, answer: res.answer }, ...prev]);
+
+      // Deep Research → auto-create research trail from consulted articles
+      if (deep && res.consulted && res.consulted.length > 0) {
+        // Start a new trail if not already recording
+        if (!recording) {
+          const trailName = question.length > 20 ? question.slice(0, 20) + '…' : question;
+          startTrail(trailName);
+        }
+        // Record the query step
+        recordStep({ type: 'query', question });
+        // Record each consulted article
+        for (const art of res.consulted) {
+          recordStep({ type: 'article', slug: art.slug, title: art.title });
+        }
+      } else if (recording) {
+        // Regular question while recording → just record the query
+        recordStep({ type: 'query', question });
+      }
     } catch (e) {
       setAnswer('Error: Failed to get response. Check API connection.');
     }

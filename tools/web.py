@@ -363,10 +363,13 @@ def create_web_app(base_dir: Path | None = None):
         file_back = data.get("file_back", True)
         tone = data.get("tone", "default")
         if deep:
-            answer = query_with_search(q, base, tone=tone, file_back=file_back)
+            result = query_with_search(q, base, tone=tone, file_back=file_back, return_context=True)
+            if isinstance(result, dict):
+                return jsonify({"answer": result["answer"], "consulted": result.get("consulted", [])})
+            return jsonify({"answer": result})
         else:
             answer = query(q, file_back=file_back, base_dir=base, tone=tone)
-        return jsonify({"answer": answer})
+            return jsonify({"answer": answer})
 
     @app.route("/api/tones", methods=["GET"])
     def api_tones():
