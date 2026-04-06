@@ -35,3 +35,7 @@ worker:
 health:
   auto_fix_broken_links: true
   max_stubs_per_run: 10
+
+entities:
+  enabled: false
+  extract_interval_hours: 24

@@ -174,6 +174,19 @@ def create_web_app(base_dir: Path | None = None):
         aliases = load_aliases(Path(cfg["paths"]["meta"]))
         return jsonify({"aliases": aliases})
 
+    @app.route("/api/entities")
+    def api_entities():
+        """Return extracted entities (people, events, places)."""
+        from .entities import get_entities
+        return jsonify(get_entities(base))
+
+    @app.route("/api/entities/extract", methods=["POST"])
+    def api_extract_entities():
+        """Trigger entity extraction."""
+        from .entities import extract_entities
+        result = extract_entities(base)
+        return jsonify(result)
+
     @app.route("/api/refs/plugins")
     def api_ref_plugins():
         """List available reference source plugins."""

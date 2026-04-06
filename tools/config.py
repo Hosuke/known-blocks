@@ -50,6 +50,10 @@ def _defaults() -> dict:
             "auto_fix_broken_links": True,
             "max_stubs_per_run": 10,
         },
+        "entities": {
+            "enabled": False,
+            "extract_interval_hours": 24,
+        },
     }
 
 

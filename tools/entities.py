@@ -1,0 +1,161 @@
+"""Entity extraction — people, events, places from wiki articles.
+
+Opt-in feature (config: entities.enabled). LLM reads article metadata
+and extracts structured entities for timeline, map, and people views.
+
+Uses two-phase extraction for large KBs to avoid token overflow.
+"""
+
+import json
+import logging
+from pathlib import Path
+
+import frontmatter
+
+from .config import load_config, ensure_dirs
+from .llm import chat
+
+logger = logging.getLogger("llmbase.entities")
+
+ENTITY_SYSTEM_PROMPT = """You are a knowledge base analyst. Extract structured entities
+(people, events, places) from wiki article metadata.
+
+Rules:
+- Only extract entities clearly supported by the article data
+- Dates should be in a consistent format: "YYYY", "c.YYYY", "YYYY-YYYY", "YYYY BCE"
+- Names must be bilingual when possible: name (English) + name_local (original script)
+- coords for places: [latitude, longitude] if determinable, null otherwise
+- Each entity references the article slugs it appears in
+- Do NOT invent entities not supported by the data
+- Respond with ONLY valid JSON, no markdown fences"""
+
+ENTITY_PROMPT = """Extract people, events, and places from these {count} wiki articles:
+
+{articles}
+
+Output a JSON object:
+{{
+  "people": [
+    {{"name": "English Name", "name_local": "本地名", "dates": "c.372-289 BCE",
+      "role": "Philosopher", "articles": ["slug1", "slug2"]}}
+  ],
+  "events": [
+    {{"name": "Event Name", "name_local": "事件名", "date": "1190 CE",
+      "description": "One-line description", "articles": ["slug1"]}}
+  ],
+  "places": [
+    {{"name": "Place Name", "name_local": "地名", "coords": [35.6, 116.99],
+      "articles": ["slug1"]}}
+  ]
+}}
+
+Rules:
+- Include ALL identifiable people, events, and places
+- coords can be null if unknown
+- articles = list of article slugs where this entity is mentioned
+- Output ONLY the JSON object"""
+
+
+def extract_entities(base_dir: Path | None = None) -> dict:
+    """Extract entities from wiki articles using LLM. Cache to entities.json."""
+    cfg = load_config(base_dir)
+    ensure_dirs(cfg)
+    concepts_dir = Path(cfg["paths"]["concepts"])
+    meta_dir = Path(cfg["paths"]["meta"])
+
+    if not cfg.get("entities", {}).get("enabled", False):
+        logger.info("[entities] Entity extraction disabled in config")
+        return get_entities(base_dir)
+
+    if not concepts_dir.exists():
+        return {"people": [], "events": [], "places": []}
+
+    # Collect article metadata
+    articles = []
+    for md_file in sorted(concepts_dir.glob("*.md")):
+        post = frontmatter.load(str(md_file))
+        articles.append({
+            "slug": md_file.stem,
+            "title": post.metadata.get("title", md_file.stem),
+            "tags": post.metadata.get("tags", []),
+            "summary": post.metadata.get("summary", ""),
+        })
+
+    if not articles:
+        return {"people": [], "events": [], "places": []}
+
+    # Build compact article list (avoid token overflow)
+    if len(articles) <= 80:
+        article_lines = [
+            f'- {a["slug"]}: {a["title"]} | {a["summary"]}'
+            for a in articles
+        ]
+    else:
+        # Large KB: only send titles + tags (no summaries)
+        article_lines = [
+            f'- {a["slug"]}: {a["title"]} | tags: {", ".join(a["tags"][:3])}'
+            for a in articles
+        ]
+
+    articles_text = "\n".join(article_lines)
+    prompt = ENTITY_PROMPT.format(count=len(articles), articles=articles_text)
+
+    try:
+        response = chat(prompt, system=ENTITY_SYSTEM_PROMPT, max_tokens=cfg["llm"]["max_tokens"])
+        result = _parse_entity_response(response)
+    except Exception as e:
+        logger.error(f"[entities] Extraction failed: {e}")
+        result = {"people": [], "events": [], "places": []}
+
+    # Add metadata
+    result["article_count"] = len(articles)
+    result["extracted_at"] = __import__("datetime").datetime.now(
+        __import__("datetime").timezone.utc
+    ).isoformat()
+
+    # Cache
+    meta_dir.mkdir(parents=True, exist_ok=True)
+    path = meta_dir / "entities.json"
+    path.write_text(json.dumps(result, indent=2, ensure_ascii=False), encoding="utf-8")
+    logger.info(
+        f"[entities] Extracted {len(result.get('people', []))} people, "
+        f"{len(result.get('events', []))} events, "
+        f"{len(result.get('places', []))} places"
+    )
+
+    return result
+
+
+def get_entities(base_dir: Path | None = None) -> dict:
+    """Read cached entities."""
+    cfg = load_config(base_dir)
+    meta_dir = Path(cfg["paths"]["meta"])
+    path = meta_dir / "entities.json"
+    if path.exists():
+        return json.loads(path.read_text())
+    return {"people": [], "events": [], "places": []}
+
+
+def _parse_entity_response(response: str) -> dict:
+    """Parse LLM JSON response into entity dict."""
+    text = response.strip()
+    if text.startswith("```"):
+        text = text.split("\n", 1)[1] if "\n" in text else text[3:]
+    if text.endswith("```"):
+        text = text.rsplit("```", 1)[0]
+    text = text.strip()
+
+    start = text.find("{")
+    end = text.rfind("}")
+    if start == -1 or end == -1:
+        return {"people": [], "events": [], "places": []}
+
+    try:
+        data = json.loads(text[start:end + 1])
+        # Validate structure
+        for key in ("people", "events", "places"):
+            if key not in data or not isinstance(data[key], list):
+                data[key] = []
+        return data
+    except (json.JSONDecodeError, KeyError):
+        return {"people": [], "events": [], "places": []}

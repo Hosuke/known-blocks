@@ -144,6 +144,20 @@ def _task_taxonomy(base: Path):
     except Exception as e:
         logger.error(f"[xici] Error: {e}")
 
+    # Extract entities (if enabled)
+    try:
+        from .config import load_config as _load_cfg
+        _cfg = _load_cfg(base)
+        if _cfg.get("entities", {}).get("enabled", False):
+            from .entities import extract_entities
+            logger.info("[entities] Extracting entities...")
+            result = extract_entities(base)
+            logger.info(f"[entities] {len(result.get('people', []))} people, "
+                        f"{len(result.get('events', []))} events, "
+                        f"{len(result.get('places', []))} places")
+    except Exception as e:
+        logger.error(f"[entities] Error: {e}")
+
 
 def _task_health_check(base: Path):
     """Run lint checks and auto-fix broken links."""

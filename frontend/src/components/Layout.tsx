@@ -61,6 +61,7 @@ const NAV = [
   { to: '/search', icon: 'search', label: 'Search' },
   { to: '/qa', icon: 'forum', label: 'Q&A' },
   { to: '/graph', icon: 'hub', label: 'Graph' },
+  { to: '/explore', icon: 'explore', label: 'Explore' },
   { to: '/ingest', icon: 'download', label: 'Ingest' },
   { to: '/health', icon: 'health_and_safety', label: 'Health' },
 ];

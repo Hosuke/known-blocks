@@ -8,6 +8,7 @@ import { QA } from './pages/QA';
 import { Graph } from './pages/Graph';
 import { Ingest } from './pages/Ingest';
 import { Health } from './pages/Health';
+import { Explore } from './pages/Explore';
 
 export default function App() {
   return (
@@ -20,6 +21,7 @@ export default function App() {
           <Route path="/search" element={<Search />} />
           <Route path="/qa" element={<QA />} />
           <Route path="/graph" element={<Graph />} />
+          <Route path="/explore" element={<Explore />} />
           <Route path="/ingest" element={<Ingest />} />
           <Route path="/health" element={<Health />} />
         </Route>
