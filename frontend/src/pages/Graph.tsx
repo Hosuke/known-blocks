@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import * as d3 from 'd3';
 import { Icon } from '../components/Icon';
@@ -9,30 +9,39 @@ import { api, type Article } from '../lib/api';
 interface Node extends d3.SimulationNodeDatum {
   id: string; title: string; localTitle: string;
   tags: string[]; size: number; summary: string;
-  linkCount: number;
+  linkCount: number; cluster: number;
 }
-interface Link extends d3.SimulationLinkDatum<Node> { source: string | Node; target: string | Node; }
+interface Link extends d3.SimulationLinkDatum<Node> {
+  source: string | Node; target: string | Node; weight: number;
+}
 
-const PALETTE = ['#bdc2ff', '#5de6ff', '#45dfa4', '#ffb4ab', '#cccfff', '#00cbe6', '#f0abfc', '#fbbf24'];
+const PALETTE = ['#60a5fa', '#34d399', '#fbbf24', '#f87171', '#a78bfa', '#38bdf8', '#fb923c', '#e879f9'];
 
 export function Graph() {
   const navigate = useNavigate();
   const { lang } = useLang();
+  const zh = lang === 'zh' || lang === 'zh-en';
   const svgRef = useRef<SVGSVGElement>(null);
   const [articles, setArticles] = useState<Article[]>([]);
   const [loading, setLoading] = useState(true);
-  const [showLabels, setShowLabels] = useState(true);
+  const [showLabels, setShowLabels] = useState(false); // Off by default for large graphs
   const [hovered, setHovered] = useState<Node | null>(null);
   const [selectedTag, setSelectedTag] = useState<string | null>(null);
+  const [linkThreshold, setLinkThreshold] = useState(2); // Min shared tags to show a link
 
   useEffect(() => {
     api.getArticles().then(a => { setArticles(a); setLoading(false); }).catch(() => setLoading(false));
   }, []);
 
-  // All unique tags
-  const allTags = [...new Set(articles.flatMap(a => a.tags || []))].sort();
+  // Top tags (by frequency)
+  const topTags = useMemo(() => {
+    const counts: Record<string, number> = {};
+    articles.forEach(a => a.tags?.forEach(t => { if (!t.startsWith('category:')) counts[t] = (counts[t] || 0) + 1; }));
+    return Object.entries(counts).sort((a, b) => b[1] - a[1]).slice(0, 12).map(([t]) => t);
+  }, [articles]);
+
   const tagColors: Record<string, string> = {};
-  allTags.forEach((t, i) => { tagColors[t] = PALETTE[i % PALETTE.length]; });
+  topTags.forEach((t, i) => { tagColors[t] = PALETTE[i % PALETTE.length]; });
 
   useEffect(() => {
     if (!svgRef.current || articles.length === 0) return;
@@ -48,13 +57,18 @@ export function Graph() {
       ? articles.filter(a => a.tags?.includes(selectedTag))
       : articles;
 
-    // Build links from shared tags
+    // Build links: weight = number of shared tags (only show if >= threshold)
     const links: Link[] = [];
+    const tagSets = filtered.map(a => new Set(a.tags?.filter(t => !t.startsWith('category:')) || []));
+
     for (let i = 0; i < filtered.length; i++) {
       for (let j = i + 1; j < filtered.length; j++) {
-        const shared = filtered[i].tags?.filter(t => filtered[j].tags?.includes(t)) || [];
-        if (shared.length > 0) {
-          links.push({ source: filtered[i].slug, target: filtered[j].slug });
+        let shared = 0;
+        for (const t of tagSets[i]) {
+          if (tagSets[j].has(t)) shared++;
+        }
+        if (shared >= linkThreshold) {
+          links.push({ source: filtered[i].slug, target: filtered[j].slug, weight: shared });
         }
       }
     }
@@ -68,77 +82,111 @@ export function Graph() {
       linkCounts[t] = (linkCounts[t] || 0) + 1;
     });
 
-    const nodes: Node[] = filtered.map(a => ({
-      id: a.slug,
-      title: a.title,
-      localTitle: localizeTitle(a.title, lang),
-      tags: a.tags || [],
-      summary: a.summary || '',
-      size: 6 + Math.min((linkCounts[a.slug] || 0) * 3, 20),
-      linkCount: linkCounts[a.slug] || 0,
-    }));
+    // Cluster by primary tag
+    const clusterMap: Record<string, number> = {};
+    topTags.forEach((t, i) => { clusterMap[t] = i; });
+
+    const nodes: Node[] = filtered.map(a => {
+      const primaryTag = a.tags?.find(t => t in clusterMap) || a.tags?.[0] || '';
+      return {
+        id: a.slug,
+        title: a.title,
+        localTitle: localizeTitle(a.title, lang),
+        tags: a.tags || [],
+        summary: a.summary || '',
+        size: Math.max(4, Math.min(5 + (linkCounts[a.slug] || 0) * 1.5, 22)),
+        linkCount: linkCounts[a.slug] || 0,
+        cluster: clusterMap[primaryTag] ?? -1,
+      };
+    });
+
+    // Only show nodes that have at least 1 link (hide isolates in large graphs)
+    const connectedIds = new Set<string>();
+    links.forEach(l => {
+      connectedIds.add(typeof l.source === 'string' ? l.source : l.source.id);
+      connectedIds.add(typeof l.target === 'string' ? l.target : l.target.id);
+    });
+    const visibleNodes = filtered.length > 100
+      ? nodes.filter(n => connectedIds.has(n.id))
+      : nodes;
 
     const g = svg.append('g');
 
     // Zoom
     svg.call(
       d3.zoom<SVGSVGElement, unknown>()
-        .scaleExtent([0.2, 5])
+        .scaleExtent([0.1, 8])
         .on('zoom', (e) => g.attr('transform', e.transform))
     );
 
-    const simulation = d3.forceSimulation(nodes)
-      .force('link', d3.forceLink<Node, Link>(links).id(d => d.id).distance(100))
-      .force('charge', d3.forceManyBody().strength(-250))
-      .force('center', d3.forceCenter(width / 2, height / 2))
-      .force('collision', d3.forceCollide().radius(d => (d as Node).size + 15));
+    // Adaptive force parameters based on graph size
+    const nodeCount = visibleNodes.length;
+    const chargeStrength = nodeCount > 200 ? -80 : nodeCount > 50 ? -150 : -250;
+    const linkDistance = nodeCount > 200 ? 40 : nodeCount > 50 ? 70 : 100;
 
-    // Link lines
+    const simulation = d3.forceSimulation(visibleNodes)
+      .force('link', d3.forceLink<Node, Link>(links).id(d => d.id)
+        .distance(d => linkDistance / Math.max(d.weight, 1))
+        .strength(d => Math.min(d.weight * 0.3, 1)))
+      .force('charge', d3.forceManyBody().strength(chargeStrength))
+      .force('center', d3.forceCenter(width / 2, height / 2))
+      .force('collision', d3.forceCollide().radius(d => (d as Node).size + 3))
+      .force('x', d3.forceX(width / 2).strength(0.03))
+      .force('y', d3.forceY(height / 2).strength(0.03));
+
+    // Links
     const link = g.append('g')
       .selectAll('line')
       .data(links)
       .join('line')
-      .attr('stroke', 'var(--c-outline-variant)')
-      .attr('stroke-width', 1)
-      .attr('stroke-opacity', 0.4);
+      .attr('stroke', '#4b5563')
+      .attr('stroke-width', d => Math.min(d.weight * 0.5, 3))
+      .attr('stroke-opacity', d => Math.min(0.15 + d.weight * 0.1, 0.5));
 
-    // Node circles with glow
+    // Nodes
     const node = g.append('g')
       .selectAll('circle')
-      .data(nodes)
+      .data(visibleNodes)
       .join('circle')
       .attr('r', d => d.size)
-      .attr('fill', d => tagColors[d.tags[0]] || '#8f909e')
-      .attr('fill-opacity', 0.85)
-      .attr('stroke', d => tagColors[d.tags[0]] || '#8f909e')
-      .attr('stroke-width', 2)
+      .attr('fill', d => {
+        const primary = d.tags.find(t => t in tagColors);
+        return primary ? tagColors[primary] : '#6b7280';
+      })
+      .attr('fill-opacity', 0.8)
+      .attr('stroke', d => {
+        const primary = d.tags.find(t => t in tagColors);
+        return primary ? tagColors[primary] : '#6b7280';
+      })
+      .attr('stroke-width', 1.5)
       .attr('stroke-opacity', 0.3)
       .style('cursor', 'pointer')
       .on('click', (_, d) => navigate(`/wiki/${d.id}`))
-      .on('mouseenter', (_, d) => setHovered(d))
-      .on('mouseleave', () => setHovered(null))
       .call(d3.drag<SVGCircleElement, Node>()
         .on('start', (e, d) => { if (!e.active) simulation.alphaTarget(0.3).restart(); d.fx = d.x; d.fy = d.y; })
         .on('drag', (e, d) => { d.fx = e.x; d.fy = e.y; })
         .on('end', (e, d) => { if (!e.active) simulation.alphaTarget(0); d.fx = null; d.fy = null; })
       );
 
-    // Labels
+    // Labels (only for nodes with enough connections, or when showLabels=true)
     const label = g.append('g')
       .selectAll('text')
-      .data(nodes)
+      .data(visibleNodes)
       .join('text')
-      .text(d => d.localTitle)
-      .attr('font-size', 11)
-      .attr('font-family', lang === 'en' ? 'Inter' : 'Noto Serif SC, serif')
-      .attr('fill', 'var(--c-on-surface-variant)')
+      .text(d => {
+        const t = d.localTitle;
+        return t.length > 10 ? t.slice(0, 10) + '…' : t;
+      })
+      .attr('font-size', d => d.linkCount > 5 ? 11 : 10)
+      .attr('font-family', zh ? "'Noto Serif SC', serif" : 'Inter, sans-serif')
+      .attr('fill', '#d1d5db')
       .attr('text-anchor', 'middle')
-      .attr('dy', d => d.size + 14)
+      .attr('dy', d => d.size + 12)
       .style('pointer-events', 'none')
-      .style('display', showLabels ? 'block' : 'none');
+      .style('display', d => showLabels || d.linkCount >= 3 ? 'block' : 'none');
 
-    // Hover highlight
-    node.on('mouseenter', function(_, d) {
+    // Hover: highlight connected nodes
+    node.on('mouseenter', function (_, d) {
       setHovered(d);
       const connected = new Set<string>([d.id]);
       links.forEach(l => {
@@ -147,24 +195,27 @@ export function Graph() {
         if (s === d.id) connected.add(t);
         if (t === d.id) connected.add(s);
       });
-      node.attr('fill-opacity', n => connected.has(n.id) ? 1 : 0.1);
-      node.attr('stroke-opacity', n => connected.has(n.id) ? 0.6 : 0.05);
+      node.attr('fill-opacity', n => connected.has(n.id) ? 1 : 0.08);
+      node.attr('stroke-opacity', n => connected.has(n.id) ? 0.8 : 0.03);
       link.attr('stroke-opacity', l => {
         const s = typeof l.source === 'string' ? l.source : (l.source as Node).id;
         const t = typeof l.target === 'string' ? l.target : (l.target as Node).id;
-        return s === d.id || t === d.id ? 0.8 : 0.03;
+        return s === d.id || t === d.id ? 0.9 : 0.02;
       });
       link.attr('stroke-width', l => {
         const s = typeof l.source === 'string' ? l.source : (l.source as Node).id;
         const t = typeof l.target === 'string' ? l.target : (l.target as Node).id;
-        return s === d.id || t === d.id ? 2 : 1;
+        return s === d.id || t === d.id ? 2.5 : 0.5;
       });
-      label.style('opacity', n => connected.has(n.id) ? 1 : 0.05);
+      label.style('opacity', n => connected.has(n.id) ? 1 : 0.03)
+           .style('display', n => connected.has(n.id) ? 'block' : 'none');
     }).on('mouseleave', () => {
       setHovered(null);
-      node.attr('fill-opacity', 0.85).attr('stroke-opacity', 0.3);
-      link.attr('stroke-opacity', 0.4).attr('stroke-width', 1);
-      label.style('opacity', 1);
+      node.attr('fill-opacity', 0.8).attr('stroke-opacity', 0.3);
+      link.attr('stroke-opacity', d => Math.min(0.15 + d.weight * 0.1, 0.5))
+          .attr('stroke-width', d => Math.min(d.weight * 0.5, 3));
+      label.style('opacity', 1)
+           .style('display', d => showLabels || d.linkCount >= 3 ? 'block' : 'none');
     });
 
     simulation.on('tick', () => {
@@ -175,7 +226,7 @@ export function Graph() {
     });
 
     return () => { simulation.stop(); };
-  }, [articles, showLabels, selectedTag, lang, navigate]);
+  }, [articles, showLabels, selectedTag, linkThreshold, lang, navigate]);
 
   if (loading) return <Loading text="Building graph..." />;
 
@@ -183,38 +234,48 @@ export function Graph() {
     <div className="h-full flex flex-col">
       {/* Controls */}
       <div className="flex items-center gap-3 p-4 border-b border-outline-variant/30 flex-wrap">
-        <h1 className="font-headline text-xl font-bold">
-          <Icon name="hub" className="text-primary mr-2 align-middle" />
-          Knowledge Graph
+        <h1 className="font-headline text-lg font-bold flex items-center gap-2">
+          <Icon name="hub" className="text-primary" />
+          {zh ? '知识图谱' : 'Knowledge Graph'}
         </h1>
         <div className="flex-1" />
 
         {/* Tag filter */}
-        <div className="flex items-center gap-1.5 flex-wrap">
+        <div className="flex items-center gap-1 flex-wrap">
           <button
             onClick={() => setSelectedTag(null)}
-            className={`px-2.5 py-1 rounded-full text-xs transition-colors ${
+            className={`px-2 py-0.5 rounded-full text-[11px] transition-colors ${
               !selectedTag ? 'bg-primary text-on-primary' : 'bg-surface-high text-on-surface-variant hover:bg-surface-highest'
             }`}>
-            All
+            {zh ? '全部' : 'All'}
           </button>
-          {allTags.slice(0, 8).map(t => (
+          {topTags.slice(0, 10).map(t => (
             <button key={t} onClick={() => setSelectedTag(selectedTag === t ? null : t)}
-              className={`px-2.5 py-1 rounded-full text-xs transition-colors ${
-                selectedTag === t ? 'bg-primary text-on-primary' : 'bg-surface-high text-on-surface-variant hover:bg-surface-highest'
-              }`}>
+              className={`px-2 py-0.5 rounded-full text-[11px] transition-colors ${
+                selectedTag === t ? 'text-on-primary' : 'text-on-surface-variant hover:bg-surface-highest'
+              }`}
+              style={selectedTag === t ? { backgroundColor: tagColors[t] } : { backgroundColor: 'var(--c-surface-high)' }}>
               {t}
             </button>
           ))}
         </div>
 
-        <span className="text-sm text-on-surface-variant">
-          {selectedTag ? articles.filter(a => a.tags?.includes(selectedTag)).length : articles.length} nodes
+        {/* Link threshold slider */}
+        <div className="flex items-center gap-2 text-xs text-on-surface-variant">
+          <span>{zh ? '连接密度' : 'Density'}</span>
+          <input type="range" min={1} max={4} value={linkThreshold}
+            onChange={e => setLinkThreshold(+e.target.value)}
+            className="w-16 h-1 accent-primary" />
+          <span className="w-3 text-center">{linkThreshold}</span>
+        </div>
+
+        <span className="text-xs text-outline">
+          {articles.length} {zh ? '篇' : 'nodes'}
         </span>
 
-        <label className="flex items-center gap-2 text-sm text-on-surface-variant cursor-pointer">
+        <label className="flex items-center gap-1.5 text-xs text-on-surface-variant cursor-pointer">
           <input type="checkbox" checked={showLabels} onChange={e => setShowLabels(e.target.checked)} className="rounded" />
-          Labels
+          {zh ? '标签' : 'Labels'}
         </label>
       </div>
 
@@ -222,26 +283,23 @@ export function Graph() {
       <div className="flex-1 relative flex">
         <svg ref={svgRef} className="flex-1 h-full" />
 
-        {/* Hover info panel */}
         {hovered && (
-          <div className="absolute bottom-4 left-4 bg-surface-container border border-outline-variant/40 rounded-xl p-4 max-w-[300px] shadow-lg card-shadow">
-            <h3 className="font-headline font-semibold text-on-surface mb-1">{hovered.localTitle}</h3>
+          <div className="absolute bottom-4 left-4 bg-surface-container border border-outline-variant/30 rounded-xl p-4 max-w-[280px] shadow-xl">
+            <h3 className="font-serif font-semibold text-on-surface mb-1">{hovered.localTitle}</h3>
             {hovered.summary && (
-              <p className="text-sm text-on-surface-variant mb-2 line-clamp-3">{hovered.summary}</p>
+              <p className="text-xs text-on-surface-variant mb-2 line-clamp-2">{hovered.summary}</p>
             )}
-            <div className="flex items-center gap-3 text-xs text-outline">
-              <span>{hovered.linkCount} connections</span>
-              <span>{hovered.tags.slice(0, 3).join(', ')}</span>
+            <div className="flex items-center gap-3 text-[11px] text-outline">
+              <span>{hovered.linkCount} {zh ? '连接' : 'connections'}</span>
+              <span>{hovered.tags.filter(t => !t.startsWith('category:')).slice(0, 3).join(', ')}</span>
             </div>
           </div>
         )}
 
         {articles.length === 0 && (
           <div className="absolute inset-0 flex items-center justify-center text-on-surface-variant">
-            <div className="text-center">
-              <Icon name="hub" className="text-5xl mb-3 block" />
-              <p>No articles to visualize</p>
-            </div>
+            <Icon name="hub" className="text-5xl mb-3 block" />
+            <p>{zh ? '没有文章可以可视化' : 'No articles to visualize'}</p>
           </div>
         )}
       </div>
