@@ -25,7 +25,14 @@ def create_web_app(base_dir: Path | None = None):
     app = Flask(__name__, static_folder=None)
 
     # ─── Auth middleware for write endpoints ───────────────────
+    # Auto-generate a secret if not set and running in production (PORT env = cloud deploy)
     API_SECRET = os.getenv("LLMBASE_API_SECRET", "")
+    if not API_SECRET and os.getenv("PORT"):
+        import secrets
+        API_SECRET = secrets.token_urlsafe(32)
+        os.environ["LLMBASE_API_SECRET"] = API_SECRET
+        import logging
+        logging.getLogger("llmbase.auth").info(f"Auto-generated API secret: {API_SECRET[:8]}...")
 
     def require_auth(f):
         """Protect write endpoints when LLMBASE_API_SECRET is set."""
@@ -34,7 +41,10 @@ def create_web_app(base_dir: Path | None = None):
             if not API_SECRET:
                 return f(*args, **kwargs)  # No secret = open (local/dev mode)
             auth = request.headers.get("Authorization", "")
-            if auth == f"Bearer {API_SECRET}" or request.args.get("secret") == API_SECRET:
+            cookie = request.cookies.get("llmbase_auth", "")
+            if (auth == f"Bearer {API_SECRET}"
+                    or request.args.get("secret") == API_SECRET
+                    or cookie == API_SECRET):
                 return f(*args, **kwargs)
             return jsonify({"status": "error", "message": "Unauthorized"}), 401
         return decorated
@@ -465,6 +475,11 @@ def create_web_app(base_dir: Path | None = None):
         file_path = static_dir / path
         if path and file_path.exists():
             return send_from_directory(str(static_dir), path)
-        return send_from_directory(str(static_dir), "index.html")
+        # Set auth cookie so frontend can call write endpoints
+        from flask import make_response
+        resp = make_response(send_from_directory(str(static_dir), "index.html"))
+        if API_SECRET:
+            resp.set_cookie("llmbase_auth", API_SECRET, httponly=False, samesite="Strict")
+        return resp
 
     return app
