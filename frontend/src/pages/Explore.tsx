@@ -21,7 +21,7 @@ export function Explore() {
   const [places, setPlaces] = useState<Place[]>([]);
   const [loading, setLoading] = useState(true);
   const [articleCount, setArticleCount] = useState(0);
-  const [filter, setFilter] = useState<'all' | 'people' | 'events' | 'texts'>('all');
+  const [filter, setFilter] = useState<'all' | 'people' | 'events'>('all');
 
   useEffect(() => {
     api.getEntities().then(data => {
@@ -78,15 +78,14 @@ export function Explore() {
         <div>
           {/* Filters */}
           <div className="flex gap-2 mb-6">
-            {(['all', 'people', 'events', 'texts'] as const).map(f => (
+            {(['all', 'people', 'events'] as const).map(f => (
               <button key={f} onClick={() => setFilter(f)}
                 className={`px-3 py-1 text-xs rounded-full transition-colors ${
                   filter === f ? 'bg-primary/15 text-primary' : 'bg-surface-container text-on-surface-variant hover:bg-surface-container-highest'
                 }`}>
                 {f === 'all' ? (zh ? '全部' : 'All') :
                  f === 'people' ? (zh ? '人物' : 'People') :
-                 f === 'events' ? (zh ? '事件' : 'Events') :
-                 (zh ? '典籍' : 'Texts')}
+                 (zh ? '事件' : 'Events')}
               </button>
             ))}
           </div>

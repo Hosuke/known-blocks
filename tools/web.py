@@ -186,12 +186,22 @@ def create_web_app(base_dir: Path | None = None):
         if not article_path.exists():
             return jsonify({"status": "error", "message": f"Article not found: {slug}"}), 404
         post = frontmatter.load(str(article_path))
+        # Sanitize source URLs (only allow http/https)
+        sources = post.metadata.get("sources", [])
+        safe_sources = []
+        for src in sources:
+            url = src.get("url", "")
+            if url and not url.startswith(("http://", "https://")):
+                src = {**src, "url": ""}
+            safe_sources.append(src)
+
         return jsonify({
             "status": "ok",
             "slug": slug,
             "title": post.metadata.get("title", slug),
             "summary": post.metadata.get("summary", ""),
             "tags": post.metadata.get("tags", []),
+            "sources": safe_sources,
             "content": post.content,
         })
 

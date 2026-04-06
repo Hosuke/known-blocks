@@ -138,8 +138,14 @@ Focus on extracting knowledge, not just summarizing. Each language section shoul
         response = chat(prompt, system=SYSTEM_PROMPT, max_tokens=cfg["llm"]["max_tokens"])
 
         # Build source reference from raw doc metadata
+        # Map raw doc type to ref plugin ID
+        type_to_plugin = {
+            "buddhist_sutra": "cbeta", "wikisource": "wikisource",
+            "classical_text": "ctext", "ctext": "ctext",
+        }
+        raw_type = post.metadata.get("type", "unknown")
         source_ref = {
-            "plugin": post.metadata.get("type", "unknown"),
+            "plugin": type_to_plugin.get(raw_type, raw_type),
             "url": post.metadata.get("source", ""),
             "title": title,
         }
@@ -489,17 +495,25 @@ def _merge_into(existing_path: Path, article: dict):
             changed = True
         # Otherwise keep existing (avoid duplication)
 
-    # Merge sources (deduplicate by URL)
+    # Merge sources (deduplicate by stable key)
     new_sources = article.get("sources", [])
     if new_sources:
         existing_sources = existing.metadata.get("sources", [])
-        existing_urls = {s.get("url", "") for s in existing_sources}
+
+        def _source_key(s):
+            return (s.get("plugin", ""), s.get("url", ""),
+                    s.get("work_id", ""), s.get("title", ""))
+
+        existing_keys = {_source_key(s) for s in existing_sources}
+        added = False
         for src in new_sources:
-            if src.get("url") and src["url"] not in existing_urls:
+            if _source_key(src) not in existing_keys:
                 existing_sources.append(src)
-                existing_urls.add(src["url"])
-        existing.metadata["sources"] = existing_sources
-        changed = True
+                existing_keys.add(_source_key(src))
+                added = True
+        if added:
+            existing.metadata["sources"] = existing_sources
+            changed = True
 
     if changed:
         # Reassemble content from sections

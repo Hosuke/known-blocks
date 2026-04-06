@@ -67,8 +67,10 @@ def extract_entities(base_dir: Path | None = None) -> dict:
         logger.info("[entities] Entity extraction disabled in config")
         return get_entities(base_dir)
 
+    empty = {"people": [], "events": [], "places": []}
     if not concepts_dir.exists():
-        return {"people": [], "events": [], "places": []}
+        _save_entities(meta_dir, empty)
+        return empty
 
     # Collect article metadata
     articles = []
@@ -82,7 +84,8 @@ def extract_entities(base_dir: Path | None = None) -> dict:
         })
 
     if not articles:
-        return {"people": [], "events": [], "places": []}
+        _save_entities(meta_dir, empty)
+        return empty
 
     # Build compact article list (avoid token overflow)
     if len(articles) <= 80:
@@ -114,9 +117,7 @@ def extract_entities(base_dir: Path | None = None) -> dict:
     ).isoformat()
 
     # Cache
-    meta_dir.mkdir(parents=True, exist_ok=True)
-    path = meta_dir / "entities.json"
-    path.write_text(json.dumps(result, indent=2, ensure_ascii=False), encoding="utf-8")
+    _save_entities(meta_dir, result)
     logger.info(
         f"[entities] Extracted {len(result.get('people', []))} people, "
         f"{len(result.get('events', []))} events, "
@@ -126,13 +127,23 @@ def extract_entities(base_dir: Path | None = None) -> dict:
     return result
 
 
+def _save_entities(meta_dir: Path, result: dict):
+    """Write entities to cache file."""
+    meta_dir.mkdir(parents=True, exist_ok=True)
+    path = meta_dir / "entities.json"
+    path.write_text(json.dumps(result, indent=2, ensure_ascii=False), encoding="utf-8")
+
+
 def get_entities(base_dir: Path | None = None) -> dict:
     """Read cached entities."""
     cfg = load_config(base_dir)
     meta_dir = Path(cfg["paths"]["meta"])
     path = meta_dir / "entities.json"
     if path.exists():
-        return json.loads(path.read_text())
+        try:
+            return json.loads(path.read_text())
+        except (json.JSONDecodeError, OSError):
+            logger.warning("[entities] Corrupted entities.json, returning empty")
     return {"people": [], "events": [], "places": []}
 
 
