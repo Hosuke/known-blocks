@@ -311,7 +311,7 @@ def query(ctx, question, output_format, tone, file_back, deep):
 
     with console.status("Researching..."):
         if deep:
-            answer = query_with_search(question, ctx.obj["base_dir"], tone=tone)
+            answer = query_with_search(question, ctx.obj["base_dir"], tone=tone, file_back=file_back)
         else:
             answer = do_query(question, output_format, file_back, ctx.obj["base_dir"], tone=tone)
 

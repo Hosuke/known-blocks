@@ -97,6 +97,7 @@ def query_with_search(
     question: str,
     base_dir: Path | None = None,
     tone: str = "default",
+    file_back: bool = False,
 ) -> str:
     """Multi-step query: first search for relevant articles, then answer."""
     cfg = load_config(base_dir)
@@ -144,12 +145,17 @@ Which articles (by title) are most relevant? List up to 10, one per line, just t
     if tone_instruction:
         system += f"\n\n{tone_instruction}"
 
-    return chat_with_context(
+    answer = chat_with_context(
         question,
         context_files,
         system=system,
         max_tokens=cfg["llm"]["max_tokens"],
     )
+
+    if file_back:
+        _file_output(question, answer, "markdown", cfg)
+
+    return answer
 
 
 def _gather_context(question: str, cfg: dict) -> list[dict]:

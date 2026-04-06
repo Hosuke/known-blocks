@@ -45,7 +45,7 @@ class KnowledgeBase:
     def ask(self, question: str, deep: bool = False, file_back: bool = True, tone: str = "default") -> dict:
         """Ask a question against the knowledge base."""
         if deep:
-            answer = query_with_search(question, self.base_dir, tone=tone)
+            answer = query_with_search(question, self.base_dir, tone=tone, file_back=file_back)
         else:
             answer = query(question, file_back=file_back, base_dir=self.base_dir, tone=tone)
         return {"status": "ok", "answer": answer}

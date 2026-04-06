@@ -205,7 +205,7 @@ def create_web_app(base_dir: Path | None = None):
         file_back = data.get("file_back", True)
         tone = data.get("tone", "default")
         if deep:
-            answer = query_with_search(q, base, tone=tone)
+            answer = query_with_search(q, base, tone=tone, file_back=file_back)
         else:
             answer = query(q, file_back=file_back, base_dir=base, tone=tone)
         return jsonify({"answer": answer})
