@@ -548,9 +548,46 @@ def _parse_taxonomy_response(response: str) -> list[dict] | None:
         for node in tree:
             if not isinstance(node, dict) or "id" not in node or "label" not in node:
                 return None
+        # Fix label format: ensure all labels are trilingual dicts
+        _fix_labels(tree)
         return tree
     except (json.JSONDecodeError, KeyError):
         return None
+
+
+def _fix_labels(tree: list[dict]):
+    """Ensure all category labels are trilingual dicts, not strings.
+
+    LLMs sometimes return label as a string instead of {"en", "zh", "ja"}.
+    This normalizes all labels in the tree recursively.
+    """
+    for node in tree:
+        label = node.get("label", "")
+        if isinstance(label, dict):
+            # Ensure all three languages exist
+            en = label.get("en", label.get("zh", label.get("ja", node.get("id", ""))))
+            label.setdefault("en", en)
+            label.setdefault("zh", en)
+            label.setdefault("ja", en)
+        else:
+            # String, number, list, null → normalize to trilingual dict
+            text = str(label) if label else node.get("id", "unknown")
+            node["label"] = {"en": text, "zh": text, "ja": text}
+        # Coerce dict label values to clean strings
+        if isinstance(node["label"], dict):
+            fallback = node.get("id", "")
+            for k in ("en", "zh", "ja"):
+                v = node["label"].get(k)
+                node["label"][k] = v if isinstance(v, str) and v else fallback
+        # Recurse into children (guard against null/non-list/non-dict items)
+        children = node.get("children")
+        if isinstance(children, dict):
+            children = [children]  # Single child object → wrap in list
+        if isinstance(children, list):
+            node["children"] = [c for c in children if isinstance(c, dict)]
+            _fix_labels(node["children"])
+        else:
+            node["children"] = []
 
 
 def _ensure_complete_assignment(tree: list[dict], articles: list[dict]) -> list[dict]:
