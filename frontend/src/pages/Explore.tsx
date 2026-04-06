@@ -91,125 +91,217 @@ export function Explore() {
     svg.selectAll('*').remove();
 
     const width = svgRef.current.clientWidth;
-    const height = 280;
-    const margin = { top: 40, right: 40, bottom: 50, left: 40 };
+    const height = 420;
+    const midY = height / 2 + 10;
+    const margin = { top: 30, right: 50, bottom: 55, left: 50 };
 
     svg.attr('viewBox', `0 0 ${width} ${height}`);
 
+    // ─── SVG Filters (glow effects) ────────────────────────
+    const defs = svg.append('defs');
+    const glowBlue = defs.append('filter').attr('id', 'glow-blue');
+    glowBlue.append('feGaussianBlur').attr('stdDeviation', 3).attr('result', 'blur');
+    glowBlue.append('feMerge').selectAll('feMergeNode').data(['blur', 'SourceGraphic'])
+      .enter().append('feMergeNode').attr('in', d => d);
+
+    const glowAmber = defs.append('filter').attr('id', 'glow-amber');
+    glowAmber.append('feGaussianBlur').attr('stdDeviation', 3).attr('result', 'blur');
+    glowAmber.append('feMerge').selectAll('feMergeNode').data(['blur', 'SourceGraphic'])
+      .enter().append('feMergeNode').attr('in', d => d);
+
+    // Gradient stems
+    for (const [id, color] of [['stem-blue', '#60a5fa'], ['stem-amber', '#fbbf24']]) {
+      const grad = defs.append('linearGradient').attr('id', id).attr('x1', 0).attr('y1', 0).attr('x2', 0).attr('y2', 1);
+      grad.append('stop').attr('offset', '0%').attr('stop-color', color).attr('stop-opacity', 0.8);
+      grad.append('stop').attr('offset', '100%').attr('stop-color', color).attr('stop-opacity', 0.1);
+    }
+
     const minYear = d3.min(timelineItems, d => d.year) ?? -500;
     const maxYear = d3.max(timelineItems, d => d.year) ?? 2000;
-    const padding = Math.max(50, (maxYear - minYear) * 0.05);
+    const padding = Math.max(80, (maxYear - minYear) * 0.08);
 
     const x = d3.scaleLinear()
       .domain([minYear - padding, maxYear + padding])
       .range([margin.left, width - margin.right]);
 
-    // Axis
+    // ─── Era background bands ──────────────────────────────
+    const eras = [
+      { label: zh ? '上古' : 'Ancient', start: -800, end: -200, color: '#1e3a5f' },
+      { label: zh ? '古典' : 'Classical', start: -200, end: 200, color: '#1a3d2e' },
+      { label: zh ? '中古' : 'Medieval', start: 200, end: 1000, color: '#3d2e1a' },
+      { label: zh ? '近世' : 'Early Modern', start: 1000, end: 1800, color: '#2e1a3d' },
+    ];
+
+    const eraG = svg.append('g').attr('class', 'eras');
+    // Always render all eras (data-bound) so zoom indices stay aligned
+    const eraRects = eraG.selectAll('rect').data(eras).enter().append('rect');
+    const eraTexts = eraG.selectAll('text').data(eras).enter().append('text');
+
+    function updateEras(xScale: d3.ScaleLinear<number, number>) {
+      eraRects.each(function (era) {
+        const ex1 = Math.max(xScale(era.start), margin.left);
+        const ex2 = Math.min(xScale(era.end), width - margin.right);
+        const w = Math.max(0, ex2 - ex1);
+        d3.select(this)
+          .attr('x', ex1).attr('y', margin.top)
+          .attr('width', w).attr('height', height - margin.top - margin.bottom)
+          .attr('fill', era.color).attr('opacity', w > 0 ? 0.15 : 0).attr('rx', 4);
+      });
+      eraTexts.each(function (era) {
+        const ex1 = Math.max(xScale(era.start), margin.left);
+        const ex2 = Math.min(xScale(era.end), width - margin.right);
+        const w = ex2 - ex1;
+        d3.select(this)
+          .attr('x', (ex1 + ex2) / 2).attr('y', margin.top + 14)
+          .attr('text-anchor', 'middle')
+          .attr('fill', era.color.replace(/1/g, '8')).attr('opacity', w > 30 ? 0.6 : 0)
+          .style('font-size', '10px').style('letter-spacing', '1px')
+          .text(era.label.toUpperCase());
+      });
+    }
+    updateEras(x);
+
+    // ─── Axis ──────────────────────────────────────────────
     const axisG = svg.append('g')
       .attr('transform', `translate(0,${height - margin.bottom})`);
 
+    const formatYear = (d: number) => d < 0 ? `${Math.abs(d)} BCE` : `${d} CE`;
+
     axisG.call(
-      d3.axisBottom(x)
-        .tickFormat(d => {
-          const v = d as number;
-          return v < 0 ? `${Math.abs(v)} BCE` : `${v}`;
-        })
+      d3.axisBottom(x).tickFormat(d => formatYear(d as number)).tickSize(-6)
     );
-    axisG.selectAll('text').attr('fill', '#9ca3af').style('font-size', '10px');
-    axisG.selectAll('line').attr('stroke', '#374151');
-    axisG.select('.domain').attr('stroke', '#374151');
+    axisG.selectAll('text').attr('fill', '#6b7280').style('font-size', '10px').style('font-family', 'Inter, sans-serif');
+    axisG.selectAll('.tick line').attr('stroke', '#374151').attr('opacity', 0.5);
+    axisG.select('.domain').attr('stroke', '#374151').attr('opacity', 0.3);
 
-    // Timeline line
+    // ─── Center timeline line ──────────────────────────────
     svg.append('line')
+      .attr('class', 'center-line')
       .attr('x1', margin.left).attr('x2', width - margin.right)
-      .attr('y1', height / 2).attr('y2', height / 2)
-      .attr('stroke', '#374151').attr('stroke-width', 1);
+      .attr('y1', midY).attr('y2', midY)
+      .attr('stroke', '#374151').attr('stroke-width', 1.5).attr('opacity', 0.4);
 
-    // Stagger items vertically to avoid overlap
-    const used: number[] = [];
-    function getRow(xPos: number): number {
-      for (let row = 0; row < 4; row++) {
-        const key = Math.round(xPos / 60) * 100 + row;
-        if (!used.includes(key)) {
-          used.push(key);
-          return row;
+    // ─── Stagger algorithm (6 rows) ───────────────────────
+    const ROW_COUNT = 6;
+    const ROW_HEIGHT = 42;
+    const usedSlots: Set<string> = new Set();
+    function getPosition(xPos: number): { cy: number; above: boolean } {
+      const col = Math.round(xPos / 50);
+      for (let row = 0; row < ROW_COUNT; row++) {
+        const key = `${col}-${row}`;
+        if (!usedSlots.has(key)) {
+          usedSlots.add(key);
+          const above = row % 2 === 0;
+          const tier = Math.floor(row / 2) + 1;
+          return { cy: midY + (above ? -tier * ROW_HEIGHT : tier * ROW_HEIGHT), above };
         }
       }
-      return Math.floor(Math.random() * 4);
+      const row = Math.floor(Math.random() * ROW_COUNT);
+      const above = row % 2 === 0;
+      return { cy: midY + (above ? -(Math.floor(row/2)+1) * ROW_HEIGHT : (Math.floor(row/2)+1) * ROW_HEIGHT), above };
     }
 
-    // Draw items
-    const items = svg.selectAll('.timeline-item')
+    // ─── Draw entities ─────────────────────────────────────
+    const DOT_R = 7;
+    const items = svg.selectAll('.tl-item')
       .data(timelineItems)
       .enter()
       .append('g')
-      .attr('class', 'timeline-item')
+      .attr('class', 'tl-item')
       .attr('cursor', 'pointer')
       .on('click', (_, d) => { if (d.slug) navigate(`/wiki/${d.slug}`); });
 
     items.each(function (d) {
       const g = d3.select(this);
       const cx = x(d.year);
-      const row = getRow(cx);
-      const above = row % 2 === 0;
-      const offset = (Math.floor(row / 2) + 1) * 36;
-      const cy = height / 2 + (above ? -offset : offset);
+      const { cy, above } = getPosition(cx);
+      const isPerson = d.type === 'person';
+      const color = isPerson ? '#60a5fa' : '#fbbf24';
 
-      // Stem line
+      // Stem (gradient opacity)
+      const stemId = isPerson ? 'url(#stem-blue)' : 'url(#stem-amber)';
       g.append('line')
+        .attr('class', 'stem')
         .attr('x1', cx).attr('x2', cx)
-        .attr('y1', height / 2).attr('y2', cy)
-        .attr('stroke', d.type === 'person' ? '#60a5fa' : '#fbbf24')
-        .attr('stroke-width', 1)
-        .attr('stroke-dasharray', '2,2');
+        .attr('y1', midY).attr('y2', cy)
+        .attr('stroke', stemId).attr('stroke-width', 1.5);
 
-      // Dot
+      // Dot with glow
       g.append('circle')
-        .attr('cx', cx).attr('cy', cy).attr('r', 5)
-        .attr('fill', d.type === 'person' ? '#60a5fa' : '#fbbf24')
-        .attr('stroke', '#1f2937').attr('stroke-width', 1.5);
+        .attr('class', 'dot')
+        .attr('cx', cx).attr('cy', cy).attr('r', DOT_R)
+        .attr('fill', color)
+        .attr('stroke', '#0f1419').attr('stroke-width', 2)
+        .attr('filter', isPerson ? 'url(#glow-blue)' : 'url(#glow-amber)');
 
-      // Label
+      // Label (serif font)
+      const label = zh
+        ? (d.localName.length > 8 ? d.localName.slice(0, 8) + '…' : d.localName)
+        : (d.name.length > 14 ? d.name.slice(0, 14) + '…' : d.name);
+
       g.append('text')
-        .attr('x', cx).attr('y', cy + (above ? -12 : 16))
+        .attr('class', 'label')
+        .attr('x', cx).attr('y', cy + (above ? -14 : 18))
         .attr('text-anchor', 'middle')
-        .attr('fill', '#d1d5db')
-        .style('font-size', '11px')
-        .text(zh ? (d.localName.length > 6 ? d.localName.slice(0, 6) + '…' : d.localName) : (d.name.length > 12 ? d.name.slice(0, 12) + '…' : d.name));
+        .attr('fill', '#e5e7eb')
+        .style('font-size', '11.5px')
+        .style('font-family', "'Noto Serif', 'Songti SC', serif")
+        .text(label);
+
+      // Small year tag
+      g.append('text')
+        .attr('class', 'year-tag')
+        .attr('x', cx).attr('y', cy + (above ? -26 : 30))
+        .attr('text-anchor', 'middle')
+        .attr('fill', '#6b7280')
+        .style('font-size', '9px')
+        .style('font-family', 'Inter, sans-serif')
+        .text(d.dates || '');
     });
 
-    // Hover interaction
+    // ─── Hover interaction ─────────────────────────────────
+    let currentTransform = d3.zoomIdentity;
+
     items.on('mouseenter', function (event, d) {
-      const cx = x(d.year);
-      setHovered({ name: zh ? d.localName : d.name, dates: d.dates, role: d.role || d.description, x: cx, y: 20 });
-      d3.select(this).select('circle').transition().duration(150).attr('r', 8);
+      const cx = currentTransform.rescaleX(x)(d.year);
+      setHovered({ name: zh ? d.localName : d.name, dates: d.dates, role: d.role || d.description, x: cx, y: 10 });
+      d3.select(this).select('.dot').transition().duration(200).attr('r', DOT_R + 4).attr('stroke-width', 3);
+      d3.select(this).select('.label').transition().duration(200).attr('fill', '#ffffff');
     }).on('mouseleave', function () {
       setHovered(null);
-      d3.select(this).select('circle').transition().duration(150).attr('r', 5);
+      d3.select(this).select('.dot').transition().duration(200).attr('r', DOT_R).attr('stroke-width', 2);
+      d3.select(this).select('.label').transition().duration(200).attr('fill', '#e5e7eb');
     });
 
-    // Zoom + pan
+    // ─── Zoom + pan ────────────────────────────────────────
     const zoom = d3.zoom<SVGSVGElement, unknown>()
-      .scaleExtent([0.5, 10])
+      .scaleExtent([0.3, 12])
       .on('zoom', (event) => {
+        currentTransform = event.transform;
+        setHovered(null); // Dismiss tooltip during zoom to prevent drift
         const newX = event.transform.rescaleX(x);
-        axisG.call(d3.axisBottom(newX).tickFormat(d => {
-          const v = d as number;
-          return v < 0 ? `${Math.abs(v)} BCE` : `${v}`;
-        }));
-        axisG.selectAll('text').attr('fill', '#9ca3af').style('font-size', '10px');
-        axisG.selectAll('line').attr('stroke', '#374151');
-        axisG.select('.domain').attr('stroke', '#374151');
 
+        // Update axis
+        axisG.call(d3.axisBottom(newX).tickFormat(d => formatYear(d as number)).tickSize(-6));
+        axisG.selectAll('text').attr('fill', '#6b7280').style('font-size', '10px').style('font-family', 'Inter, sans-serif');
+        axisG.selectAll('.tick line').attr('stroke', '#374151').attr('opacity', 0.5);
+        axisG.select('.domain').attr('stroke', '#374151').attr('opacity', 0.3);
+
+        // Update era bands (data-bound, no index mismatch)
+        updateEras(newX);
+
+        // Update entities
         items.each(function (d) {
           const g = d3.select(this);
           const cx = newX(d.year);
-          g.select('line').attr('x1', cx).attr('x2', cx);
-          g.select('circle').attr('cx', cx);
-          g.select('text').attr('x', cx);
+          g.select('.stem').attr('x1', cx).attr('x2', cx);
+          g.select('.dot').attr('cx', cx);
+          g.select('.label').attr('x', cx);
+          g.select('.year-tag').attr('x', cx);
         });
 
-        svg.select('line:not(.timeline-item line)')
+        // Update center line (class-selected, not positional)
+        svg.select('.center-line')
           .attr('x1', newX(minYear - padding))
           .attr('x2', newX(maxYear + padding));
       });
@@ -273,14 +365,14 @@ export function Explore() {
             <span className="text-[10px] text-outline">{zh ? '滚轮缩放，拖拽平移' : 'Scroll to zoom, drag to pan'}</span>
           </div>
 
-          <div className="relative bg-surface-container rounded-xl border border-outline-variant/20 overflow-hidden">
-            <svg ref={svgRef} className="w-full" style={{ height: 280 }} />
+          <div className="relative bg-[#141414] rounded-xl border border-outline-variant/15 overflow-hidden">
+            <svg ref={svgRef} className="w-full" style={{ height: 420 }} />
             {hovered && (
-              <div className="absolute bg-surface-container-highest border border-outline-variant/30 rounded-lg px-3 py-2 shadow-lg pointer-events-none text-sm"
-                style={{ left: Math.min(hovered.x, 800), top: hovered.y }}>
-                <div className="font-medium">{hovered.name}</div>
-                <div className="text-xs text-outline">{hovered.dates}</div>
-                {hovered.role && <div className="text-xs text-on-surface-variant">{hovered.role}</div>}
+              <div className="absolute bg-[#1e1e1e] border border-outline-variant/25 rounded-xl px-4 py-3 shadow-2xl pointer-events-none backdrop-blur-sm"
+                style={{ left: Math.min(Math.max(hovered.x - 80, 10), 700), top: hovered.y }}>
+                <div className="font-medium font-serif">{hovered.name}</div>
+                <div className="text-xs text-outline mt-0.5 font-mono">{hovered.dates}</div>
+                {hovered.role && <div className="text-xs text-on-surface-variant mt-1">{hovered.role}</div>}
               </div>
             )}
           </div>
