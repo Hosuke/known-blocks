@@ -1,6 +1,6 @@
 ---
 name: llmwiki
-version: "0.1.0"
+version: "0.1.1"
 description: "LLM-powered personal knowledge base. Ingest raw documents, compile into a structured interlinked wiki, query with deep research, self-heal. Works for any domain."
 author: Hosuke
 homepage: https://github.com/Hosuke/llmbase
@@ -20,6 +20,26 @@ keywords:
   - agent-tools
   - claude-code
   - openclaw
+install: "pip install llmwiki"
+requires:
+  credentials:
+    - name: LLMBASE_API_KEY
+      description: "API key for any OpenAI-compatible LLM provider (user-supplied)"
+      required: true
+    - name: LLMBASE_BASE_URL
+      description: "LLM API base URL (default: https://api.openai.com/v1)"
+      required: false
+    - name: LLMBASE_MODEL
+      description: "Model name (default: gpt-4o)"
+      required: false
+  permissions:
+    - network: "Fetches URLs during ingest (user-initiated, with SSRF protection)"
+    - filesystem: "Reads/writes markdown files in local raw/ and wiki/ directories"
+    - server: "Optional: web UI (localhost:5555), agent API (localhost:5556), MCP server (stdio)"
+  notes: |
+    This skill manages a local knowledge base. All network access is user-initiated
+    (ingesting URLs). The web server and worker are optional features that users
+    explicitly enable. No data is sent anywhere except the configured LLM API.
 ---
 
 # llmwiki
@@ -158,3 +178,12 @@ Available MCP tools: `kb_search`, `kb_ask`, `kb_get`, `kb_list`, `kb_backlinks`,
 - The web UI at `/health` has buttons for all repair operations
 - Knowledge graph at `/graph` — use the density slider for large KBs
 - Timeline at `/explore` — requires `entities: { enabled: true }` in config
+
+## Security & Privacy
+
+- **All data stays local**: wiki files are plain markdown on your filesystem
+- **LLM API key**: user-supplied, stored in `.env` (never committed to git)
+- **Network access**: only when you explicitly ingest a URL (with SSRF protection)
+- **Web server**: optional, localhost-only by default
+- **Autonomous worker**: opt-in via config, disabled by default
+- **No telemetry**: llmwiki sends nothing except LLM API calls to your configured provider
