@@ -25,6 +25,9 @@ job_lock = threading.Lock()
 _worker_started = False
 _worker_start_lock = threading.Lock()
 
+# Trigger event — set by /api/worker/trigger to wake the worker immediately
+trigger_event = threading.Event()
+
 
 def run_worker(base_dir: Path | None = None):
     """Main worker loop — runs forever, executing scheduled tasks."""
@@ -58,9 +61,13 @@ def run_worker(base_dir: Path | None = None):
 
     while True:
         now = time.time()
+        triggered = trigger_event.is_set()
+        if triggered:
+            trigger_event.clear()
+            logger.info("[worker] Manual trigger received — running learn+compile now")
 
         # Learn from sources
-        if now - last_learn >= learn_interval and job_lock.acquire(blocking=False):
+        if (triggered or now - last_learn >= learn_interval) and job_lock.acquire(blocking=False):
             try:
                 _task_learn(base, learn_source, learn_batch)
             finally:
@@ -68,7 +75,7 @@ def run_worker(base_dir: Path | None = None):
             last_learn = now
 
         # Compile new documents
-        if now - last_compile >= compile_interval and job_lock.acquire(blocking=False):
+        if (triggered or now - last_compile >= compile_interval) and job_lock.acquire(blocking=False):
             try:
                 _task_compile(base)
             finally:
@@ -253,7 +260,10 @@ _file_lock_fd = None
 def _try_acquire_file_lock(base_dir: Path) -> bool:
     """Try to acquire an exclusive file lock (prevents duplicate workers across gunicorn processes)."""
     global _file_lock_fd
-    import fcntl
+    try:
+        import fcntl
+    except ImportError:
+        return True  # Non-POSIX (Windows) — skip file lock, rely on thread lock only
     lock_path = base_dir / ".worker.lock"
     try:
         _file_lock_fd = open(lock_path, "w")

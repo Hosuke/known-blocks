@@ -602,13 +602,9 @@ def create_web_app(base_dir: Path | None = None):
     @require_auth
     def api_worker_trigger():
         """Trigger an immediate learn+compile cycle."""
-        from .taskdb import set_worker_state
-        from datetime import datetime, timezone
-        now = datetime.now(timezone.utc).isoformat()
-        # Set next_run to now so the worker picks it up on next tick
-        for task in ("learn", "compile"):
-            set_worker_state(task, now, now, base_dir=base)
-        return jsonify({"status": "ok", "message": "Learn+compile triggered for next worker tick"})
+        from .worker import trigger_event
+        trigger_event.set()
+        return jsonify({"status": "ok", "message": "Learn+compile triggered for next worker tick (within 60s)"})
 
     @app.route("/api/wiki/export")
     def api_wiki_export():
