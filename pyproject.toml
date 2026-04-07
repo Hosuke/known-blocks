@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "llmwiki"
-version = "0.1.0"
+version = "0.2.0"
 description = "LLM-powered personal knowledge base — raw data goes in, an LLM compiles it into a structured, interlinked wiki"
 readme = "README.md"
 license = {text = "MIT"}
@@ -31,17 +31,17 @@ dependencies = [
     "beautifulsoup4>=4.12.0",
     "requests>=2.31.0",
     "markdownify>=0.13.0",
-    "matplotlib>=3.8.0",
     "python-frontmatter>=1.1.0",
-    "watchdog>=4.0.0",
-    "pymupdf>=1.24.0",
     "httpx>=0.27.0",
-    "mcp>=1.0.0",
 ]
 
 [project.optional-dependencies]
+pdf = ["pymupdf>=1.24.0"]
+chart = ["matplotlib>=3.8.0"]
+watch = ["watchdog>=4.0.0"]
+mcp = ["mcp>=1.0.0"]
 cjk = ["opencc-python-reimplemented>=0.1.7"]
-all = ["llmbase[cjk]"]
+all = ["llmwiki[pdf,chart,mcp,cjk,watch]"]
 
 [project.urls]
 Homepage = "https://github.com/Hosuke/llmbase"
