@@ -394,7 +394,8 @@ def learn(batch_size: int = 5, base_dir: Path | None = None) -> list[str]:
         strategy_used = "curiosity"
         results = _learn_curiosity(batch_size, base)
     else:
-        # Try strategies in priority order until one produces results
+        # Round-robin allocation: split batch across strategies
+        # Give curriculum guaranteed slots so it doesn't starve behind P0
         strategies = [
             ("foundation", _learn_foundations),
             ("broken_links", _learn_broken_links),
@@ -405,11 +406,44 @@ def learn(batch_size: int = 5, base_dir: Path | None = None) -> list[str]:
             ("curiosity", _learn_curiosity),
         ]
 
-        for name, strategy_fn in strategies:
-            results = strategy_fn(batch_size, base)
-            if results:
-                strategy_used = name
-                break
+        # Allocate: curriculum gets at least 2 slots if it has tasks,
+        # foundation gets at least 2, rest is first-come
+        curriculum_slots = min(2, batch_size // 2)
+        foundation_slots = min(2, batch_size - curriculum_slots)
+        remaining_slots = batch_size - curriculum_slots - foundation_slots
+
+        # Try curriculum first with its allocation
+        cr = _learn_curriculum(curriculum_slots, base)
+        if cr:
+            results.extend(cr)
+            strategy_used = "curriculum"
+
+        # Then foundation with its allocation
+        fr = _learn_foundations(foundation_slots, base)
+        if fr:
+            results.extend(fr)
+            if not strategy_used or strategy_used == "none":
+                strategy_used = "foundation"
+            else:
+                strategy_used = f"{strategy_used}+foundation"
+
+        # Fill remaining slots with other strategies
+        if remaining_slots > 0 and len(results) < batch_size:
+            remaining = batch_size - len(results)
+            other_strategies = [
+                ("broken_links", _learn_broken_links),
+                ("trending", _learn_trending),
+                ("structured", _learn_structured),
+                ("deepen", _learn_deepen),
+            ]
+            for name, fn in other_strategies:
+                if remaining <= 0:
+                    break
+                r = fn(remaining, base)
+                if r:
+                    results.extend(r)
+                    remaining -= len(r)
+                    strategy_used = f"{strategy_used}+{name}" if strategy_used != "none" else name
 
     # Update state
     state["history"].append({
