@@ -167,8 +167,60 @@ def _find_stub_articles(base_dir: Path) -> list[str]:
 
 # ─── Learning strategies ────────────────────────────────────
 
+def _generate_foundation_doc(concept: str, base_dir: Path) -> Path | None:
+    """Generate a raw document for a foundational concept using LLM knowledge.
+
+    Fallback when web search is unavailable (e.g., DuckDuckGo blocked in China).
+    """
+    import frontmatter as fm
+    from .llm import chat
+    from .config import load_config, ensure_dirs
+
+    cfg = load_config(base_dir)
+    ensure_dirs(cfg)
+    raw_dir = Path(cfg["paths"]["raw"])
+
+    slug = f"foundation-{concept}"
+    doc_dir = raw_dir / slug
+    if (doc_dir / "index.md").exists():
+        return None
+
+    prompt = (
+        f"Write a comprehensive educational article about '{concept}' in the context of "
+        f"blockchain, cryptocurrency, and DeFi. Cover: definition, how it works, why it matters, "
+        f"key examples, and relationship to other blockchain concepts.\n\n"
+        f"Write in English. Be factual and authoritative. Target audience: someone learning "
+        f"blockchain technology. Length: 800-1500 words."
+    )
+
+    try:
+        content = chat(prompt, max_tokens=4096)
+        if not content or len(content) < 200:
+            return None
+    except Exception as e:
+        logger.error(f"LLM generation failed for {concept}: {e}")
+        return None
+
+    doc_dir.mkdir(parents=True, exist_ok=True)
+    post = fm.Post(content)
+    post.metadata["title"] = concept.replace("-", " ").title()
+    post.metadata["source"] = "llm-generated"
+    post.metadata["ingested_at"] = datetime.now(timezone.utc).isoformat()
+    post.metadata["type"] = "foundation"
+    post.metadata["concept"] = concept
+    post.metadata["compiled"] = False
+
+    doc_path = doc_dir / "index.md"
+    doc_path.write_text(fm.dumps(post), encoding="utf-8")
+    logger.info(f"[orchestrator] Generated foundation doc for '{concept}'")
+    return doc_path
+
+
 def _learn_foundations(batch_size: int, base_dir: Path) -> list[str]:
-    """P0: Learn foundational concepts that are missing."""
+    """P0: Learn foundational concepts that are missing.
+
+    Tries web research first; falls back to LLM generation if search fails.
+    """
     from . import web_research
 
     missing = [c for c in FOUNDATIONS if not _article_exists(c, base_dir)]
@@ -178,7 +230,12 @@ def _learn_foundations(batch_size: int, base_dir: Path) -> list[str]:
     results = []
     for concept in missing[:batch_size]:
         logger.info(f"[orchestrator] P0 foundation: {concept}")
+        # Try web research first
         path = web_research.research_concept(concept, base_dir)
+        if not path:
+            # Fallback: generate from LLM knowledge
+            logger.info(f"[orchestrator] Web search failed, using LLM generation for {concept}")
+            path = _generate_foundation_doc(concept, base_dir)
         if path:
             results.append(concept)
         time.sleep(2)
@@ -197,6 +254,8 @@ def _learn_broken_links(batch_size: int, base_dir: Path) -> list[str]:
     for concept in broken[:batch_size]:
         logger.info(f"[orchestrator] P1 broken link: {concept}")
         path = web_research.research_concept(concept, base_dir)
+        if not path:
+            path = _generate_foundation_doc(concept, base_dir)
         if path:
             results.append(concept)
         time.sleep(2)
