@@ -97,13 +97,19 @@ def _save_state(base_dir: Path, state: dict):
 
 
 def _article_exists(concept_slug: str, base_dir: Path) -> bool:
-    """Check if a wiki article exists for a concept (by slug or alias)."""
+    """Check if a wiki article or raw doc exists for a concept (by slug or alias)."""
     cfg = load_config(base_dir)
     concepts_dir = Path(cfg["paths"]["concepts"])
+    raw_dir = Path(cfg["paths"]["raw"])
 
-    # Direct slug match
+    # Direct slug match (compiled article)
     if (concepts_dir / f"{concept_slug}.md").exists():
         return True
+
+    # Check raw docs (already ingested, awaiting compilation)
+    for prefix in ("foundation-", "research-", "curriculum-", ""):
+        if (raw_dir / f"{prefix}{concept_slug}" / "index.md").exists():
+            return True
 
     # Check aliases
     aliases_path = Path(cfg["paths"]["meta"]) / "aliases.json"
@@ -183,7 +189,7 @@ def _generate_foundation_doc(concept: str, base_dir: Path) -> Path | None:
     slug = f"foundation-{concept}"
     doc_dir = raw_dir / slug
     if (doc_dir / "index.md").exists():
-        return None
+        return doc_dir / "index.md"  # Already researched, return existing
 
     prompt = (
         f"Write a comprehensive educational article about '{concept}' in the context of "
