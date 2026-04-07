@@ -23,7 +23,7 @@ logger = logging.getLogger("llmbase.taskdb")
 
 _local = threading.local()
 
-SCHEMA_VERSION = 1
+SCHEMA_VERSION = 2
 
 SCHEMA = """
 CREATE TABLE IF NOT EXISTS tasks (
@@ -35,6 +35,7 @@ CREATE TABLE IF NOT EXISTS tasks (
     retries      INTEGER DEFAULT 0,
     max_retries  INTEGER DEFAULT 3,
     error_msg    TEXT,
+    metadata     TEXT,
     created_at   TEXT NOT NULL,
     started_at   TEXT,
     completed_at TEXT,
@@ -109,9 +110,15 @@ def get_db(base_dir: Path | str) -> sqlite3.Connection:
     conn.execute("PRAGMA foreign_keys=ON")
     conn.executescript(SCHEMA)
 
+    # Schema migration: add metadata column if missing (v1 → v2)
+    cols = {r[1] for r in conn.execute("PRAGMA table_info(tasks)").fetchall()}
+    if "metadata" not in cols:
+        conn.execute("ALTER TABLE tasks ADD COLUMN metadata TEXT")
+        logger.info("Migrated tasks table: added metadata column")
+
     # Set schema version
     conn.execute(
-        "INSERT OR IGNORE INTO schema_meta(key, value) VALUES('version', ?)",
+        "INSERT OR REPLACE INTO schema_meta(key, value) VALUES('version', ?)",
         (str(SCHEMA_VERSION),),
     )
     conn.commit()
@@ -208,13 +215,14 @@ def get_queued_tasks(source: str | None = None, limit: int = 10, *, base_dir: Pa
     return [dict(r) for r in rows]
 
 
-def enqueue_task(source: str, item_key: str, priority: int = 3, *, base_dir: Path):
+def enqueue_task(source: str, item_key: str, priority: int = 3, *, base_dir: Path, metadata: dict | None = None):
     """Add a task to the queue (idempotent — skips if already exists)."""
     db = get_db(base_dir)
+    meta_json = json.dumps(metadata, ensure_ascii=False) if metadata else None
     try:
         db.execute(
-            "INSERT INTO tasks(source, item_key, priority, status, created_at) VALUES(?, ?, ?, 'queued', ?)",
-            (source, item_key, priority, _now()),
+            "INSERT INTO tasks(source, item_key, priority, status, created_at, metadata) VALUES(?, ?, ?, 'queued', ?, ?)",
+            (source, item_key, priority, _now(), meta_json),
         )
         db.commit()
     except sqlite3.IntegrityError:
@@ -325,6 +333,49 @@ def set_worker_state(task_name: str, last_run_at: str, next_run_at: str, *, base
         (task_name, last_run_at, next_run_at, last_run_at, next_run_at),
     )
     db.commit()
+
+
+# ─── Curriculum helpers ──────────────────────────────────────
+
+
+def get_curriculum_tasks(theme: str | None = None, status: str | None = None, *, base_dir: Path) -> list[dict]:
+    """Get curriculum tasks, optionally filtered by theme and status."""
+    db = get_db(base_dir)
+    query = "SELECT * FROM tasks WHERE source='curriculum'"
+    params = []
+    if theme:
+        query += " AND item_key LIKE ?"
+        params.append(f"{theme}/%")
+    if status:
+        query += " AND status=?"
+        params.append(status)
+    query += " ORDER BY priority, item_key"
+    rows = db.execute(query, params).fetchall()
+    result = []
+    for r in rows:
+        d = dict(r)
+        if d.get("metadata"):
+            d["metadata"] = json.loads(d["metadata"])
+        result.append(d)
+    return result
+
+
+def get_curriculum_progress(*, base_dir: Path) -> dict:
+    """Get per-theme curriculum progress stats."""
+    db = get_db(base_dir)
+    rows = db.execute(
+        "SELECT item_key, status FROM tasks WHERE source='curriculum'"
+    ).fetchall()
+    themes = {}
+    for r in rows:
+        # item_key format: "theme-name/concept-slug"
+        parts = r["item_key"].split("/", 1)
+        theme = parts[0] if len(parts) > 1 else "unknown"
+        if theme not in themes:
+            themes[theme] = {"total": 0, "completed": 0, "queued": 0, "failed": 0, "in_progress": 0}
+        themes[theme]["total"] += 1
+        themes[theme][r["status"]] = themes[theme].get(r["status"], 0) + 1
+    return themes
 
 
 # ─── Stats (for API) ────────────────────────────────────────

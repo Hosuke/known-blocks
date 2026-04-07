@@ -586,6 +586,33 @@ def create_web_app(base_dir: Path | None = None):
         from .taskdb import get_task_stats
         return jsonify(get_task_stats(base_dir=base))
 
+    # ─── Curriculum API ────────────────────────────────────────
+
+    @app.route("/api/curriculum/themes")
+    def api_curriculum_themes():
+        """List available learning themes."""
+        from .curriculum import list_themes
+        return jsonify(list_themes())
+
+    @app.route("/api/curriculum/generate", methods=["POST"])
+    @require_auth
+    def api_curriculum_generate():
+        """Generate curriculum for a theme (or all themes)."""
+        from .curriculum import generate_curriculum, generate_all_curricula
+        theme = request.json.get("theme") if request.json else None
+        if theme:
+            lessons = generate_curriculum(theme, base)
+            return jsonify({"status": "ok", "theme": theme, "lessons": len(lessons)})
+        else:
+            results = generate_all_curricula(base)
+            return jsonify({"status": "ok", "results": results})
+
+    @app.route("/api/curriculum/progress")
+    def api_curriculum_progress():
+        """Get per-theme learning progress."""
+        from .taskdb import get_curriculum_progress
+        return jsonify(get_curriculum_progress(base_dir=base))
+
     @app.route("/api/worker/retry", methods=["POST"])
     @require_auth
     def api_worker_retry():

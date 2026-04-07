@@ -262,6 +262,31 @@ def _learn_broken_links(batch_size: int, base_dir: Path) -> list[str]:
     return results
 
 
+def _learn_curriculum(batch_size: int, base_dir: Path) -> list[str]:
+    """P1.5: Learn from active theme curricula in dependency order."""
+    try:
+        from .curriculum import get_next_lessons, research_lesson
+
+        lessons = get_next_lessons(batch_size, base_dir)
+        if not lessons:
+            return []
+
+        results = []
+        for lesson in lessons:
+            meta = lesson.get("metadata", {})
+            theme = meta.get("theme", "unknown") if meta else "unknown"
+            slug = lesson["item_key"].split("/", 1)[-1]
+            logger.info(f"[orchestrator] P1.5 curriculum [{theme}]: {slug}")
+            path = research_lesson(lesson, base_dir)
+            if path:
+                results.append(slug)
+            time.sleep(2)
+        return results
+    except Exception as e:
+        logger.error(f"[orchestrator] Curriculum learning failed: {e}")
+        return []
+
+
 def _learn_trending(batch_size: int, base_dir: Path) -> list[str]:
     """P2: Learn about top DeFi protocols not yet covered."""
     try:
@@ -367,6 +392,7 @@ def learn(batch_size: int = 5, base_dir: Path | None = None) -> list[str]:
         strategies = [
             ("foundation", _learn_foundations),
             ("broken_links", _learn_broken_links),
+            ("curriculum", _learn_curriculum),
             ("trending", _learn_trending),
             ("structured", _learn_structured),
             ("deepen", _learn_deepen),
