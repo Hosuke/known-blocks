@@ -318,7 +318,7 @@ def _learn_deepen(batch_size: int, base_dir: Path) -> list[str]:
 
 def _learn_curiosity(batch_size: int, base_dir: Path) -> list[str]:
     """P5: Random browsing — spellbook, rekt.news, L2Beat."""
-    sources = ["spellbook", "rekt", "l2beat"]
+    sources = ["rekt", "l2beat"]
     source = random.choice(sources)
     logger.info(f"[orchestrator] P5 curiosity: browsing {source}")
 
