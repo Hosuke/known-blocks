@@ -133,7 +133,13 @@ def _task_learn(base: Path, source: str, batch_size: int):
         elif source == "wikisource":
             from .wikisource import learn
             results = learn(batch_size=batch_size, base_dir=base)
-            logger.info(f"[learn] Wikisource: ingested {len(results)} new works")
+            logger.info(f"[learn] Wikisource: ingested {len(results)} new works: {results}")
+        elif source == "both":
+            from .cbeta import learn as cbeta_learn
+            from .wikisource import learn as ws_learn
+            r1 = cbeta_learn(batch_size=batch_size // 2, base_dir=base)
+            r2 = ws_learn(batch_size=batch_size // 2, base_dir=base)
+            logger.info(f"[learn] CBETA: {len(r1)}, Wikisource: {len(r2)}")
         else:
             logger.warning(f"[learn] Unknown source: {source}")
     except Exception as e:

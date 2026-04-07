@@ -6,6 +6,10 @@
 
 基于 [LLMBase](https://github.com/Hosuke/llmbase) 构建。系统像一个好奇的 crypto researcher——自动发现该学什么、从哪学、怎么补盲。部署后无需人工干预，知识库持续增长。
 
+[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](https://opensource.org/licenses/MIT)
+[![Python 3.11+](https://img.shields.io/badge/Python-3.11+-blue.svg)](https://www.python.org)
+[![MCP Compatible](https://img.shields.io/badge/MCP-Compatible-purple.svg)](https://modelcontextprotocol.io/)
+
 [English](#how-it-works) | [中文](#中文说明)
 
 </div>
@@ -34,7 +38,7 @@
 └──────────────┬───────────────────────────────────────────┘
                │ writes raw/{slug}/index.md
                ▼
-┌─ LLMBase Pipeline (unchanged) ──────────────────────────┐
+┌─ LLMBase Pipeline ──────────────────────────────────────┐
 │  Compile → trilingual wiki articles (EN / 中文 / 日本語)  │
 │  Lint → broken links, orphans, stubs                     │
 │  Heal → auto-generate stubs, fix metadata                │
@@ -42,9 +46,7 @@
 └──────────────────────────────────────────────────────────┘
 ```
 
-## Quick Start
-
-### 1. Install
+## Install
 
 ```bash
 cd known-blocks
@@ -56,7 +58,9 @@ pip install -e .
 cd frontend && npm install && npx vite build && cd ..
 ```
 
-### 2. Configure LLM
+## Quick Start
+
+### 1. Configure LLM
 
 ```bash
 cp .env.example .env
@@ -73,7 +77,7 @@ LLMBASE_MODEL=gpt-4o
 # Or OpenRouter (200+ models)
 LLMBASE_API_KEY=sk-or-...
 LLMBASE_BASE_URL=https://openrouter.ai/api/v1
-LLMBASE_MODEL=anthropic/claude-sonnet-4-6
+LLMBASE_MODEL=anthropic/claude-sonnet-4-5
 
 # Or Ollama (local, free)
 LLMBASE_API_KEY=ollama
@@ -81,7 +85,7 @@ LLMBASE_BASE_URL=http://localhost:11434/v1
 LLMBASE_MODEL=llama3.1
 ```
 
-### 3. Configure Spellbook Path (optional)
+### 2. Configure Spellbook Path (optional)
 
 If you have a local clone of [duneanalytics/spellbook](https://github.com/duneanalytics/spellbook), edit `config.yaml`:
 
@@ -90,7 +94,7 @@ spellbook:
   path: "/path/to/your/spellbook"
 ```
 
-### 4. Learn Something
+### 3. Learn Something
 
 ```bash
 # Learn 3 pages from ethereum.org
@@ -103,7 +107,7 @@ llmbase compile new
 llmbase search query "ethereum"
 ```
 
-### 5. Let the Orchestrator Decide
+### 4. Let the Orchestrator Decide
 
 ```bash
 # Run one auto-learning cycle
@@ -113,7 +117,7 @@ llmbase ingest orchestrate
 llmbase compile new
 ```
 
-### 6. Go Fully Autonomous
+### 5. Go Fully Autonomous
 
 Edit `config.yaml`:
 
@@ -134,6 +138,19 @@ llmbase web    # http://localhost:5555
 The worker runs in the background: learn → compile → index → health check → repeat.
 
 ---
+
+## Key Features
+
+| Feature | Description |
+|---------|-------------|
+| **Blockchain Orchestrator** | Priority-based auto-learning: foundations → broken links → trending protocols → EIPs → deepening → curiosity |
+| **7 Data Source Plugins** | ethereum.org, EIPs, DefiLlama, L2Beat, rekt.news, Spellbook, web search |
+| **Trilingual Output** | Every article compiled in English, 中文, and 日本語 with global language switcher |
+| **Self-Healing Wiki** | 7-step auto-fix: clean garbage → fix tags → normalize → metadata → broken links → dedup → taxonomy |
+| **MCP Server** | Model Context Protocol support — Claude Code, Cursor, and other AI clients can query your KB directly |
+| **Model Fallback** | Primary LLM fails? Auto-falls back to secondary models. Handles thinking-mode output. |
+| **Knowledge Graph** | D3.js force-directed graph with density control slider, tag filtering, adaptive layout |
+| **Agent-First API** | HTTP API + Python SDK for LLM agents to query and contribute |
 
 ## CLI Reference
 
@@ -166,32 +183,37 @@ llmbase ingest spellbook-browse --batch 3
 llmbase ingest orchestrate --batch 5
 ```
 
-### Standard LLMBase Commands
+### Standard Commands
 
 ```bash
-# Compile raw docs into trilingual wiki articles
-llmbase compile new          # Incremental
-llmbase compile all          # Full rebuild
+# ─── Ingest ───────────────────────────────────────
+llmbase ingest url https://docs.uniswap.org/concepts/overview
+llmbase ingest pdf ./whitepaper.pdf --chunk-pages 20
+llmbase ingest file ./notes.md
 
-# Search & query
-llmbase search query "AMM"
+# ─── Compile ──────────────────────────────────────
+llmbase compile new          # Incremental (3-layer dedup)
+llmbase compile all          # Full rebuild
+llmbase compile index        # Rebuild index + aliases
+
+# ─── Health & Repair ─────────────────────────────
+llmbase lint check           # All checks
+llmbase lint clean           # Remove garbage stubs
+llmbase lint dedup           # Detect + merge duplicates
+llmbase lint normalize-tags  # Merge synonymous tags
+llmbase lint fix             # Full auto-fix pipeline
+llmbase lint heal            # Check → fix → recheck → report
+
+# ─── Query ────────────────────────────────────────
 llmbase query "What is a flash loan?" --file-back
 llmbase query "Compare Optimistic vs ZK rollups"
+llmbase query "What is MEV?" --tone scholar
 
-# Health & maintenance
-llmbase lint check           # Find issues
-llmbase lint heal            # Auto-fix everything
-
-# Ingest from other sources
-llmbase ingest url https://docs.uniswap.org/concepts/overview
-llmbase ingest pdf ./whitepaper.pdf
-
-# Serve
+# ─── Serve ────────────────────────────────────────
 llmbase web                  # Web UI (localhost:5555)
 llmbase serve                # Agent API (localhost:5556)
+llmbase mcp                  # MCP server (stdio)
 ```
-
----
 
 ## Data Sources
 
@@ -220,7 +242,7 @@ The orchestrator (`tools/orchestrator.py`) is the brain. Each cycle, it evaluate
 | **P4** | Deepen | Stub articles that need more content |
 | **P5** | Curiosity | Random browsing — spellbook, rekt.news, or L2Beat |
 
-A `curiosity_ratio` config (default 0.2) means 20% of cycles skip priorities and just explore randomly — because serendipity is how you discover unexpected connections.
+A `curiosity_ratio` config (default 0.2) means 20% of cycles skip priorities and just explore randomly.
 
 ## Configuration
 
@@ -246,36 +268,19 @@ orchestrator:
   curiosity_ratio: 0.2         # 20% chance of random exploration
 ```
 
-## Example: First 24 Hours
+## MCP Server (AI Client Integration)
 
-Here's what happens when you deploy with `worker.enabled: true`:
+LLMBase exposes a [Model Context Protocol](https://modelcontextprotocol.io/) server, so any MCP-compatible AI client can interact with your knowledge base directly.
 
-```
-Hour 0:  Orchestrator starts. Notices 0/45 foundation concepts.
-         → P0: Searches "blockchain", "ethereum", "smart contract"...
-         → Compiles into trilingual articles.
-
-Hour 4:  Foundations 15/45 covered. Still P0 priority.
-         → Learns "DeFi", "AMM", "flash loan", "oracle", "bridge"...
-
-Hour 8:  Foundations 30/45. P0 continues.
-         → "zero-knowledge proof", "optimistic rollup", "MEV"...
-
-Hour 12: Foundations 42/45. Some broken [[wiki-links]] appeared.
-         → P1: Researches "Uniswap V3", "Chainlink CCIP"...
-
-Hour 16: Foundations done. Broken links fixed.
-         → P2: Learns about top TVL protocols from DefiLlama.
-         → "Lido", "Aave", "Maker", "EigenLayer"...
-
-Hour 20: Top protocols covered.
-         → P3: Starts reading EIPs (ERC-20, ERC-721, EIP-1559...)
-         → Also fetches ethereum.org scaling docs.
-
-Hour 24: Health check runs. Finds 8 broken links, 3 stubs.
-         → Auto-generates stubs, fixes metadata.
-         → P5 curiosity kick: browses Spellbook, finds Balancer SQL models.
-         → Knowledge base now has ~100 concepts, growing.
+```json
+{
+  "mcpServers": {
+    "known-blocks": {
+      "command": "python",
+      "args": ["-m", "tools.mcp_server", "--base-dir", "/path/to/known-blocks"]
+    }
+  }
+}
 ```
 
 ## Project Structure
@@ -283,21 +288,15 @@ Hour 24: Health check runs. Finds 8 broken links, 3 stubs.
 ```
 known-blocks/
 ├── tools/                     # Python backend
-│   ├── orchestrator.py        # 🧠 Learning brain — priority queue + curiosity
-│   ├── ethdocs.py             # 📖 Ethereum.org docs plugin
-│   ├── eips.py                # 📋 EIP/ERC standards plugin
-│   ├── defillama.py           # 📊 DefiLlama protocol data plugin
-│   ├── l2beat.py              # 🔗 L2Beat ecosystem plugin
-│   ├── rekt.py                # 🔒 Security incidents plugin
-│   ├── spellbook_browse.py    # 🔍 Spellbook SQL browsing plugin
-│   ├── web_research.py        # 🌐 Web search gap-filler
+│   ├── orchestrator.py        # Learning brain — priority queue + curiosity
+│   ├── ethdocs.py             # Ethereum.org docs plugin
+│   ├── eips.py                # EIP/ERC standards plugin
+│   ├── defillama.py           # DefiLlama protocol data plugin
+│   ├── l2beat.py              # L2Beat ecosystem plugin
+│   ├── rekt.py                # Security incidents plugin
+│   ├── spellbook_browse.py    # Spellbook SQL browsing plugin
+│   ├── web_research.py        # Web search gap-filler
 │   ├── refs/                  # Reference link plugins
-│   │   ├── ethdocs.py         #   → ethereum.org links
-│   │   ├── eips.py            #   → eips.ethereum.org links
-│   │   ├── defillama.py       #   → defillama.com links
-│   │   ├── l2beat.py          #   → l2beat.com links
-│   │   ├── rekt.py            #   → rekt.news links
-│   │   └── spellbook.py       #   → GitHub spellbook links
 │   ├── compile.py             # LLM compilation pipeline
 │   ├── worker.py              # Background worker
 │   ├── cli.py                 # CLI entry point
@@ -310,6 +309,21 @@ known-blocks/
 ├── config.yaml                # Configuration
 ├── .env                       # LLM API credentials
 └── frontend/                  # React Web UI
+```
+
+## Deployment
+
+```bash
+# Docker
+docker compose up -d
+
+# Railway
+railway login && railway init
+railway variables set LLMBASE_API_KEY=sk-...
+railway up
+
+# Manual
+gunicorn --bind 0.0.0.0:5555 --workers 2 --timeout 300 wsgi:app
 ```
 
 ---
@@ -369,82 +383,12 @@ llmbase web
 
 ---
 
-## Deployment
-
-### Fly.io (recommended)
-
-One-time setup — about 5 minutes:
-
-```bash
-# 1. Install Fly CLI (if not installed)
-# macOS
-brew install flyctl
-# or
-curl -L https://fly.io/install.sh | sh
-
-# 2. Login / sign up
-fly auth login
-
-# 3. Launch app (creates app, don't deploy yet)
-fly launch --no-deploy
-# When prompted: pick a region (nrt=Tokyo, iad=Virginia, etc.)
-# Say NO to database
-
-# 4. Create persistent volume for knowledge data
-fly volumes create kb_data --size 1 --region nrt
-# 1GB is enough to start; expandable later
-
-# 5. Set your LLM API credentials
-fly secrets set LLMBASE_API_KEY=sk-your-key-here
-fly secrets set LLMBASE_BASE_URL=https://api.openai.com/v1
-fly secrets set LLMBASE_MODEL=gpt-4o
-
-# 6. Deploy!
-fly deploy
-```
-
-Done. Your knowledge base is now live at `https://known-blocks.fly.dev`.
-
-After deployment:
-```bash
-# Check status
-fly status
-
-# View logs (watch the worker learn)
-fly logs
-
-# SSH in for debugging
-fly ssh console
-
-# Open in browser
-fly open
-
-# Redeploy after code changes
-fly deploy
-```
-
-Volume data (`raw/`, `wiki/`) persists across redeploys and restarts.
-
-### Docker (local or VPS)
-
-```bash
-# Configure .env, then:
-docker compose up -d
-
-# Data stored in local ./raw and ./wiki directories
-# Open http://localhost:5555
-```
-
-### Railway
-
-```bash
-railway login && railway init
-railway variables set LLMBASE_API_KEY=sk-...
-railway up
-```
-
----
-
 ## License
 
 MIT
+
+---
+
+<div align="center">
+<sub>Built with LLMs, for LLMs. Knowledge compounds. 温故而知新。</sub>
+</div>

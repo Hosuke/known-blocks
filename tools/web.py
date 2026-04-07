@@ -228,8 +228,11 @@ def create_web_app(base_dir: Path | None = None):
             return []
         slugs = data.get(slug, [])
         result = []
+        concepts_resolved = str(concepts_dir.resolve()) + "/"
         for s in slugs:
-            p = concepts_dir / f"{s}.md"
+            p = (concepts_dir / f"{s}.md").resolve()
+            if not (str(p) + "/").startswith(concepts_resolved):
+                continue  # Path traversal guard
             if p.exists():
                 post = frontmatter.load(str(p))
                 result.append({"slug": s, "title": post.metadata.get("title", s)})
@@ -281,54 +284,64 @@ def create_web_app(base_dir: Path | None = None):
         atomic_write_json(path, data)
 
     @app.route("/api/trails")
+    @require_auth
     def api_trails():
         """List all research trails."""
         return jsonify(_load_trails())
 
+    import threading as _threading
+    _trail_lock = _threading.Lock()
+
     @app.route("/api/trails", methods=["POST"])
+    @require_auth
     def api_trails_save():
         """Add a step to a trail (or create a new trail)."""
         import uuid
         from datetime import datetime, timezone
-        data = request.json or {}
-        step = data.get("step", {})
+        data = request.get_json(silent=True) or {}
+        step = data.get("step")
+        if step and not isinstance(step, dict):
+            return jsonify({"status": "error", "message": "step must be a dict"}), 400
+        step = step or {}
         trail_id = data.get("trail_id")
         name = data.get("name", "")
 
-        trails_data = _load_trails()
-        trails = trails_data.get("trails", [])
-        now = datetime.now(timezone.utc).isoformat()
+        with _trail_lock:
+            trails_data = _load_trails()
+            trails = trails_data.get("trails", [])
+            now = datetime.now(timezone.utc).isoformat()
 
-        if trail_id:
-            # Add step to existing trail
-            trail = next((t for t in trails if t["id"] == trail_id), None)
-            if trail:
-                step["ts"] = now
-                trail["steps"].append(step)
-                trail["updated"] = now
+            if trail_id:
+                trail = next((t for t in trails if t["id"] == trail_id), None)
+                if trail:
+                    step["ts"] = now  # Server timestamp always wins
+                    trail["steps"].append(step)
+                    trail["updated"] = now
+                else:
+                    return jsonify({"status": "error", "message": "Trail not found"}), 404
             else:
-                return jsonify({"status": "error", "message": "Trail not found"}), 404
-        else:
-            # Create new trail
-            trail = {
-                "id": uuid.uuid4().hex[:12],
-                "name": name or f"Trail {len(trails) + 1}",
-                "created": now,
-                "updated": now,
-                "steps": [{"ts": now, **step}] if step else [],
-            }
-            trails.append(trail)
+                # Create new trail
+                trail = {
+                    "id": uuid.uuid4().hex[:12],
+                    "name": name or f"Trail {len(trails) + 1}",
+                    "created": now,
+                    "updated": now,
+                    "steps": [{**step, "ts": now}] if step.get("type") else [],
+                }
+                trails.append(trail)
 
-        trails_data["trails"] = trails
-        _save_trails(trails_data)
-        return jsonify({"trail": trail})
+            trails_data["trails"] = trails
+            _save_trails(trails_data)
+            return jsonify({"trail": trail})
 
     @app.route("/api/trails/<trail_id>/delete", methods=["POST"])
+    @require_auth
     def api_trail_delete(trail_id):
         """Delete a research trail."""
-        trails_data = _load_trails()
-        trails_data["trails"] = [t for t in trails_data.get("trails", []) if t["id"] != trail_id]
-        _save_trails(trails_data)
+        with _trail_lock:
+            trails_data = _load_trails()
+            trails_data["trails"] = [t for t in trails_data.get("trails", []) if t["id"] != trail_id]
+            _save_trails(trails_data)
         return jsonify({"status": "ok"})
 
     @app.route("/api/xici")
@@ -363,10 +376,13 @@ def create_web_app(base_dir: Path | None = None):
         file_back = data.get("file_back", True)
         tone = data.get("tone", "default")
         if deep:
-            answer = query_with_search(q, base, tone=tone, file_back=file_back)
+            result = query_with_search(q, base, tone=tone, file_back=file_back, return_context=True)
+            if isinstance(result, dict):
+                return jsonify({"answer": result["answer"], "consulted": result.get("consulted", [])})
+            return jsonify({"answer": result})
         else:
             answer = query(q, file_back=file_back, base_dir=base, tone=tone)
-        return jsonify({"answer": answer})
+            return jsonify({"answer": answer})
 
     @app.route("/api/tones", methods=["GET"])
     def api_tones():
@@ -562,6 +578,38 @@ def create_web_app(base_dir: Path | None = None):
         report = json.loads(health_path.read_text())
         return jsonify({"report": report})
 
+    # ─── Worker Status API ──────────────────────────────────────
+
+    @app.route("/api/worker/status")
+    def api_worker_status():
+        """Task queue stats, source health, recent runs."""
+        from .taskdb import get_task_stats
+        return jsonify(get_task_stats(base_dir=base))
+
+    @app.route("/api/worker/retry", methods=["POST"])
+    @require_auth
+    def api_worker_retry():
+        """Reset all failed tasks back to queued."""
+        from .taskdb import get_db
+        db = get_db(base)
+        result = db.execute(
+            "UPDATE tasks SET status='queued', retries=0, error_msg=NULL WHERE status='failed'"
+        )
+        db.commit()
+        return jsonify({"status": "ok", "retried": result.rowcount})
+
+    @app.route("/api/worker/trigger", methods=["POST"])
+    @require_auth
+    def api_worker_trigger():
+        """Trigger an immediate learn+compile cycle."""
+        from .taskdb import set_worker_state
+        from datetime import datetime, timezone
+        now = datetime.now(timezone.utc).isoformat()
+        # Set next_run to now so the worker picks it up on next tick
+        for task in ("learn", "compile"):
+            set_worker_state(task, now, now, base_dir=base)
+        return jsonify({"status": "ok", "message": "Learn+compile triggered for next worker tick"})
+
     @app.route("/api/wiki/export")
     def api_wiki_export():
         """Export all wiki articles as JSON (for backup/sync)."""
@@ -584,6 +632,14 @@ def create_web_app(base_dir: Path | None = None):
         return jsonify({"status": "ok", "article_count": len(entries)})
 
     # ─── SPA Fallback ──────────────────────────────────────────
+
+    # Serve custom favicon from project static/ dir if it exists
+    @app.route("/favicon.svg")
+    def serve_favicon():
+        custom_favicon = base / "static" / "favicon.svg"
+        if custom_favicon.exists():
+            return send_from_directory(str(custom_favicon.parent), "favicon.svg")
+        return send_from_directory(str(static_dir), "favicon.svg")
 
     @app.route("/", defaults={"path": ""})
     @app.route("/<path:path>")

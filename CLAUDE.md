@@ -43,7 +43,42 @@ Each plugin implements `learn(batch_size, base_dir) -> list[str]` and progress t
 - All wiki-links use [[target]] syntax; resolved via tools/resolve.py
 - Article slugs are kebab-case; domain-agnostic compile pipeline
 - Reference plugins in tools/refs/ provide get_source_url() for citations
+- Alias resolution via tools/resolve.py — always use resolve_link() for wiki-link targets
+- Taxonomy is LLM-generated (not hardcoded) — tools/taxonomy.py
+- Never expose specific LLM provider names in public code or commits
+
+## Auto-Fix Pipeline (tools/lint.py:auto_fix)
+1. clean_garbage() — remove template stubs
+2. fix metadata — LLM generates missing summary/tags
+3. fix_broken_links() — alias-aware, only stubs for truly missing concepts
+4. merge_duplicates() — LLM confirms, content 叠加进化
+5. fix_uncategorized() — regenerate taxonomy
+
+## Key Files
+- tools/resolve.py — alias system (central to all link resolution)
+- tools/xici.py — guided introduction generation
+- tools/taxonomy.py — emergent LLM-generated categories
+- wiki/_meta/ — aliases.json, taxonomy.json, health.json, backlinks.json
+
+## Commit Process (MANDATORY)
+Before EVERY git commit, you MUST:
+1. Run `cd frontend && npx tsc --noEmit` — TypeScript check
+2. Run `python -c "from tools.lint import lint; print('OK')"` — Python import check
+3. Run Codex review on staged changes and WAIT for the result:
+   ```
+   codex exec --sandbox read-only -C . \
+     --output-last-message /tmp/codex-review-result.txt \
+     "Review the staged git diff for bugs, security, edge cases. file:line format. Say LGTM if clean."
+   ```
+4. Read the Codex review output. If there are HIGH issues, fix them BEFORE committing.
+5. Only then run `git commit`
+
+Do NOT skip Codex review. Do NOT commit while Codex is still running.
 
 ## CI Process
 - Python import check: `python -c "from tools.orchestrator import learn; print('OK')"`
 - CLI check: `python -c "from tools.cli import main; print('OK')"`
+- TypeScript check: `cd frontend && npx tsc --noEmit`
+- Python lint check: `python -c "from tools.lint import lint; print('OK')"`
+- Lint check: `python llmbase.py lint check`
+- Build: `cd frontend && npx vite build`

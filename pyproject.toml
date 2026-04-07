@@ -6,7 +6,21 @@ build-backend = "setuptools.build_meta"
 name = "known-blocks"
 version = "0.1.0"
 description = "Autonomous blockchain knowledge base, powered by LLMBase"
+readme = "README.md"
+license = {text = "MIT"}
 requires-python = ">=3.11"
+authors = [{name = "Huang Geyang", email = "Sukebeta@outlook.com"}]
+keywords = ["llm", "knowledge-base", "wiki", "mcp", "blockchain", "defi"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+    "Topic :: Text Processing :: Markup :: Markdown",
+]
 dependencies = [
     "openai>=1.30.0",
     "python-dotenv>=1.0.0",
@@ -21,7 +35,18 @@ dependencies = [
     "python-frontmatter>=1.1.0",
     "watchdog>=4.0.0",
     "pymupdf>=1.24.0",
+    "httpx>=0.27.0",
+    "mcp>=1.0.0",
 ]
+
+[project.optional-dependencies]
+cjk = ["opencc-python-reimplemented>=0.1.7"]
+all = ["known-blocks[cjk]"]
+
+[project.urls]
+Homepage = "https://github.com/Hosuke/llmbase"
+Documentation = "https://github.com/Hosuke/llmbase/tree/main/docs"
+Repository = "https://github.com/Hosuke/llmbase"
 
 [project.scripts]
 llmbase = "tools.cli:main"

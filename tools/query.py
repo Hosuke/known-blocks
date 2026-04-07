@@ -160,6 +160,14 @@ Which articles (by title) are most relevant? List up to 10, one per line, just t
     if file_back:
         _file_output(question, answer, "markdown", cfg)
 
+    if return_context:
+        # Extract slugs from consulted articles
+        consulted = []
+        for entry in index:
+            if any(cf["path"] == entry["title"] for cf in context_files):
+                consulted.append({"slug": entry["slug"], "title": entry["title"]})
+        return {"answer": answer, "consulted": consulted}
+
     return answer
 
 

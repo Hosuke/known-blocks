@@ -229,6 +229,7 @@ def ingest_ctext_catalog_cmd(ctx, catalog, delay, browser):
         console.print(f"  • {book}: {len(paths)} chapters")
 
 
+
 # ─── Blockchain knowledge sources ────────────────────────────
 
 @ingest.command("ethdocs-learn")
@@ -744,6 +745,17 @@ def web(ctx, port):
     app = create_web_app(ctx.obj["base_dir"])
     console.print(f"[green]Web UI running at http://localhost:{port}[/green]")
     app.run(host="0.0.0.0", port=port, debug=False)
+
+
+@cli.command()
+@click.pass_context
+def mcp(ctx):
+    """Start the MCP (Model Context Protocol) server for AI client integration."""
+    import asyncio
+    from .mcp_server import main as mcp_main
+    console.print("[green]Starting LLMBase MCP server (stdio)...[/green]")
+    console.print("[dim]Register in your AI client settings to connect.[/dim]")
+    asyncio.run(mcp_main())
 
 
 def main():

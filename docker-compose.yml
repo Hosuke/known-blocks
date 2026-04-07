@@ -6,6 +6,6 @@ services:
     env_file:
       - .env
     volumes:
-      - ./raw:/app/data/raw
-      - ./wiki:/app/data/wiki
+      - ./raw:/app/raw
+      - ./wiki:/app/wiki
     restart: unless-stopped

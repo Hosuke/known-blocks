@@ -22,6 +22,9 @@ RUN chmod +x entrypoint.sh
 # Copy built frontend
 COPY --from=frontend-build /app/static/dist ./static/dist
 
+# Create data directories
+RUN mkdir -p raw wiki/_meta wiki/concepts wiki/outputs
+
 # Expose port
 EXPOSE 5555
 
