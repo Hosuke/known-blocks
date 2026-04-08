@@ -135,7 +135,19 @@ append: |
 
 Focus on extracting knowledge, not just summarizing. Each language section should be substantive, not a mere translation."""
 
-        response = chat(prompt, system=SYSTEM_PROMPT, max_tokens=cfg["llm"]["max_tokens"])
+        try:
+            response = chat(prompt, system=SYSTEM_PROMPT, max_tokens=cfg["llm"]["max_tokens"])
+        except Exception as e:
+            import logging
+            logging.getLogger("llmbase.compile").error(f"LLM call failed for {doc_path.parent.name}: {e}")
+            continue  # Don't mark as compiled — retry next round
+
+        if not response or len(response.strip()) < 50:
+            import logging
+            logging.getLogger("llmbase.compile").warning(
+                f"Empty/tiny LLM response for {doc_path.parent.name} ({len(response or '')} chars), skipping"
+            )
+            continue
 
         # Build source reference from raw doc metadata
         # Map raw doc type to ref plugin ID
@@ -163,6 +175,15 @@ Focus on extracting knowledge, not just summarizing. Each language section shoul
 
         # Parse response and write articles (with source ref)
         articles = _parse_compile_response(response)
+        if not articles:
+            import logging
+            logging.getLogger("llmbase.compile").warning(
+                f"No articles extracted from LLM response for {doc_path.parent.name} "
+                f"({len(response)} chars). First 200 chars: {response[:200]}"
+            )
+            # Don't mark as compiled — let it retry next round
+            continue
+
         for article in articles:
             article["sources"] = [source_ref]
             article_path = _write_article(article, concepts_dir)
@@ -170,7 +191,7 @@ Focus on extracting knowledge, not just summarizing. Each language section shoul
                 compiled_articles.append(str(article_path))
                 existing_concepts.append(article["slug"])
 
-        # Mark raw doc as compiled
+        # Mark raw doc as compiled (only if we extracted articles)
         post.metadata["compiled"] = True
         post.metadata["compiled_at"] = datetime.now(timezone.utc).isoformat()
         doc_path.write_text(frontmatter.dumps(post), encoding="utf-8")
