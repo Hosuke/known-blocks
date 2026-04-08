@@ -158,7 +158,9 @@ def _task_compile(base: Path):
     logger.info("[compile] Checking for uncompiled documents...")
     try:
         from .compile import compile_new, rebuild_index
-        articles = compile_new(base, batch_size=5)
+        cfg = load_config(base)
+        batch_size = cfg.get("compile", {}).get("batch_size", 10)
+        articles = compile_new(base, batch_size=batch_size)
         if articles:
             logger.info(f"[compile] Created {len(articles)} new articles")
             rebuild_index(base)
