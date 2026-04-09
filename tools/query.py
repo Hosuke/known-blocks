@@ -1,6 +1,7 @@
 """Query module: Q&A against the wiki, with output filing."""
 
 import json
+import logging
 import re
 from datetime import datetime, timezone
 from pathlib import Path
@@ -8,7 +9,9 @@ from pathlib import Path
 import frontmatter
 
 from .config import load_config, ensure_dirs
-from .llm import chat, chat_with_context
+from .llm import chat, chat_with_context, extract_json
+
+logger = logging.getLogger("llmbase.query")
 
 
 SYSTEM_PROMPT = """You are a research assistant with access to a personal knowledge base wiki.
@@ -99,11 +102,17 @@ def query_with_search(
     tone: str = "default",
     file_back: bool = False,
     return_context: bool = False,
+    promote: bool = False,
 ) -> str | dict:
     """Multi-step query: first search for relevant articles, then answer.
 
     If return_context=True, returns {"answer": str, "consulted": [slug, ...]}
     instead of just the answer string.
+
+    If promote=True, also runs an LLM judge to decide whether this Q&A
+    should be promoted into a new (or extended) wiki concept. The
+    resulting promotion info is added as "promotion" in the return dict.
+    Requires return_context=True to take effect.
     """
     cfg = load_config(base_dir)
     ensure_dirs(cfg)
@@ -166,9 +175,215 @@ Which articles (by title) are most relevant? List up to 10, one per line, just t
         for entry in index:
             if any(cf["path"] == entry["title"] for cf in context_files):
                 consulted.append({"slug": entry["slug"], "title": entry["title"]})
-        return {"answer": answer, "consulted": consulted}
+
+        result: dict = {"answer": answer, "consulted": consulted}
+
+        if promote:
+            try:
+                promotion = promote_to_concept(
+                    question=question,
+                    answer=answer,
+                    consulted=consulted,
+                    index=index,
+                    base_dir=base_dir,
+                )
+                result["promotion"] = promotion
+            except Exception as e:
+                logger.warning(f"Promotion failed: {e}")
+                result["promotion"] = {"promoted": False, "reason": f"error: {e}"}
+
+        return result
 
     return answer
+
+
+PROMOTE_SYSTEM_PROMPT = """You evaluate whether a Q&A exchange should be promoted
+into a knowledge base as a standalone concept article.
+
+Be conservative: only promote when the Q&A is about a nameable concept that
+adds genuinely new knowledge or meaningfully extends an existing article.
+Reject conversational / procedural / list-of-things questions.
+
+You must reply with a single JSON object. No preamble, no markdown fences."""
+
+
+def promote_to_concept(
+    question: str,
+    answer: str,
+    consulted: list[dict],
+    index: list[dict],
+    base_dir: Path | None = None,
+) -> dict:
+    """LLM judges whether a Q&A should become a wiki concept, and if yes, writes it.
+
+    Returns a dict describing the outcome:
+        {"promoted": False, "reason": "..."}
+        {"promoted": True, "slug": "...", "title": "...", "path": "...",
+         "merged": bool, "reason": "..."}
+
+    Relies on compile._write_article() for the actual write, which handles
+    3-layer deduplication (slug / alias / CJK substring) — so even if the
+    judge mistakenly re-proposes an existing concept, the writer will merge
+    rather than create a duplicate.
+    """
+    from .compile import _write_article, rebuild_index
+
+    cfg = load_config(base_dir)
+
+    # Build a compact index summary for the judge (cap at ~80 entries)
+    index_lines = []
+    for entry in index[:80]:
+        summary = entry.get("summary", "") or ""
+        if len(summary) > 120:
+            summary = summary[:120] + "…"
+        index_lines.append(f"- {entry['slug']}: {entry.get('title', '')} — {summary}")
+    index_summary = "\n".join(index_lines) if index_lines else "(empty wiki)"
+
+    consulted_slugs = [c["slug"] for c in consulted]
+
+    prompt = f"""A user asked a question and received an answer from the wiki.
+Decide whether this Q&A should be promoted into a standalone concept article.
+
+QUESTION:
+{question}
+
+ANSWER:
+{answer}
+
+ARTICLES ALREADY CONSULTED FOR THIS ANSWER (likely candidates for merge, not new creation):
+{', '.join(consulted_slugs) if consulted_slugs else '(none)'}
+
+CURRENT WIKI INDEX (do not create duplicates — use merge_into for existing slugs):
+{index_summary}
+
+Decide:
+1. Does this Q&A center on a clearly nameable concept?
+2. Is that concept already covered? If yes, which existing slug should we merge into?
+3. Does it add genuinely new, substantive knowledge (not just rephrasing)?
+
+PROMOTE when ALL are true:
+- Clear nameable concept at the center
+- Either a new concept OR a meaningful extension of an existing one
+- Substantive content (~150+ words of the answer are about the concept)
+
+REJECT when ANY are true:
+- Procedural / conversational / meta question ("how do I…", "what can you…")
+- Vague, multi-topic, or list-of-things question
+- Pure rehash of articles already in the index
+- No clean slug/title can be extracted
+
+Reply with EXACTLY this JSON schema (all fields required):
+
+{{
+  "promote": true,
+  "reason": "one-line explanation",
+  "merge_into": "existing-slug or null",
+  "slug": "new-or-existing-slug (kebab-case, ascii; use pinyin for Chinese)",
+  "title": "English Title / 中文标题",
+  "summary": "one-line English summary (≤200 chars)",
+  "tags": ["tag1", "tag2"],
+  "content": "## English\\n\\nFull English body with [[wiki-links]]…\\n\\n## 中文\\n\\n完整中文内容…\\n\\n## 日本語\\n\\n完全な日本語…"
+}}
+
+If rejecting, reply with:
+{{"promote": false, "reason": "one-line explanation"}}"""
+
+    raw = chat(
+        prompt,
+        system=PROMOTE_SYSTEM_PROMPT,
+        max_tokens=cfg["llm"]["max_tokens"],
+    )
+
+    try:
+        decision = json.loads(extract_json(raw))
+    except (json.JSONDecodeError, ValueError) as e:
+        return {"promoted": False, "reason": f"judge returned invalid JSON: {e}"}
+
+    # Fail closed on non-object JSON ([], "ok", null, 42, …)
+    if not isinstance(decision, dict):
+        return {
+            "promoted": False,
+            "reason": f"judge returned non-object JSON: {type(decision).__name__}",
+        }
+
+    if not decision.get("promote"):
+        return {
+            "promoted": False,
+            "reason": decision.get("reason", "judge declined"),
+        }
+
+    # If the judge said "merge into existing X", treat X as the target slug —
+    # this prevents the writer from creating a duplicate when the judge picks
+    # a different new slug than the one it intends to merge into.
+    merge_into = decision.get("merge_into") or None
+    if isinstance(merge_into, str) and merge_into.strip().lower() not in ("", "null", "none"):
+        target_slug = merge_into.strip()
+    else:
+        merge_into = None
+        target_slug = decision.get("slug")
+
+    # Validate required fields for a promotion
+    if not target_slug or not decision.get("title") or not decision.get("content"):
+        missing = [
+            k for k, v in (
+                ("slug", target_slug),
+                ("title", decision.get("title")),
+                ("content", decision.get("content")),
+            ) if not v
+        ]
+        return {
+            "promoted": False,
+            "reason": f"judge missing fields: {', '.join(missing)}",
+        }
+
+    # Sanitize slug up-front (mirrors _write_article so pre_exists can't be
+    # tricked into probing paths outside concepts/ via traversal characters)
+    safe_slug = (
+        target_slug.replace("/", "-").replace("\\", "-").replace("..", "").strip(".-_ ")
+    )
+    if not safe_slug:
+        return {"promoted": False, "reason": "judge slug sanitized to empty"}
+
+    # Build article dict shaped like compile._write_article expects
+    article = {
+        "slug": safe_slug,
+        "title": decision["title"],
+        "summary": decision.get("summary", ""),
+        "tags": decision.get("tags", []),
+        "content": decision["content"],
+        "sources": [{
+            "plugin": "qa",
+            "url": "",
+            "title": question,
+            "question": question,
+            "created": datetime.now(timezone.utc).isoformat(),
+        }],
+    }
+
+    concepts_dir = Path(cfg["paths"]["concepts"])
+    pre_exists = (concepts_dir / f"{safe_slug}.md").exists()
+
+    article_path = _write_article(article, concepts_dir)
+    if article_path is None:
+        return {"promoted": False, "reason": "write_article rejected slug"}
+
+    # Rebuild index/aliases/backlinks so the new concept is discoverable
+    rebuild_index(base_dir)
+
+    # Determine whether this was a merge or a new file. Merge happens when:
+    # - the target file already existed (exact slug or alias hit), or
+    # - dedup redirected the write to a different file (CJK substring)
+    final_slug = article_path.stem
+    merged = pre_exists or (final_slug != safe_slug)
+
+    return {
+        "promoted": True,
+        "reason": decision.get("reason", ""),
+        "slug": final_slug,
+        "title": decision["title"],
+        "path": str(article_path),
+        "merged": merged,
+    }
 
 
 def _gather_context(question: str, cfg: dict) -> list[dict]:

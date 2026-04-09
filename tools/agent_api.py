@@ -42,12 +42,34 @@ class KnowledgeBase:
             articles = compile_new(self.base_dir)
         return {"status": "ok", "articles_created": len(articles), "articles": articles}
 
-    def ask(self, question: str, deep: bool = False, file_back: bool = True, tone: str = "default") -> dict:
-        """Ask a question against the knowledge base."""
+    def ask(
+        self,
+        question: str,
+        deep: bool = False,
+        file_back: bool = True,
+        tone: str = "default",
+        promote: bool = False,
+    ) -> dict:
+        """Ask a question against the knowledge base.
+
+        When deep=True, runs the two-step search → answer pipeline and returns
+        the articles consulted. When promote=True, an LLM judge decides whether
+        the Q&A should become a new wiki concept; if yes, the article is
+        written into wiki/concepts and the index rebuilt.
+        """
         if deep:
-            answer = query_with_search(question, self.base_dir, tone=tone, file_back=file_back)
-        else:
-            answer = query(question, file_back=file_back, base_dir=self.base_dir, tone=tone)
+            result = query_with_search(
+                question,
+                self.base_dir,
+                tone=tone,
+                file_back=file_back,
+                return_context=True,
+                promote=promote,
+            )
+            if isinstance(result, dict):
+                return {"status": "ok", **result}
+            return {"status": "ok", "answer": result}
+        answer = query(question, file_back=file_back, base_dir=self.base_dir, tone=tone)
         return {"status": "ok", "answer": answer}
 
     def search(self, query_text: str, top_k: int = 10) -> dict:
@@ -171,6 +193,7 @@ def create_agent_server(base_dir: str | Path | None = None, port: int = 5556):
             deep=data.get("deep", False),
             file_back=data.get("file_back", True),
             tone=data.get("tone", "default"),
+            promote=data.get("promote", False),
         ))
 
     @app.route("/api/search", methods=["GET"])

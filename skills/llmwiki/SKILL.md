@@ -68,7 +68,7 @@ EOF
 # Initialize config
 cat > config.yaml << 'EOF'
 llm:
-  max_tokens: 8192
+  max_tokens: 16384
 paths:
   raw: "./raw"
   wiki: "./wiki"

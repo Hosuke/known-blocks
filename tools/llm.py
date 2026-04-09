@@ -130,7 +130,7 @@ def chat(
     prompt: str,
     system: str = "",
     model: str | None = None,
-    max_tokens: int = 8192,
+    max_tokens: int = 16384,
 ) -> str:
     """Send a prompt with automatic model fallback on failure."""
     if model is None:
@@ -177,7 +177,7 @@ def chat_with_context(
     context_files: list[dict],
     system: str = "",
     model: str | None = None,
-    max_tokens: int = 8192,
+    max_tokens: int = 16384,
 ) -> str:
     """Ask a question with file contents as context."""
     context_parts = []

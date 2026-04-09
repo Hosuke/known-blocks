@@ -46,12 +46,13 @@ TOOLS = [
     ),
     Tool(
         name="kb_ask",
-        description="Ask a question against the knowledge base (deep research with context retrieval)",
+        description="Ask a question against the knowledge base (deep research with context retrieval). Set promote=true to let the LLM judge whether to sediment the Q&A as a new wiki concept.",
         inputSchema={
             "type": "object",
             "properties": {
                 "question": {"type": "string", "description": "Question to ask"},
                 "tone": {"type": "string", "description": "Response tone: default, wenyan, scholar, caveman, eli5", "default": "default"},
+                "promote": {"type": "boolean", "description": "If true, run promotion judge to sediment Q&A into wiki/concepts when warranted", "default": False},
             },
             "required": ["question"],
         },
@@ -160,9 +161,14 @@ TOOLS = [
 def handle_tool(name: str, arguments: dict, base_dir: Path) -> str:
     """Dispatch tool call to the appropriate handler."""
 
-    # Write operations use the worker job lock to prevent concurrent mutations
+    # Write operations use the worker job lock to prevent concurrent mutations.
+    # kb_ask is normally read-only, but promote=True turns it into a write
+    # (creates concept files, rebuilds index) and must take the lock too.
     write_tools = {"kb_ingest", "kb_compile", "kb_lint"}
-    if name in write_tools:
+    needs_lock = name in write_tools or (
+        name == "kb_ask" and arguments.get("promote") is True
+    )
+    if needs_lock:
         from .worker import job_lock
         if not job_lock.acquire(blocking=False):
             return "Another write operation is running. Try again later."
@@ -170,7 +176,7 @@ def handle_tool(name: str, arguments: dict, base_dir: Path) -> str:
     try:
         return _dispatch_tool(name, arguments, base_dir)
     finally:
-        if name in write_tools:
+        if needs_lock:
             from .worker import job_lock
             try:
                 job_lock.release()
@@ -194,9 +200,19 @@ def _dispatch_tool(name: str, arguments: dict, base_dir: Path) -> str:
             tone=arguments.get("tone", "default"),
             file_back=False,  # MCP queries don't write by default
             return_context=True,
+            promote=arguments.get("promote", False),
         )
         if isinstance(result, dict):
-            return f"{result['answer']}\n\n---\nConsulted: {', '.join(a['title'] for a in result.get('consulted', []))}"
+            consulted_str = ", ".join(a["title"] for a in result.get("consulted", []))
+            out = f"{result['answer']}\n\n---\nConsulted: {consulted_str}"
+            promo = result.get("promotion")
+            if promo:
+                if promo.get("promoted"):
+                    label = "Merged into" if promo.get("merged") else "Promoted"
+                    out += f"\n{label}: {promo.get('slug')} — {promo.get('reason', '')}"
+                else:
+                    out += f"\nNot promoted: {promo.get('reason', '')}"
+            return out
         return result
 
     elif name == "kb_get":

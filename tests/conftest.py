@@ -23,7 +23,7 @@ def tmp_kb(tmp_path):
 
     # Config
     config = {
-        "llm": {"max_tokens": 8192},
+        "llm": {"max_tokens": 16384},
         "paths": {
             "raw": str(raw_dir),
             "wiki": str(wiki_dir),
