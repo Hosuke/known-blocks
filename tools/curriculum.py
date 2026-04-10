@@ -98,6 +98,132 @@ THEMES = {
             "docs.hyperlane.xyz", "conduit.xyz", "docs.altlayer.io",
         ],
     },
+    # ─── Chain ecosystems ──────────────────────────────────
+    "ethereum-defi": {
+        "description": (
+            "Ethereum DeFi ecosystem deep dive: Uniswap V3/V4 concentrated liquidity, "
+            "Aave V3 multi-chain lending, MakerDAO and DAI, Curve Finance and stableswap, "
+            "Lido liquid staking, Compound, Balancer, 1inch aggregation, Flashbots MEV, "
+            "EigenLayer restaking, and Ethereum staking economics."
+        ),
+        "seed_concepts": [
+            "uniswap-v3", "aave-v3", "makerdao", "curve-finance",
+            "compound", "1inch", "flashbots", "ethereum-staking",
+        ],
+        "preferred_domains": [
+            "docs.uniswap.org", "docs.aave.com", "docs.makerdao.com",
+            "resources.curve.fi", "docs.compound.finance", "docs.1inch.io",
+            "docs.flashbots.net", "docs.lido.fi",
+        ],
+    },
+    "arbitrum-ecosystem": {
+        "description": (
+            "Arbitrum L2 ecosystem: Arbitrum One and Nova architecture, Nitro stack, "
+            "Stylus smart contracts, ARB governance, top DeFi (GMX, Camelot, Radiant, "
+            "Pendle, Vela), Arbitrum Orbit chains, and the Arbitrum DAO."
+        ),
+        "seed_concepts": [
+            "arbitrum-nitro", "arbitrum-stylus", "gmx", "camelot-dex",
+            "arbitrum-orbit", "arb-governance",
+        ],
+        "preferred_domains": [
+            "docs.arbitrum.io", "docs.gmx.io", "docs.camelot.exchange",
+            "docs.radiant.capital", "docs.vela.exchange",
+        ],
+    },
+    "base-ecosystem": {
+        "description": (
+            "Base L2 ecosystem by Coinbase: OP Stack architecture, Base Bridge, "
+            "top protocols (Aerodrome, BaseSwap, Moonwell, Extra Finance), "
+            "friend.tech social, Farcaster frames, onchain summer, and Base chain identity."
+        ),
+        "seed_concepts": [
+            "base-chain", "op-stack", "aerodrome", "farcaster",
+            "onchain-identity", "coinbase-smart-wallet",
+        ],
+        "preferred_domains": [
+            "docs.base.org", "docs.optimism.io", "aerodrome.finance",
+            "docs.farcaster.xyz", "docs.moonwell.fi",
+        ],
+    },
+    "bnb-chain-ecosystem": {
+        "description": (
+            "BNB Chain ecosystem: BNB Smart Chain (BSC) architecture, opBNB L2, "
+            "BNB Greenfield storage, PancakeSwap, Venus Protocol, BiSwap, "
+            "BNB staking, and the Binance connection."
+        ),
+        "seed_concepts": [
+            "bnb-smart-chain", "opbnb", "pancakeswap", "venus-protocol",
+            "bnb-greenfield", "bnb-staking",
+        ],
+        "preferred_domains": [
+            "docs.bnbchain.org", "docs.pancakeswap.finance",
+            "docs.venus.io", "docs.opbnb.org",
+        ],
+    },
+    # ─── Emerging topics ───────────────────────────────────
+    "bitcoin-ecosystem": {
+        "description": (
+            "Bitcoin ecosystem renaissance: Ordinals and BRC-20 tokens, Bitcoin L2s (Stacks, "
+            "Lightning Network, Liquid, BOB), Runes protocol, BitVM, Bitcoin DeFi, "
+            "Taproot and script upgrades, and Bitcoin scaling debates."
+        ),
+        "seed_concepts": [
+            "ordinals", "brc-20", "runes-protocol", "lightning-network",
+            "stacks-blockchain", "bitvm", "taproot",
+        ],
+        "preferred_domains": [
+            "docs.ordinals.com", "docs.stacks.co", "lightning.network",
+            "docs.liquid.net", "docs.gobob.xyz",
+        ],
+    },
+    "nft-gaming-social": {
+        "description": (
+            "NFTs, GameFi, and SocialFi: ERC-721/1155/6551, NFT marketplaces (OpenSea, Blur, "
+            "Magic Eden), on-chain gaming (Immutable, Ronin, Treasure), SocialFi (Lens Protocol, "
+            "Farcaster, friend.tech), creator economy, and digital identity (ENS, Worldcoin)."
+        ),
+        "seed_concepts": [
+            "nft-marketplace", "erc-6551", "immutable-x", "lens-protocol",
+            "ens", "worldcoin", "blur-marketplace",
+        ],
+        "preferred_domains": [
+            "docs.immutable.com", "docs.lens.xyz", "docs.ens.domains",
+            "docs.blur.foundation", "docs.treasure.lol",
+        ],
+    },
+    "security-mev": {
+        "description": (
+            "Blockchain security and MEV: common attack vectors (reentrancy, flash loan attacks, "
+            "oracle manipulation, sandwich attacks), MEV extraction and PBS (proposer-builder separation), "
+            "Flashbots, audit firms and practices, formal verification, "
+            "major hacks analysis, and security tooling (Slither, Foundry fuzzing)."
+        ),
+        "seed_concepts": [
+            "reentrancy-attack", "flash-loan-attack", "sandwich-attack",
+            "mev-extraction", "proposer-builder-separation", "smart-contract-audit",
+        ],
+        "preferred_domains": [
+            "docs.flashbots.net", "docs.openzeppelin.com",
+            "docs.trail-of-bits.com", "docs.consensys.io/diligence",
+        ],
+    },
+    "depin-rwa": {
+        "description": (
+            "DePIN (Decentralized Physical Infrastructure Networks) and RWA tokenization: "
+            "Helium, Hivemapper, Render Network, Filecoin, Arweave, "
+            "tokenized treasuries (Ondo, Backed), real estate tokens, "
+            "supply chain (VeChain), and the regulatory landscape."
+        ),
+        "seed_concepts": [
+            "depin", "helium-network", "filecoin", "arweave",
+            "render-network", "ondo-finance", "tokenized-treasuries",
+        ],
+        "preferred_domains": [
+            "docs.helium.com", "docs.filecoin.io", "docs.arweave.org",
+            "docs.render.network", "docs.ondo.finance",
+        ],
+    },
 }
 
 
