@@ -1,0 +1,301 @@
+"""Lint checks — detect issues in the knowledge base."""
+
+import json
+import re
+from pathlib import Path
+
+import frontmatter
+
+from ..config import load_config, ensure_dirs
+from ..llm import chat
+
+
+SYSTEM_PROMPT = """You are a knowledge base quality analyst. Your job is to review wiki articles
+and identify issues, inconsistencies, and opportunities for improvement.
+
+Be specific and actionable in your findings. Reference article titles and specific content."""
+
+
+
+def lint(base_dir: Path | None = None) -> dict:
+    """Run all lint checks on the wiki."""
+    cfg = load_config(base_dir)
+    ensure_dirs(cfg)
+
+    results = {
+        "structural": check_structural(cfg),
+        "broken_links": check_broken_links(cfg),
+        "orphans": check_orphans(cfg),
+        "missing_metadata": check_missing_metadata(cfg),
+        "dirty_tags": check_dirty_tags(cfg),
+        "duplicates": check_duplicates(cfg),
+        "stubs": check_stubs(cfg),
+        "uncategorized": check_uncategorized(cfg, base_dir),
+    }
+
+    # Count total issues
+    total = sum(len(v) for v in results.values())
+    results["total_issues"] = total
+
+    return results
+
+
+
+def lint_deep(base_dir: Path | None = None) -> str:
+    """Use LLM to do a deep quality check on the wiki content."""
+    cfg = load_config(base_dir)
+    ensure_dirs(cfg)
+    concepts_dir = Path(cfg["paths"]["concepts"])
+
+    articles = []
+    for md_file in sorted(concepts_dir.glob("*.md")):
+        post = frontmatter.load(str(md_file))
+        articles.append({
+            "slug": md_file.stem,
+            "title": post.metadata.get("title", md_file.stem),
+            "summary": post.metadata.get("summary", ""),
+            "tags": post.metadata.get("tags", []),
+            "content_preview": post.content[:500],
+        })
+
+    if not articles:
+        return "No articles to lint. Run `llmbase compile` first."
+
+    articles_text = json.dumps(articles, indent=2, ensure_ascii=False)
+
+    prompt = f"""Review this knowledge base wiki for quality issues.
+
+Articles:
+{articles_text}
+
+Please check for and report:
+1. **Inconsistencies**: Contradictory information across articles
+2. **Missing data**: Important topics referenced but not yet covered
+3. **Weak connections**: Concepts that should be linked but aren't
+4. **New article candidates**: Connections between existing concepts that deserve their own article
+5. **Suggested questions**: Further research questions worth exploring based on the knowledge base
+
+Format your response as a structured markdown report."""
+
+    return chat(prompt, system=SYSTEM_PROMPT, max_tokens=cfg["llm"]["max_tokens"])
+
+
+
+def check_structural(cfg: dict) -> list[str]:
+    """Check for structural issues."""
+    issues = []
+    concepts_dir = Path(cfg["paths"]["concepts"])
+    meta_dir = Path(cfg["paths"]["meta"])
+
+    if not (meta_dir / "_index.md").exists():
+        issues.append("Missing master index file (_index.md)")
+
+    if not (meta_dir / "index.json").exists():
+        issues.append("Missing JSON index (index.json)")
+
+    article_count = len(list(concepts_dir.glob("*.md")))
+    if article_count == 0:
+        issues.append("No articles in the wiki")
+
+    return issues
+
+
+
+def check_broken_links(cfg: dict) -> list[str]:
+    """Find broken wiki-links [[target]] that don't have corresponding articles.
+
+    Uses alias resolution so that [[参禅]] correctly resolves to can-chan.md
+    instead of being falsely flagged as broken.
+    """
+    from ..resolve import load_aliases, resolve_link
+
+    issues = []
+    concepts_dir = Path(cfg["paths"]["concepts"])
+    meta_dir = Path(cfg["paths"]["meta"])
+    link_pattern = re.compile(r"\[\[([^\]|]+)(?:\|[^\]]+)?\]\]")
+    existing_slugs = {f.stem.lower() for f in concepts_dir.glob("*.md")}
+    aliases = load_aliases(meta_dir)
+
+    for md_file in concepts_dir.glob("*.md"):
+        content = md_file.read_text()
+        for match in link_pattern.finditer(content):
+            raw_target = match.group(1).strip()
+            # Try alias resolution first
+            resolved = resolve_link(raw_target, aliases)
+            if resolved and resolved in existing_slugs:
+                continue
+            # Fall back to old normalization
+            simple = raw_target.lower().replace(" ", "-")
+            if simple in existing_slugs:
+                continue
+            issues.append(f"Broken link in {md_file.stem}: [[{match.group(1)}]]")
+
+    return issues
+
+
+
+def check_orphans(cfg: dict) -> list[str]:
+    """Find articles that are not linked to from any other article."""
+    issues = []
+    concepts_dir = Path(cfg["paths"]["concepts"])
+    meta_dir = Path(cfg["paths"]["meta"])
+
+    backlinks_path = meta_dir / "backlinks.json"
+    if not backlinks_path.exists():
+        return ["Backlinks map not built yet"]
+
+    backlinks = json.loads(backlinks_path.read_text())
+    linked_slugs = set(backlinks.keys())
+
+    for md_file in concepts_dir.glob("*.md"):
+        slug = md_file.stem.lower()
+        if slug not in linked_slugs:
+            issues.append(f"Orphan article (no incoming links): {md_file.stem}")
+
+    return issues
+
+
+
+def check_missing_metadata(cfg: dict) -> list[str]:
+    """Find articles with missing or incomplete metadata."""
+    issues = []
+    concepts_dir = Path(cfg["paths"]["concepts"])
+
+    for md_file in concepts_dir.glob("*.md"):
+        post = frontmatter.load(str(md_file))
+        slug = md_file.stem
+        if not post.metadata.get("title"):
+            issues.append(f"Missing title: {slug}")
+        if not post.metadata.get("summary"):
+            issues.append(f"Missing summary: {slug}")
+        if not post.metadata.get("tags"):
+            issues.append(f"Missing tags: {slug}")
+
+    return issues
+
+
+
+def check_dirty_tags(cfg: dict) -> list[str]:
+    """Find articles with malformed tags (LLM prompt leaks, sentences, etc.).
+
+    Valid tags should be short (< 30 chars), lowercase, no sentences.
+    Dirty tags look like: "2-4 tags. we need to interpret the article's content"
+    """
+    issues = []
+    concepts_dir = Path(cfg["paths"]["concepts"])
+
+    for md_file in concepts_dir.glob("*.md"):
+        post = frontmatter.load(str(md_file))
+        tags = post.metadata.get("tags", [])
+        slug = md_file.stem
+
+        dirty = []
+        for tag in tags:
+            if not isinstance(tag, str):
+                dirty.append(str(tag))
+            elif len(tag) > 40:
+                dirty.append(tag[:40] + "...")
+            elif " " in tag and len(tag.split()) > 4:
+                # More than 4 words — probably a sentence, not a tag
+                dirty.append(tag)
+            elif any(phrase in tag.lower() for phrase in [
+                "we need", "the user", "output", "list ", "tags:",
+                "tag1", "tag2", "interpret", "based on",
+            ]):
+                dirty.append(tag)
+
+        if dirty:
+            issues.append(f"Dirty tags in {slug}: {dirty}")
+
+    return issues
+
+
+
+def check_stubs(cfg: dict) -> list[str]:
+    """Find garbage/empty stub articles that should be cleaned.
+
+    Detects:
+    - Unfilled LLM templates ("English Title / 中文标题")
+    - Stubs with no real content (< 50 chars)
+    - "has not been written yet" placeholder text
+    - LLM prompt leak in summary ("The user says", "the user wants")
+    - Title is "..." or only dots/punctuation
+    - CJK-only slug (should be pinyin, e.g. "人性善" instead of "ren-xing-shan")
+    """
+    issues = []
+    concepts_dir = Path(cfg["paths"]["concepts"])
+    cjk_re = re.compile(r'^[\u4e00-\u9fff\u3400-\u4dbf]+$')
+
+    for md_file in concepts_dir.glob("*.md"):
+        post = frontmatter.load(str(md_file))
+        title = post.metadata.get("title", "")
+        summary = post.metadata.get("summary", "")
+        content = post.content.strip()
+        slug = md_file.stem
+
+        if "English Title / 中文标题" in title:
+            issues.append(f"Unfilled template: {slug}")
+        elif "One-line summary in English" in summary:
+            issues.append(f"Unfilled template: {slug}")
+        elif title.replace(".", "").replace("/", "").replace(" ", "") == "":
+            issues.append(f"Empty/garbage title: {slug}")
+        elif "has not been fully written" in content or "has not been written yet" in content:
+            issues.append(f"Placeholder stub: {slug}")
+        elif "尚未完成撰写" in content:
+            issues.append(f"Placeholder stub: {slug}")
+        elif any(leak in summary.lower() for leak in ["the user says", "the user wants", "the user asks", "the user is"]):
+            issues.append(f"LLM prompt leak: {slug}")
+        elif cjk_re.match(slug):
+            issues.append(f"CJK slug (should be pinyin): {slug}")
+        elif len(content) < 50 and not post.metadata.get("stub"):
+            issues.append(f"Near-empty article: {slug} ({len(content)} chars)")
+
+    return issues
+
+
+
+def check_uncategorized(cfg: dict, base_dir: Path | None = None) -> list[str]:
+    """Find articles that fall into 'Other' in the current taxonomy."""
+    from ..taxonomy import build_taxonomy
+    categories = build_taxonomy(base_dir, lang="en")
+    issues = []
+    for cat in categories:
+        if cat["id"] == "other":
+            for a in cat.get("articles", []):
+                issues.append(f"Uncategorized article: {a['slug']}")
+    return issues
+
+
+
+def check_duplicates(cfg: dict) -> list[str]:
+    """Detect duplicate articles using scored heuristics.
+
+    High-confidence pairs (score >= 3, e.g. identical CJK title) are
+    confirmed without LLM. No LLM call needed — avoids thinking-token issues.
+    """
+    concepts_dir = Path(cfg["paths"]["concepts"])
+    if not concepts_dir.exists():
+        return []
+
+    articles = []
+    for md_file in sorted(concepts_dir.glob("*.md")):
+        post = frontmatter.load(str(md_file))
+        articles.append({
+            "slug": md_file.stem,
+            "title": post.metadata.get("title", md_file.stem),
+            "tags": set(t.lower() for t in post.metadata.get("tags", [])),
+            "summary": post.metadata.get("summary", ""),
+        })
+
+    if len(articles) < 2:
+        return []
+
+    from .dedup import _find_duplicate_candidates
+    candidates = _find_duplicate_candidates(articles)
+    issues = []
+    for slug_a, slug_b in candidates:
+        issues.append(f"Likely duplicate: {slug_a} <-> {slug_b}")
+
+    return issues
+
+

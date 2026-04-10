@@ -26,7 +26,7 @@ def load_config(base_dir: Path | None = None) -> dict:
 def _defaults() -> dict:
     base = Path.cwd()
     return {
-        "llm": {"model": "claude-sonnet-4-6", "max_tokens": 8192},
+        "llm": {"model": "claude-sonnet-4-6", "max_tokens": 16384},
         "paths": {
             "raw": str(base / "raw"),
             "wiki": str(base / "wiki"),

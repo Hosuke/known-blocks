@@ -46,12 +46,13 @@ TOOLS = [
     ),
     Tool(
         name="kb_ask",
-        description="Ask a question against the knowledge base (deep research with context retrieval)",
+        description="Ask a question against the knowledge base (deep research with context retrieval). Set promote=true to let the LLM judge whether to sediment the Q&A as a new wiki concept.",
         inputSchema={
             "type": "object",
             "properties": {
                 "question": {"type": "string", "description": "Question to ask"},
                 "tone": {"type": "string", "description": "Response tone: default, wenyan, scholar, caveman, eli5", "default": "default"},
+                "promote": {"type": "boolean", "description": "If true, run promotion judge to sediment Q&A into wiki/concepts when warranted", "default": False},
             },
             "required": ["question"],
         },
@@ -130,6 +131,19 @@ TOOLS = [
         },
     ),
     Tool(
+        name="kb_export",
+        description="Export structured data: article with full context, articles by tag, or subgraph",
+        inputSchema={
+            "type": "object",
+            "properties": {
+                "type": {"type": "string", "enum": ["article", "tag", "graph"]},
+                "slug": {"type": "string", "description": "Article slug or tag name"},
+                "depth": {"type": "integer", "default": 2},
+            },
+            "required": ["type", "slug"],
+        },
+    ),
+    Tool(
         name="kb_xici",
         description="Get the guided reading (导读) — an LLM-generated introduction to the knowledge base",
         inputSchema={
@@ -147,9 +161,14 @@ TOOLS = [
 def handle_tool(name: str, arguments: dict, base_dir: Path) -> str:
     """Dispatch tool call to the appropriate handler."""
 
-    # Write operations use the worker job lock to prevent concurrent mutations
+    # Write operations use the worker job lock to prevent concurrent mutations.
+    # kb_ask is normally read-only, but promote=True turns it into a write
+    # (creates concept files, rebuilds index) and must take the lock too.
     write_tools = {"kb_ingest", "kb_compile", "kb_lint"}
-    if name in write_tools:
+    needs_lock = name in write_tools or (
+        name == "kb_ask" and arguments.get("promote") is True
+    )
+    if needs_lock:
         from .worker import job_lock
         if not job_lock.acquire(blocking=False):
             return "Another write operation is running. Try again later."
@@ -157,7 +176,7 @@ def handle_tool(name: str, arguments: dict, base_dir: Path) -> str:
     try:
         return _dispatch_tool(name, arguments, base_dir)
     finally:
-        if name in write_tools:
+        if needs_lock:
             from .worker import job_lock
             try:
                 job_lock.release()
@@ -181,9 +200,19 @@ def _dispatch_tool(name: str, arguments: dict, base_dir: Path) -> str:
             tone=arguments.get("tone", "default"),
             file_back=False,  # MCP queries don't write by default
             return_context=True,
+            promote=arguments.get("promote", False),
         )
         if isinstance(result, dict):
-            return f"{result['answer']}\n\n---\nConsulted: {', '.join(a['title'] for a in result.get('consulted', []))}"
+            consulted_str = ", ".join(a["title"] for a in result.get("consulted", []))
+            out = f"{result['answer']}\n\n---\nConsulted: {consulted_str}"
+            promo = result.get("promotion")
+            if promo:
+                if promo.get("promoted"):
+                    label = "Merged into" if promo.get("merged") else "Promoted"
+                    out += f"\n{label}: {promo.get('slug')} — {promo.get('reason', '')}"
+                else:
+                    out += f"\nNot promoted: {promo.get('reason', '')}"
+            return out
         return result
 
     elif name == "kb_get":
@@ -304,6 +333,20 @@ def _dispatch_tool(name: str, arguments: dict, base_dir: Path) -> str:
                 if k != "total_issues" and isinstance(v, list) and v:
                     lines.append(f"  {k}: {len(v)}")
             return "\n".join(lines)
+
+    elif name == "kb_export":
+        from .export import export_article, export_by_tag, export_graph
+        export_type = arguments.get("type", "article")
+        slug = arguments.get("slug", "")
+        if export_type == "article":
+            result = export_article(slug, base_dir)
+            return json.dumps(result, ensure_ascii=False, indent=2) if result else f"Article not found: {slug}"
+        elif export_type == "tag":
+            return json.dumps(export_by_tag(slug, base_dir), ensure_ascii=False, indent=2)
+        elif export_type == "graph":
+            depth = arguments.get("depth", 2)
+            return json.dumps(export_graph(slug, depth, base_dir), ensure_ascii=False, indent=2)
+        return f"Unknown export type: {export_type}"
 
     elif name == "kb_xici":
         from .xici import get_xici

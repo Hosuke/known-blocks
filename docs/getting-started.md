@@ -66,7 +66,7 @@ All settings in `config.yaml`:
 
 ```yaml
 llm:
-  max_tokens: 8192
+  max_tokens: 16384
 
 paths:
   raw: "./raw"

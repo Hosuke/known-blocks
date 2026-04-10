@@ -6,7 +6,15 @@ import { api } from '../lib/api';
 import { useLang } from '../lib/lang';
 import { useTrail } from '../lib/trail';
 
-interface QAPair { question: string; answer: string; }
+interface PromotionInfo {
+  promoted: boolean;
+  reason?: string;
+  slug?: string;
+  title?: string;
+  path?: string;
+  merged?: boolean;
+}
+interface QAPair { question: string; answer: string; promotion?: PromotionInfo; }
 interface ToneOption { id: string; label: string; label_zh: string; icon: string; }
 
 const FALLBACK_TONES: ToneOption[] = [
@@ -22,8 +30,10 @@ export function QA() {
   const zh = lang === 'zh' || lang === 'zh-en';
   const [question, setQuestion] = useState('');
   const [answer, setAnswer] = useState('');
+  const [promotion, setPromotion] = useState<PromotionInfo | null>(null);
   const [loading, setLoading] = useState(false);
   const [fileBack, setFileBack] = useState(true);
+  const [promote, setPromote] = useState(true);
   const [tone, setTone] = useState(() => (lang === 'zh' || lang === 'zh-en') ? 'wenyan' : 'default');
   const [tones, setTones] = useState<ToneOption[]>(FALLBACK_TONES);
   const [history, setHistory] = useState<QAPair[]>([]);
@@ -38,10 +48,13 @@ export function QA() {
     if (!question.trim() || loading) return;
     setLoading(true);
     setAnswer('');
+    setPromotion(null);
     try {
-      const res = await api.ask(question, deep, fileBack, tone);
+      const res = await api.ask(question, deep, fileBack, tone, promote);
       setAnswer(res.answer);
-      setHistory(prev => [{ question, answer: res.answer }, ...prev]);
+      const promo = res.promotion ?? null;
+      setPromotion(promo);
+      setHistory(prev => [{ question, answer: res.answer, promotion: promo ?? undefined }, ...prev]);
 
       // Trail recording: deep research or regular question
       if (deep && res.consulted && res.consulted.length > 0) {
@@ -95,7 +108,19 @@ export function QA() {
                 onChange={e => setFileBack(e.target.checked)}
                 className="rounded border-outline-variant"
               />
-              File to wiki
+              {zh ? '归档到 outputs' : 'File to wiki'}
+            </label>
+            <label
+              className="flex items-center gap-2 text-sm text-on-surface-variant cursor-pointer"
+              title={zh ? 'LLM 判断是否值得作为新词条沉淀' : 'LLM decides whether to promote into a new concept'}
+            >
+              <input
+                type="checkbox"
+                checked={promote}
+                onChange={e => setPromote(e.target.checked)}
+                className="rounded border-outline-variant"
+              />
+              {zh ? '沉淀为词条' : 'Promote to concept'}
             </label>
             {/* Tone selector */}
             <div className="flex items-center gap-1">
@@ -141,6 +166,43 @@ export function QA() {
             <span className="text-xs uppercase tracking-widest text-on-surface-variant">The Synthesis</span>
           </div>
           <Markdown content={answer} />
+          {promotion && (
+            <div className="mt-5 pt-4 border-t border-outline-variant/20">
+              {promotion.promoted ? (
+                <div className="flex items-start gap-2 text-sm">
+                  <Icon name="bookmark_added" className="text-primary text-[16px] mt-0.5" />
+                  <div>
+                    <div className="text-on-surface">
+                      {zh ? '已沉淀为词条' : 'Promoted to concept'}
+                      {': '}
+                      <a
+                        href={`/wiki/${promotion.slug}`}
+                        className="text-primary hover:underline font-medium"
+                      >
+                        {promotion.title || promotion.slug}
+                      </a>
+                      {promotion.merged && (
+                        <span className="ml-2 text-xs text-on-surface-variant">
+                          {zh ? '（合并到已有词条）' : '(merged into existing)'}
+                        </span>
+                      )}
+                    </div>
+                    {promotion.reason && (
+                      <div className="text-xs text-on-surface-variant mt-1">{promotion.reason}</div>
+                    )}
+                  </div>
+                </div>
+              ) : (
+                <div className="flex items-start gap-2 text-sm text-on-surface-variant">
+                  <Icon name="info" className="text-[16px] mt-0.5" />
+                  <div>
+                    {zh ? '未沉淀为词条' : 'Not promoted'}
+                    {promotion.reason && <span>: {promotion.reason}</span>}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
         </div>
       )}
 
